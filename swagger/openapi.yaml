@@ -1,0 +1,198 @@
+openapi: 3.0.0
+info:
+  title: Aplikasi Warga API (PocketBase)
+  description: Dokumentasi API untuk mengelola Data Warga, Status, Iuran, dan Lampiran.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8090/api
+    description: PocketBase Server
+components:
+  securitySchemes:
+    UserAuth:
+      type: http
+      scheme: bearer
+      description: Token otentikasi didapatkan dari endpoint Login.
+paths:
+  /collections/users/auth-with-password:
+    post:
+      tags:
+        - Authentication
+      summary: Login User
+      description: Mendapatkan token otentikasi dengan email dan password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identity
+                - password
+              properties:
+                identity:
+                  type: string
+                  description: Email user
+                password:
+                  type: string
+                  description: Password user
+      responses:
+        '200':
+          description: Berhasil login, mengembalikan token dan data user.
+          
+  /collections/warga/records:
+    get:
+      tags:
+        - Warga
+      summary: Ambil Data Warga
+      security:
+        - UserAuth: []
+      responses:
+        '200':
+          description: List warga
+    post:
+      tags:
+        - Warga
+      summary: Tambah Data Warga
+      security:
+        - UserAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - no_rumah
+                - user
+              properties:
+                no_rumah:
+                  type: string
+                no_wa:
+                  type: string
+                user:
+                  type: string
+                  description: ID dari collection users
+                status:
+                  type: string
+                  description: ID dari collection status
+      responses:
+        '200':
+          description: Warga berhasil dibuat
+          
+  /collections/status/records:
+    get:
+      tags:
+        - Status
+      summary: Ambil Data Status
+      security:
+        - UserAuth: []
+      responses:
+        '200':
+          description: List status
+    post:
+      tags:
+        - Status
+      summary: Tambah Data Status
+      security:
+        - UserAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nama
+                - jumlah_iuran
+              properties:
+                nama:
+                  type: string
+                jumlah_iuran:
+                  type: number
+      responses:
+        '200':
+          description: Status berhasil dibuat
+          
+  /collections/iuran/records:
+    get:
+      tags:
+        - Iuran
+      summary: Ambil Data Iuran
+      security:
+        - UserAuth: []
+      responses:
+        '200':
+          description: List iuran
+    post:
+      tags:
+        - Iuran
+      summary: Tambah Data Iuran
+      security:
+        - UserAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - kode
+                - nominal
+              properties:
+                kode:
+                  type: string
+                nominal:
+                  type: number
+                keterangan:
+                  type: string
+      responses:
+        '200':
+          description: Iuran berhasil dibuat
+          
+  /collections/lampiran/records:
+    get:
+      tags:
+        - Lampiran
+      summary: Ambil Data Lampiran
+      security:
+        - UserAuth: []
+      responses:
+        '200':
+          description: List lampiran
+    post:
+      tags:
+        - Lampiran
+      summary: Upload Lampiran (Multipart Form)
+      security:
+        - UserAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - iuran
+                - warga
+                - file_bukti
+              properties:
+                iuran:
+                  type: array
+                  items:
+                    type: string
+                  description: List ID dari collection iuran
+                warga:
+                  type: string
+                  description: ID dari collection warga
+                file_bukti:
+                  type: string
+                  format: binary
+                  description: File gambar atau PDF
+                approval:
+                  type: boolean
+                approved_by:
+                  type: string
+                  description: ID user yang melakukan approval
+      responses:
+        '200':
+          description: Lampiran berhasil diunggah
