@@ -12,12 +12,12 @@ const tabs = [
     ),
   },
   {
-    path: '/iuran',
-    label: 'Iuran',
+    path: '/lapor',
+    label: 'Lapor',
     icon: (c) => (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="6" width="18" height="13" rx="3" stroke={c} strokeWidth="1.9"/>
-        <path d="M3 10h18" stroke={c} strokeWidth="1.9"/>
+        <path d="M4 14V6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V14C20 15.1046 19.1046 16 18 16H8L4 20V14Z" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx="12" cy="10" r="1" fill={c}/>
       </svg>
     ),
   },

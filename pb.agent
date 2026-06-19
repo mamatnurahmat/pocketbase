@@ -1,0 +1,30 @@
+# Project Overview: Warga P2S
+
+Ini adalah proyek aplikasi manajemen warga (Warga P2S) yang memiliki fitur untuk mengatur iuran bulanan, tagihan, laporan, dan informasi warga.
+
+## Tech Stack
+- **Backend**: PocketBase (Go/JS). Database berjalan menggunakan SQLite bawaan PocketBase dengan mode WAL (_Write-Ahead Logging_).
+- **Frontend**: React.js (menggunakan Vite). Terletak di folder `client/`.
+- **Database Migrations**: Menggunakan PocketBase JS Migrations di dalam folder `pb_migrations/`.
+
+## Struktur Database (Koleksi PocketBase Utama)
+1. **users**: Tabel autentikasi bawaan PocketBase untuk akun login warga.
+2. **warga**: Data spesifik warga (seperti `no_rumah`, dll) yang berelasi dengan tabel `users`.
+3. **iuran**: Master data jenis iuran (misal: Keamanan, Kebersihan, IPL bulanan).
+4. **tagihan**: Data tagihan spesifik untuk masing-masing warga yang berelasi dengan `iuran` dan `warga`.
+5. **lampiran**: Bukti pembayaran atau dokumen pendukung.
+6. **status**: Status log atau tracking.
+
+---
+
+> [!CAUTION]
+> # 🛑 ATURAN SANGAT KRITIS (CRITICAL RULES) 🛑
+> 
+> **JANGAN PERNAH MENGGUNAKAN PERINTAH `sqlite3` SECARA LANGSUNG PADA FILE `pb_data/data.db` SAAT POCKETBASE SEDANG MENYALA!**
+> 
+> Karena PocketBase menggunakan SQLite dalam mode WAL (_Write-Ahead Logging_), mengakses atau mengeksekusi perintah modifikasi (`INSERT`, `UPDATE`, `DELETE`) secara langsung via terminal CLI `sqlite3` akan **MERUSAK DAN MENGKORUPSI DATABASE** (_database disk image is malformed_). 
+> 
+> ### Cara yang BENAR untuk memanipulasi data:
+> 1. **Via PocketBase REST API / SDK:** Buat script Node.js kecil yang menggunakan `fetch` ke endpoint `http://127.0.0.1:8090/api/...`
+> 2. **Via File Migrasi:** Buat file `.js` di dalam folder `pb_migrations/` dan jalankan dengan me-restart container Docker.
+> 3. **Via Admin UI:** Arahkan user untuk menggunakan halaman dashboard di `http://127.0.0.1:8090/_/`.

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'warga-p2s-v1';
+const CACHE_NAME = 'warga-p2s-v2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',

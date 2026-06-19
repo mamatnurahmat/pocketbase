@@ -8,114 +8,95 @@ export default function Profil() {
   const [user, setUser] = useState(pb.authStore.model);
   const [warga, setWarga] = useState(null);
 
-  // Name form
+  const phone = user?.username?.replace('hp_', '') || '';
+  const displayName = user?.name || phone || 'Warga';
+
+  // Combined Form States
   const [name, setName] = useState(user?.name || '');
-  const [loadingName, setLoadingName] = useState(false);
-  const [msgName, setMsgName] = useState({ text: '', type: '' });
+  const [phoneInput, setPhoneInput] = useState(phone);
+  const [agama, setAgama] = useState('islam');
+  const [pengurus, setPengurus] = useState(false);
 
-  // Phone form
-  const [newPhone, setNewPhone] = useState('');
-  const [loadingPhone, setLoadingPhone] = useState(false);
-  const [msgPhone, setMsgPhone] = useState({ text: '', type: '' });
-
-  // Password form
+  // Password fields
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loadingPw, setLoadingPw] = useState(false);
-  const [msgPw, setMsgPw] = useState({ text: '', type: '' });
+
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState({ text: '', type: '' });
 
   const getInitials = (name) => {
     if (!name) return '?';
     return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const displayName = user?.name || user?.username?.replace('hp_', '') || 'Warga';
-  const phone = user?.username?.replace('hp_', '') || '-';
-
   useEffect(() => {
     const fetchWarga = async () => {
       try {
         const w = await pb.collection('warga').getFirstListItem(`user="${user.id}"`);
         setWarga(w);
+        setAgama(w.agama || 'islam');
+        setPengurus(w.pengurus || false);
       } catch (e) { /* no warga linked */ }
     };
     if (pb.authStore.isValid) fetchWarga();
   }, [user]);
 
-  const handleUpdateName = async (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
-    setLoadingName(true);
-    setMsgName({ text: '', type: '' });
-    try {
-      const updated = await pb.collection('users').update(user.id, { name });
-      setUser(updated);
-      setMsgName({ text: 'Nama berhasil diperbarui!', type: 'success' });
-    } catch (err) {
-      setMsgName({ text: err.message || 'Gagal memperbarui nama.', type: 'error' });
-    } finally {
-      setLoadingName(false);
-    }
-  };
+    setLoading(true);
+    setMsg({ text: '', type: '' });
 
-  const handleUpdatePhone = async (e) => {
-    e.preventDefault();
-    if (!newPhone || newPhone.length < 8) {
-      return setMsgPhone({ text: 'Nomor HP minimal 8 digit.', type: 'error' });
-    }
-    setLoadingPhone(true);
-    setMsgPhone({ text: '', type: '' });
     try {
-      const updated = await pb.collection('users').update(user.id, {
-        username: 'hp_' + newPhone,
-      });
-      setUser(updated);
-      setNewPhone('');
-      setMsgPhone({ text: 'Nomor HP berhasil diperbarui!', type: 'success' });
-    } catch (err) {
-      let errMsg = 'Gagal memperbarui nomor HP.';
-      if (err.response?.data?.username) {
-        errMsg = 'Nomor HP sudah digunakan akun lain.';
+      const userUpdateData = {};
+      if (name !== user.name) userUpdateData.name = name;
+      
+      const cleanPhone = phoneInput.replace(/[^0-9]/g, '');
+      if (cleanPhone && `hp_${cleanPhone}` !== user.username) {
+        if (cleanPhone.length < 8) throw new Error('Nomor HP minimal 8 digit.');
+        userUpdateData.username = `hp_${cleanPhone}`;
       }
-      setMsgPhone({ text: errMsg, type: 'error' });
-    } finally {
-      setLoadingPhone(false);
-    }
-  };
 
-  const handleUpdatePassword = async (e) => {
-    e.preventDefault();
-    if (newPassword.length < 8) {
-      return setMsgPw({ text: 'Password baru minimal 8 karakter.', type: 'error' });
-    }
-    if (newPassword !== confirmPassword) {
-      return setMsgPw({ text: 'Konfirmasi password tidak cocok.', type: 'error' });
-    }
-    setLoadingPw(true);
-    setMsgPw({ text: '', type: '' });
-    try {
-      await pb.collection('users').update(user.id, {
-        oldPassword: oldPassword,
-        password: newPassword,
-        passwordConfirm: confirmPassword,
-      });
-      setOldPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      setMsgPw({ text: 'Password berhasil diubah! Silakan login ulang.', type: 'success' });
-      // PocketBase invalidates auth after password change
-      setTimeout(() => {
-        pb.authStore.clear();
-        navigate('/login');
-      }, 1500);
-    } catch (err) {
-      let errMsg = 'Gagal mengubah password.';
-      if (err.response?.data?.oldPassword) {
-        errMsg = 'Password lama salah.';
+      let passwordChanged = false;
+      if (oldPassword || newPassword || confirmPassword) {
+        if (!oldPassword) throw new Error('Masukkan password lama untuk mengubah password.');
+        if (newPassword.length < 8) throw new Error('Password baru minimal 8 karakter.');
+        if (newPassword !== confirmPassword) throw new Error('Konfirmasi password tidak cocok.');
+        
+        userUpdateData.oldPassword = oldPassword;
+        userUpdateData.password = newPassword;
+        userUpdateData.passwordConfirm = confirmPassword;
+        passwordChanged = true;
       }
-      setMsgPw({ text: errMsg, type: 'error' });
+
+      if (Object.keys(userUpdateData).length > 0) {
+        const updatedUser = await pb.collection('users').update(user.id, userUpdateData);
+        setUser(updatedUser);
+      }
+
+      if (warga && agama !== warga.agama) {
+        const updatedWarga = await pb.collection('warga').update(warga.id, { agama });
+        setWarga(updatedWarga);
+      }
+
+      setMsg({ text: 'Profil berhasil diperbarui!', type: 'success' });
+      
+      if (passwordChanged) {
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => {
+          pb.authStore.clear();
+          navigate('/login');
+        }, 1500);
+      }
+    } catch (err) {
+      let errMsg = err.message || 'Gagal memperbarui profil.';
+      if (err.response?.data?.username) errMsg = 'Nomor HP sudah digunakan akun lain.';
+      else if (err.response?.data?.oldPassword) errMsg = 'Password lama salah.';
+      setMsg({ text: errMsg, type: 'error' });
     } finally {
-      setLoadingPw(false);
+      setLoading(false);
     }
   };
 
@@ -135,24 +116,31 @@ export default function Profil() {
         <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div className="avatar avatar-lg">{getInitials(displayName)}</div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>{displayName}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>{displayName}</div>
+              {pengurus && (
+                <span style={{ background: '#E3F2FD', color: '#1976D2', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600 }}>
+                  Pengurus
+                </span>
+              )}
+            </div>
             <div style={{ marginTop: 3, fontSize: 13, color: '#8A9991' }}>
               {warga ? `No. Rumah ${warga.no_rumah}` : `HP: ${phone}`}
             </div>
           </div>
         </div>
 
-        {/* Update Name */}
-        <div className="mt-3 section-title">Ubah nama</div>
+        {/* Unified Update Form */}
+        <div className="mt-3 section-title">Ubah Profil</div>
         <div className="card">
-          {msgName.text && (
-            <div className={`alert ${msgName.type === 'error' ? 'alert-error' : 'alert-success'}`}>
-              {msgName.text}
+          {msg.text && (
+            <div className={`alert ${msg.type === 'error' ? 'alert-error' : 'alert-success'}`} style={{ marginBottom: 16 }}>
+              {msg.text}
             </div>
           )}
-          <form onSubmit={handleUpdateName}>
+          <form onSubmit={handleSaveProfile}>
             <div className="form-group">
-              <label>Nama lengkap</label>
+              <label>Nama Lengkap</label>
               <input
                 type="text"
                 className="form-control"
@@ -161,92 +149,85 @@ export default function Profil() {
                 placeholder="Masukkan nama lengkap"
               />
             </div>
-            <button type="submit" className="btn btn-primary" disabled={loadingName} style={{ height: 48 }}>
-              {loadingName ? 'Menyimpan...' : 'Simpan nama'}
-            </button>
-          </form>
-        </div>
-
-        {/* Update Phone */}
-        <div className="mt-3 section-title">Ubah nomor HP</div>
-        <div className="card">
-          {msgPhone.text && (
-            <div className={`alert ${msgPhone.type === 'error' ? 'alert-error' : 'alert-success'}`}>
-              {msgPhone.text}
-            </div>
-          )}
-          <div style={{ marginBottom: 12, fontSize: 13, color: '#8A9991' }}>
-            Nomor saat ini: <strong style={{ color: '#3A453F' }}>{phone}</strong>
-          </div>
-          <form onSubmit={handleUpdatePhone}>
+            
             <div className="form-group">
-              <label>Nomor HP baru</label>
+              <label>Nomor HP</label>
               <input
                 type="text"
                 className="form-control"
-                value={newPhone}
-                onChange={(e) => setNewPhone(e.target.value.replace(/[^0-9]/g, ''))}
+                value={phoneInput}
+                onChange={(e) => setPhoneInput(e.target.value.replace(/[^0-9]/g, ''))}
                 placeholder="08xxxxxxxxxx"
               />
             </div>
-            <button type="submit" className="btn btn-primary" disabled={loadingPhone || !newPhone} style={{ height: 48 }}>
-              {loadingPhone ? 'Menyimpan...' : 'Ubah nomor HP'}
-            </button>
-          </form>
-        </div>
 
-        {/* Update Password */}
-        <div className="mt-3 section-title">Ubah password</div>
-        <div className="card">
-          {msgPw.text && (
-            <div className={`alert ${msgPw.type === 'error' ? 'alert-error' : 'alert-success'}`}>
-              {msgPw.text}
+            {warga && (
+              <div className="form-group">
+                <label>Agama</label>
+                <select 
+                  className="form-control"
+                  value={agama}
+                  onChange={(e) => setAgama(e.target.value)}
+                >
+                  <option value="islam">Islam</option>
+                  <option value="katolik">Katolik</option>
+                  <option value="protestan">Protestan</option>
+                  <option value="hindu">Hindu</option>
+                  <option value="budha">Budha</option>
+                  <option value="konghucu">Konghucu</option>
+                </select>
+              </div>
+            )}
+
+            <div className="mt-4" style={{ fontSize: 14, fontWeight: 600, color: '#3A453F', marginBottom: 12 }}>
+              Ubah Password (Opsional)
             </div>
-          )}
-          <form onSubmit={handleUpdatePassword}>
             <div className="form-group">
-              <label>Password lama</label>
+              <label>Password Lama</label>
               <input
                 type="password"
                 className="form-control"
                 value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
-                placeholder="Masukkan password saat ini"
-                required
+                placeholder="Isi jika ingin mengubah password"
               />
             </div>
-            <div className="form-group">
-              <label>Password baru</label>
-              <input
-                type="password"
-                className="form-control"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Minimal 8 karakter"
-                required
-                minLength={8}
-              />
-            </div>
-            <div className="form-group">
-              <label>Konfirmasi password baru</label>
-              <input
-                type="password"
-                className="form-control"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Ulangi password baru"
-                required
-                minLength={8}
-              />
-            </div>
-            <button type="submit" className="btn btn-primary" disabled={loadingPw} style={{ height: 48 }}>
-              {loadingPw ? 'Mengubah...' : 'Ubah password'}
+            
+            {oldPassword && (
+              <>
+                <div className="form-group">
+                  <label>Password Baru</label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Minimal 8 karakter"
+                    minLength={8}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Konfirmasi Password Baru</label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Ulangi password baru"
+                    minLength={8}
+                  />
+                </div>
+              </>
+            )}
+
+            <button type="submit" className="btn btn-primary" disabled={loading} style={{ height: 48, marginTop: 16, width: '100%' }}>
+              {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
             </button>
           </form>
         </div>
 
         {/* Info */}
-        <div className="mt-3 section-title">Informasi akun</div>
+        <div className="mt-3 section-title">Informasi Akun</div>
         <div className="card" style={{ padding: '6px 18px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid #F0F2F0' }}>
             <span style={{ fontSize: 13, color: '#8A9991' }}>Nomor HP</span>
@@ -281,4 +262,3 @@ export default function Profil() {
     </div>
   );
 }
-

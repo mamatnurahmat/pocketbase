@@ -76,7 +76,7 @@ export default function Iuran() {
       formData.append('file_bukti', file);
       formData.append('approval', false);
 
-      await pb.collection('lampiran').create(formData);
+      const lampiranRecord = await pb.collection('lampiran').create(formData);
 
       const tagihanPromises = selectedIurans.map(iuranId => {
         const iuranData = iuranList.find(x => x.id === iuranId);
@@ -89,6 +89,24 @@ export default function Iuran() {
         });
       });
       await Promise.all(tagihanPromises);
+
+      // Tambahkan post ke logs
+      try {
+        const iuranCodes = selectedIurans.map(id => {
+          const iData = iuranList.find(x => x.id === id);
+          return iData ? iData.kode : id;
+        }).join(', ');
+        
+        const logDetail = `Tujuan Koleksi: lampiran\nID Record: ${lampiranRecord.id}\nOleh: Warga ${warga.no_rumah}\nWaktu: ${new Date().toLocaleString('id-ID')}\nKeterangan: Iuran ${iuranCodes}`;
+        
+        await pb.collection('aktivitas_warga').create({
+          warga: warga.id,
+          aktivitas: 'Upload Bukti Pembayaran',
+          detail: logDetail
+        });
+      } catch (logErr) {
+        console.warn("Gagal mencatat log aktivitas:", logErr);
+      }
 
       setMessage({ text: 'Bukti pembayaran berhasil diupload!', type: 'success' });
       setSelectedIurans([]);

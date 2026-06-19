@@ -24,6 +24,12 @@ export default function Dashboard() {
 
   const rupiah = (n) => 'Rp ' + (n || 0).toLocaleString('id-ID');
 
+  const statusBadge = (status) => {
+    if (status === 'Lunas') return 'badge-success';
+    if (status === 'Menunggu Konfirmasi') return 'badge-warning';
+    return 'badge-danger';
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -45,7 +51,7 @@ export default function Dashboard() {
     if (pb.authStore.isValid) fetchData();
   }, []);
 
-  const unpaid = tagihan.filter(t => t.status_pembayaran !== 'Lunas');
+  const unpaid = tagihan.filter(t => t.status_pembayaran === 'Belum Dibayar');
   const totalUnpaid = unpaid.reduce((sum, t) => sum + (t.nominal || 0), 0);
   const displayName = user?.name || user?.username?.replace('hp_', '') || 'Warga';
 
@@ -175,7 +181,9 @@ export default function Dashboard() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <span className="list-amount">{rupiah(t.nominal)}</span>
-                    <span style={{ display: 'block', marginTop: 3, fontSize: 11, fontWeight: 700, color: '#C8821A' }}>Belum bayar →</span>
+                    <span className={`badge ${statusBadge(t.status_pembayaran)}`} style={{ marginTop: 4, display: 'inline-block' }}>
+                      {t.status_pembayaran}
+                    </span>
                   </div>
                 </div>
               ))}
