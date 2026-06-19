@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{ box-sizing:border-box; }
+  body{ margin:0; }
+  [data-appscroll]::-webkit-scrollbar{ width:0; height:0; }
+  .pp{ font-family:'Plus Jakarta Sans',system-ui,sans-serif; }
+</style>
+</helmet>
+
+<div class="pp" style="min-height:100vh; width:100%; display:flex; align-items:center; justify-content:center; background:#E7EAE8; padding:32px 16px; background-image:radial-gradient(circle at 20% 0%,#EAF3EE 0%,#E7EAE8 55%);">
+
+  <div style="position:relative; width:390px; height:844px; background:#0F1A14; border-radius:50px; padding:11px; box-shadow:0 40px 90px -30px rgba(15,26,20,.55), 0 0 0 1px rgba(15,26,20,.06);">
+    <div style="position:absolute; top:11px; left:50%; transform:translateX(-50%); width:128px; height:30px; background:#0F1A14; border-bottom-left-radius:18px; border-bottom-right-radius:18px; z-index:50;"></div>
+
+    <div style="position:relative; width:100%; height:100%; background:#F4F6F4; border-radius:40px; overflow:hidden; display:flex; flex-direction:column;">
+
+      <!-- status bar -->
+      <div style="flex:none; height:50px; display:flex; align-items:flex-end; justify-content:space-between; padding:0 28px 6px; font-size:14px; font-weight:700; color:#0F1A14; z-index:20;">
+        <span>9:41</span>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="none"><rect x="0" y="7" width="3" height="5" rx="1" fill="#0F1A14"/><rect x="5" y="4" width="3" height="8" rx="1" fill="#0F1A14"/><rect x="10" y="1.5" width="3" height="10.5" rx="1" fill="#0F1A14"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#0F1A14" opacity="0.3"/></svg>
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M8 9.5l2.4 2.4C9.2 10.8 7 10.5 5.6 11.9L8 9.5z" fill="#0F1A14"/><path d="M8 4.2c2.4 0 4.6.9 6.3 2.5l-1.6 1.7A6.6 6.6 0 008 6.5c-1.8 0-3.5.7-4.7 1.9L1.7 6.7A9 9 0 018 4.2z" fill="#0F1A14"/><path d="M8 .5c3.4 0 6.5 1.3 8.8 3.5L15.2 5.7A10 10 0 008 2.8 10 10 0 00.8 5.7L-.8 4C1.5 1.8 4.6.5 8 .5z" fill="#0F1A14"/></svg>
+          <div style="display:flex; align-items:center; gap:2px;"><div style="width:22px; height:11px; border:1.5px solid #0F1A14; border-radius:3px; padding:1.5px;"><div style="width:80%; height:100%; background:#0F1A14; border-radius:1px;"></div></div><div style="width:2px; height:4px; background:#0F1A14; border-radius:0 1px 1px 0;"></div></div>
+        </div>
+      </div>
+
+      <!-- scroll area -->
+      <div data-appscroll style="flex:1; overflow-y:auto; position:relative; -webkit-overflow-scrolling:touch;">
+
+        <!-- ============ LOGIN ============ -->
+        <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+          <div style="min-height:100%; display:flex; flex-direction:column; padding:24px 28px 32px;">
+            <div style="flex:none; padding-top:24px;">
+              <div style="width:64px; height:64px; border-radius:20px; background:linear-gradient(150deg,#1FAE69,#0C6B40); display:flex; align-items:center; justify-content:center; box-shadow:0 14px 30px -10px rgba(12,107,64,.55);">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M3 11.5L12 4l9 7.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10.5V20h14v-9.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 20v-5h4v5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div style="margin-top:24px; font-size:26px; font-weight:800; color:#0F1A14; letter-spacing:-0.02em;">Masuk ke warga P2S</div>
+              <div style="margin-top:8px; font-size:15px; color:#6B7B72; line-height:1.5;">Satu pintu untuk iuran, laporan, dan informasi warga RW&nbsp;04.</div>
+            </div>
+
+            <div style="margin-top:28px;">
+              <div style="font-size:13px; font-weight:600; color:#6B7B72; margin-bottom:8px;">Nomor handphone</div>
+              <div style="display:flex; align-items:center; gap:10px; height:54px; background:#fff; border:1.5px solid #E6EBE7; border-radius:14px; padding:0 16px;">
+                <span style="font-size:16px; font-weight:600; color:#0F1A14;">+62</span>
+                <span style="width:1px; height:22px; background:#E6EBE7;"></span>
+                <span style="font-size:16px; font-weight:600; color:#0F1A14; letter-spacing:0.02em;">812-3456-7890</span>
+              </div>
+            </div>
+
+            <div style="margin-top:24px; text-align:center;">
+              <div style="font-size:13px; font-weight:600; color:#6B7B72; margin-bottom:14px;">Masukkan PIN</div>
+              <div style="display:flex; justify-content:center; gap:14px;">
+                <sc-for list="{{ pinDots }}" as="d" hint-placeholder-count="6">
+                  <div style="width:14px; height:14px; border-radius:50%; border:2px solid #15935A; background:{{ d.on }};" data-pindot></div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="flex:1;"></div>
+
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:24px;">
+              <sc-for list="{{ keys }}" as="k" hint-placeholder-count="12">
+                <button onClick="{{ k.press }}" style="height:60px; border:none; background:{{ k.empty }}; border-radius:16px; font-size:24px; font-weight:600; color:#0F1A14; cursor:pointer; font-family:inherit;" style-active="transform:scale(0.95);">{{ k.label }}</button>
+              </sc-for>
+            </div>
+            <button onClick="{{ goHome }}" style="margin-top:18px; height:54px; width:100%; border:none; background:#15935A; color:#fff; border-radius:16px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; box-shadow:0 12px 24px -10px rgba(21,147,90,.6);">Masuk</button>
+          </div>
+        </sc-if>
+
+        <!-- ============ HOME ============ -->
+        <sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 0 28px;">
+            <div style="background:linear-gradient(160deg,#147a4a,#0C6B40); padding:8px 20px 60px; border-bottom-left-radius:28px; border-bottom-right-radius:28px;">
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="width:42px; height:42px; border-radius:14px; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; font-size:15px;">BS</div>
+                  <div>
+                    <div style="color:rgba(255,255,255,.7); font-size:12px; font-weight:500;">Selamat pagi,</div>
+                    <div style="color:#fff; font-size:16px; font-weight:700;">Budi Santoso · <span style="font-weight:500; opacity:.85;">{{ roleLabel }}</span></div>
+                  </div>
+                </div>
+                <div style="position:relative; width:42px; height:42px; border-radius:14px; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.7 21a2 2 0 01-3.4 0" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <span style="position:absolute; top:8px; right:9px; width:8px; height:8px; background:#FFCC4D; border-radius:50%; border:2px solid #0C6B40;"></span>
+                </div>
+              </div>
+            </div>
+
+            <div style="padding:0 20px; margin-top:-44px;">
+              <!-- total tagihan card -->
+              <div style="background:#fff; border-radius:22px; padding:20px; box-shadow:0 10px 30px -12px rgba(15,26,20,.18);">
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                  <span style="font-size:13px; color:#6B7B72; font-weight:600;">Total tagihan bulan ini</span>
+                  <span style="font-size:11px; font-weight:700; color:#C8821A; background:#FBF1DD; padding:4px 9px; border-radius:20px;">Jatuh tempo 25 Jun</span>
+                </div>
+                <div style="margin-top:10px; font-size:30px; font-weight:800; color:#0F1A14; letter-spacing:-0.02em; font-variant-numeric:tabular-nums;">{{ totalDueStr }}</div>
+                <button onClick="{{ goIuran }}" style="margin-top:16px; width:100%; height:50px; border:none; background:#15935A; color:#fff; border-radius:14px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit;">Bayar sekarang</button>
+              </div>
+
+              <!-- pengurus card -->
+              <sc-if value="{{ isPengurus }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ goVerifikasi }}" style="margin-top:14px; width:100%; text-align:left; display:flex; align-items:center; gap:14px; background:#0F1A14; border:none; border-radius:18px; padding:16px 18px; cursor:pointer; font-family:inherit;">
+                  <div style="width:40px; height:40px; border-radius:12px; background:rgba(255,255,255,.12); display:flex; align-items:center; justify-content:center;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="#5BDCA0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-3z" stroke="#5BDCA0" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                  </div>
+                  <div style="flex:1;">
+                    <div style="color:#fff; font-size:14px; font-weight:700;">Verifikasi pembayaran</div>
+                    <div style="color:rgba(255,255,255,.6); font-size:12px;">{{ verifCount }} pembayaran menunggu konfirmasi</div>
+                  </div>
+                  <span style="background:#15935A; color:#fff; font-size:13px; font-weight:800; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;">{{ verifCount }}</span>
+                </button>
+              </sc-if>
+
+              <!-- quick actions -->
+              <div style="margin-top:18px; background:#fff; border-radius:22px; padding:18px 8px; box-shadow:0 1px 2px rgba(15,26,20,.04);">
+                <div style="display:grid; grid-template-columns:repeat(4,1fr);">
+                  <button onClick="{{ goIuran }}" style="border:none; background:none; cursor:pointer; font-family:inherit; display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px;">
+                    <span style="width:48px; height:48px; border-radius:16px; background:#E8F5EE; display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="3" stroke="#15935A" stroke-width="1.8"/><path d="M3 10h18" stroke="#15935A" stroke-width="1.8"/><path d="M7 15h4" stroke="#15935A" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                    <span style="font-size:12px; font-weight:600; color:#3A453F;">Bayar Iuran</span>
+                  </button>
+                  <button onClick="{{ goLaporNew }}" style="border:none; background:none; cursor:pointer; font-family:inherit; display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px;">
+                    <span style="width:48px; height:48px; border-radius:16px; background:#FBF1DD; display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.4 8.4 0 01-9 8.4L4 21l1.1-4A8.4 8.4 0 1121 11.5z" stroke="#C8821A" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 8v3" stroke="#C8821A" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="14.5" r="1" fill="#C8821A"/></svg></span>
+                    <span style="font-size:12px; font-weight:600; color:#3A453F;">Buat Laporan</span>
+                  </button>
+                  <button onClick="{{ goKas }}" style="border:none; background:none; cursor:pointer; font-family:inherit; display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px;">
+                    <span style="width:48px; height:48px; border-radius:16px; background:#E5F2F4; display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 6h18v12H3z" stroke="#2E7D8A" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.5" stroke="#2E7D8A" stroke-width="1.8"/></svg></span>
+                    <span style="font-size:12px; font-weight:600; color:#3A453F;">Kas RT</span>
+                  </button>
+                  <button onClick="{{ goRiwayat }}" style="border:none; background:none; cursor:pointer; font-family:inherit; display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px;">
+                    <span style="width:48px; height:48px; border-radius:16px; background:#EDEAF6; display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 7v5l3 2" stroke="#7A5BC2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="8.5" stroke="#7A5BC2" stroke-width="1.8"/></svg></span>
+                    <span style="font-size:12px; font-weight:600; color:#3A453F;">Riwayat</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- announcement preview -->
+              <div style="margin-top:22px; display:flex; align-items:center; justify-content:space-between;">
+                <span style="font-size:16px; font-weight:800; color:#0F1A14;">Pengumuman terbaru</span>
+                <button onClick="{{ goInfo }}" style="border:none; background:none; color:#15935A; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit;">Lihat semua</button>
+              </div>
+              <div style="margin-top:12px; display:flex; flex-direction:column; gap:10px;">
+                <sc-for list="{{ news }}" as="a" hint-placeholder-count="2">
+                  <button onClick="{{ a.open }}" style="text-align:left; border:none; background:#fff; border-radius:16px; padding:14px 16px; cursor:pointer; font-family:inherit; box-shadow:0 1px 2px rgba(15,26,20,.04); display:flex; gap:12px; align-items:flex-start;">
+                    <span style="flex:none; margin-top:2px; font-size:10px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:{{ a.tColor }}; background:{{ a.tBg }}; padding:4px 8px; border-radius:6px;">{{ a.tag }}</span>
+                    <span style="flex:1;"><span style="display:block; font-size:14px; font-weight:700; color:#0F1A14; line-height:1.35;">{{ a.title }}</span><span style="display:block; margin-top:3px; font-size:12px; color:#8A9991;">{{ a.date }}</span></span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ IURAN ============ -->
+        <sc-if value="{{ isIuran }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:8px 20px 28px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0 16px;">
+              <span style="font-size:22px; font-weight:800; color:#0F1A14; letter-spacing:-0.02em;">Iuran</span>
+              <button onClick="{{ goRiwayat }}" style="border:none; background:#EAF0EC; color:#15935A; font-size:13px; font-weight:700; padding:8px 14px; border-radius:20px; cursor:pointer; font-family:inherit;">Riwayat</button>
+            </div>
+
+            <div style="background:linear-gradient(160deg,#147a4a,#0C6B40); border-radius:20px; padding:20px; color:#fff;">
+              <div style="font-size:13px; opacity:.8; font-weight:600;">Total belum dibayar</div>
+              <div style="margin-top:6px; font-size:28px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-0.02em;">{{ totalDueStr }}</div>
+              <div style="margin-top:4px; font-size:12px; opacity:.75;">{{ billCount }} tagihan · jatuh tempo 25 Juni 2026</div>
+            </div>
+
+            <div style="margin-top:20px; font-size:13px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#8A9991;">Tagihan aktif</div>
+            <div style="margin-top:12px; display:flex; flex-direction:column; gap:12px;">
+              <sc-for list="{{ bills }}" as="b" hint-placeholder-count="3">
+                <button onClick="{{ b.open }}" style="text-align:left; border:none; background:#fff; border-radius:18px; padding:16px; cursor:pointer; font-family:inherit; box-shadow:0 1px 2px rgba(15,26,20,.04); display:flex; align-items:center; gap:14px;">
+                  <span style="flex:none; width:46px; height:46px; border-radius:14px; background:#E8F5EE; display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="3" stroke="#15935A" stroke-width="1.8"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#15935A" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                  <span style="flex:1;"><span style="display:block; font-size:15px; font-weight:700; color:#0F1A14;">{{ b.title }}</span><span style="display:block; margin-top:2px; font-size:12px; color:#8A9991;">{{ b.period }}</span></span>
+                  <span style="text-align:right;"><span style="display:block; font-size:15px; font-weight:800; color:#0F1A14; font-variant-numeric:tabular-nums;">{{ b.amountStr }}</span><span style="display:block; margin-top:3px; font-size:11px; font-weight:700; color:#C8821A;">Belum bayar →</span></span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ PAY DETAIL ============ -->
+        <sc-if value="{{ isPay }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 0 32px;">
+            <div style="position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:12px; padding:8px 20px 14px; background:#F4F6F4;">
+              <button onClick="{{ goIuran }}" style="width:38px; height:38px; border-radius:12px; border:none; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 1px 2px rgba(15,26,20,.06);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#0F1A14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <span style="font-size:18px; font-weight:800; color:#0F1A14;">Pembayaran</span>
+            </div>
+
+            <div style="padding:0 20px;">
+              <div style="background:#fff; border-radius:18px; padding:18px;">
+                <div style="font-size:13px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#8A9991;">Rincian</div>
+                <div style="margin-top:14px; display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-size:15px; font-weight:700; color:#0F1A14;">{{ selBill.title }}</span>
+                  <span style="font-size:15px; font-weight:700; color:#0F1A14; font-variant-numeric:tabular-nums;">{{ selBill.amountStr }}</span>
+                </div>
+                <div style="margin-top:6px; display:flex; justify-content:space-between;"><span style="font-size:13px; color:#8A9991;">Periode</span><span style="font-size:13px; color:#3A453F; font-weight:600;">{{ selBill.period }}</span></div>
+                <div style="margin-top:6px; display:flex; justify-content:space-between;"><span style="font-size:13px; color:#8A9991;">Biaya admin</span><span style="font-size:13px; color:#15935A; font-weight:700;">Gratis</span></div>
+                <div style="margin-top:14px; padding-top:14px; border-top:1px dashed #E6EBE7; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:14px; font-weight:700; color:#0F1A14;">Total bayar</span><span style="font-size:20px; font-weight:800; color:#15935A; font-variant-numeric:tabular-nums;">{{ selBill.amountStr }}</span></div>
+              </div>
+
+              <div style="margin-top:20px; font-size:13px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#8A9991;">Metode pembayaran</div>
+              <div style="margin-top:12px; display:flex; flex-direction:column; gap:12px;">
+                <button onClick="{{ pickQris }}" style="text-align:left; border:2px solid {{ payMethodQrisBorder }}; background:#fff; border-radius:16px; padding:15px 16px; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:14px;" data-method="qris">
+                  <span style="flex:none; width:46px; height:32px; border-radius:8px; background:#0F1A14; display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:800; letter-spacing:.02em;">QRIS</span>
+                  <span style="flex:1;"><span style="display:block; font-size:15px; font-weight:700; color:#0F1A14;">Bayar dengan QRIS</span><span style="display:block; font-size:12px; color:#8A9991;">Scan dari aplikasi bank / e-wallet</span></span>
+                  <sc-if value="{{ methodQris }}" hint-placeholder-val="{{ true }}"><span style="width:22px; height:22px; border-radius:50%; background:#15935A; display:flex; align-items:center; justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></sc-if>
+                </button>
+                <button onClick="{{ pickVa }}" style="text-align:left; border:2px solid {{ payMethodVaBorder }}; background:#fff; border-radius:16px; padding:15px 16px; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:14px;" data-method="va">
+                  <span style="flex:none; width:46px; height:32px; border-radius:8px; background:#E5F2F4; display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2.5" stroke="#2E7D8A" stroke-width="1.8"/><path d="M3 9h18" stroke="#2E7D8A" stroke-width="1.8"/></svg></span>
+                  <span style="flex:1;"><span style="display:block; font-size:15px; font-weight:700; color:#0F1A14;">Transfer Bank (VA)</span><span style="display:block; font-size:12px; color:#8A9991;">BCA, Mandiri, BNI, BRI</span></span>
+                  <sc-if value="{{ methodVa }}" hint-placeholder-val="{{ false }}"><span style="width:22px; height:22px; border-radius:50%; background:#15935A; display:flex; align-items:center; justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></sc-if>
+                </button>
+              </div>
+
+              <button onClick="{{ payNow }}" style="margin-top:24px; width:100%; height:54px; border:none; background:#15935A; color:#fff; border-radius:16px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; box-shadow:0 12px 24px -10px rgba(21,147,90,.6);">Lanjut bayar {{ selBill.amountStr }}</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ QRIS ============ -->
+        <sc-if value="{{ isQris }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 0 32px;">
+            <div style="position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:12px; padding:8px 20px 14px; background:#F4F6F4;">
+              <button onClick="{{ payNow }}" style="width:38px; height:38px; border-radius:12px; border:none; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 1px 2px rgba(15,26,20,.06);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#0F1A14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <span style="font-size:18px; font-weight:800; color:#0F1A14;">Bayar dengan QRIS</span>
+            </div>
+            <div style="padding:8px 20px 0; text-align:center;">
+              <div style="background:#fff; border-radius:24px; padding:24px; box-shadow:0 10px 30px -14px rgba(15,26,20,.16);">
+                <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                  <span style="font-size:14px; font-weight:800; color:#0F1A14;">warga P2S · RW 04</span>
+                </div>
+                <div style="margin-top:4px; font-size:12px; color:#8A9991;">{{ selBill.title }}</div>
+                <div style="margin:18px auto 0; width:210px; height:210px; padding:10px; background:#fff; border:2px solid #EFF2F0; border-radius:16px;">{{ qr }}</div>
+                <div style="margin-top:18px; font-size:13px; color:#8A9991;">Nominal</div>
+                <div style="font-size:26px; font-weight:800; color:#0F1A14; font-variant-numeric:tabular-nums; letter-spacing:-0.02em;">{{ selBill.amountStr }}</div>
+              </div>
+              <div style="margin-top:16px; display:flex; align-items:center; gap:10px; background:#FBF1DD; border-radius:14px; padding:12px 14px; text-align:left;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex:none;"><circle cx="12" cy="12" r="9" stroke="#C8821A" stroke-width="1.8"/><path d="M12 7v6" stroke="#C8821A" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="16" r="1" fill="#C8821A"/></svg>
+                <span style="font-size:12.5px; color:#7A5A14; line-height:1.4;">Scan kode di atas dengan aplikasi bank atau e-wallet apa pun. Berlaku 15 menit.</span>
+              </div>
+              <button onClick="{{ confirmQris }}" style="margin-top:18px; width:100%; height:54px; border:none; background:#15935A; color:#fff; border-radius:16px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit;">Saya sudah bayar</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ SUCCESS ============ -->
+        <sc-if value="{{ isSuccess }}" hint-placeholder-val="{{ false }}">
+          <div style="min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px 28px; text-align:center;">
+            <div style="width:96px; height:96px; border-radius:50%; background:#E8F5EE; display:flex; align-items:center; justify-content:center;">
+              <div style="width:68px; height:68px; border-radius:50%; background:#15935A; display:flex; align-items:center; justify-content:center;"><svg width="38" height="38" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            </div>
+            <div style="margin-top:24px; font-size:24px; font-weight:800; color:#0F1A14; letter-spacing:-0.02em;">Pembayaran berhasil</div>
+            <div style="margin-top:8px; font-size:15px; color:#6B7B72; line-height:1.5;">Terima kasih, pembayaran iuran Anda telah kami terima.</div>
+            <div style="margin-top:24px; width:100%; background:#fff; border-radius:18px; padding:18px; text-align:left;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span style="font-size:13px; color:#8A9991;">Jumlah</span><span style="font-size:15px; font-weight:800; color:#0F1A14; font-variant-numeric:tabular-nums;">{{ selBill.amountStr }}</span></div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span style="font-size:13px; color:#8A9991;">Untuk</span><span style="font-size:13px; font-weight:600; color:#3A453F;">{{ selBill.title }}</span></div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span style="font-size:13px; color:#8A9991;">Waktu</span><span style="font-size:13px; font-weight:600; color:#3A453F;">19 Jun 2026, 09:41</span></div>
+              <div style="display:flex; justify-content:space-between;"><span style="font-size:13px; color:#8A9991;">No. Referensi</span><span style="font-size:13px; font-weight:600; color:#3A453F;">P2S-20260619-0041</span></div>
+            </div>
+            <button onClick="{{ doneToHome }}" style="margin-top:24px; width:100%; height:54px; border:none; background:#15935A; color:#fff; border-radius:16px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit;">Selesai</button>
+            <button onClick="{{ goRiwayat }}" style="margin-top:10px; width:100%; height:48px; border:none; background:none; color:#15935A; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit;">Lihat riwayat pembayaran</button>
+          </div>
+        </sc-if>
+
+        <!-- ============ RIWAYAT ============ -->
+        <sc-if value="{{ isRiwayat }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 0 28px;">
+            <div style="position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:12px; padding:8px 20px 14px; background:#F4F6F4;">
+              <button onClick="{{ goIuran }}" style="width:38px; height:38px; border-radius:12px; border:none; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 1px 2px rgba(15,26,20,.06);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#0F1A14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <span style="font-size:18px; font-weight:800; color:#0F1A14;">Riwayat pembayaran</span>
+            </div>
+            <div style="padding:0 20px;">
+              <div style="display:flex; flex-direction:column; gap:10px;">
+                <sc-for list="{{ riwayat }}" as="r" hint-placeholder-count="4">
+                  <div style="background:#fff; border-radius:16px; padding:14px 16px; display:flex; align-items:center; gap:14px; box-shadow:0 1px 2px rgba(15,26,20,.04);">
+                    <span style="flex:none; width:40px; height:40px; border-radius:50%; background:#E8F5EE; display:flex; align-items:center; justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="#15935A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <span style="flex:1;"><span style="display:block; font-size:14px; font-weight:700; color:#0F1A14;">{{ r.title }}</span><span style="display:block; margin-top:2px; font-size:12px; color:#8A9991;">{{ r.sub }} · {{ r.method }}</span></span>
+                    <span style="font-size:14px; font-weight:800; color:#0F1A14; font-variant-numeric:tabular-nums;">{{ r.amountStr }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ LAPOR LIST ============ -->
+        <sc-if value="{{ isLapor }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:8px 20px 28px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0 16px;">
+              <span style="font-size:22px; font-weight:800; color:#0F1A14; letter-spacing:-0.02em;">Laporan Warga</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <sc-for list="{{ reports }}" as="r" hint-placeholder-count="3">
+                <button onClick="{{ r.open }}" style="text-align:left; border:none; background:#fff; border-radius:18px; padding:14px; cursor:pointer; font-family:inherit; box-shadow:0 1px 2px rgba(15,26,20,.04); display:flex; gap:14px; align-items:center;">
+                  <span style="flex:none; width:54px; height:54px; border-radius:14px; background:{{ r.photo }}; display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="14" rx="2.5" stroke="#fff" stroke-width="1.6" opacity="0.85"/><circle cx="12" cy="13" r="3.2" stroke="#fff" stroke-width="1.6" opacity="0.85"/><path d="M8.5 6l1.2-2h4.6L15.5 6" stroke="#fff" stroke-width="1.6" opacity="0.85" stroke-linejoin="round"/></svg></span>
+                  <span style="flex:1;"><span style="display:block; font-size:14.5px; font-weight:700; color:#0F1A14; line-height:1.3;">{{ r.title }}</span><span style="display:block; margin-top:4px; font-size:12px; color:#8A9991;">{{ r.sub }}</span></span>
+                  <span style="flex:none; font-size:11px; font-weight:700; color:{{ r.sColor }}; background:{{ r.sBg }}; padding:5px 10px; border-radius:20px;">{{ r.status }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <button onClick="{{ goLaporNew }}" style="margin-top:20px; width:100%; height:52px; border:1.5px dashed #B7C6BD; background:#fff; color:#15935A; border-radius:16px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#15935A" stroke-width="2" stroke-linecap="round"/></svg>Buat laporan baru</button>
+          </div>
+        </sc-if>
+
+        <!-- ============ LAPOR DETAIL ============ -->
+        <sc-if value="{{ isLaporDetail }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 0 32px;">
+            <div style="position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:12px; padding:8px 20px 14px; background:#F4F6F4;">
+              <button onClick="{{ goLapor }}" style="width:38px; height:38px; border-radius:12px; border:none; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 1px 2px rgba(15,26,20,.06);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#0F1A14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <span style="font-size:18px; font-weight:800; color:#0F1A14;">Detail Laporan</span>
+            </div>
+            <div style="padding:0 20px;">
+              <div style="height:170px; border-radius:18px; background:{{ selReport.photo }}; display:flex; align-items:flex-end; padding:14px;">
+                <span style="font-size:11px; font-weight:700; color:#fff; background:rgba(255,255,255,.18); backdrop-filter:blur(4px); padding:5px 11px; border-radius:20px;">{{ selReport.cat }}</span>
+              </div>
+              <div style="margin-top:16px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+                <span style="font-size:18px; font-weight:800; color:#0F1A14; line-height:1.3;">{{ selReport.title }}</span>
+                <span style="flex:none; margin-top:2px; font-size:11px; font-weight:700; color:{{ selReport.sColor }}; background:{{ selReport.sBg }}; padding:5px 10px; border-radius:20px;">{{ selReport.status }}</span>
+              </div>
+              <div style="margin-top:6px; font-size:12px; color:#8A9991;">Dilaporkan {{ selReport.date }}</div>
+              <div style="margin-top:14px; font-size:14px; color:#3A453F; line-height:1.55;">{{ selReport.desc }}</div>
+
+              <div style="margin-top:24px; font-size:13px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#8A9991;">Status penanganan</div>
+              <div style="margin-top:14px;">
+                <sc-for list="{{ selReport.steps }}" as="st" hint-placeholder-count="4">
+                  <div style="display:flex; gap:14px;">
+                    <div style="flex:none; display:flex; flex-direction:column; align-items:center;">
+                      <span style="width:22px; height:22px; border-radius:50%; background:{{ st.dotBg }}; display:flex; align-items:center; justify-content:center; border:2px solid {{ st.dotBorder }};"><span style="width:8px; height:8px; border-radius:50%; background:{{ st.inner }};"></span></span>
+                      <span style="width:2px; flex:1; min-height:24px; background:#E6EBE7;"></span>
+                    </div>
+                    <div style="padding-bottom:18px;">
+                      <div style="font-size:14px; font-weight:700; color:{{ st.labelColor }};">{{ st.label }}</div>
+                      <div style="font-size:12px; color:#8A9991; margin-top:2px;">{{ st.time }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ LAPOR NEW ============ -->
+        <sc-if value="{{ isLaporNew }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 0 32px;">
+            <div style="position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:12px; padding:8px 20px 14px; background:#F4F6F4;">
+              <button onClick="{{ goLapor }}" style="width:38px; height:38px; border-radius:12px; border:none; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 1px 2px rgba(15,26,20,.06);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#0F1A14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <span style="font-size:18px; font-weight:800; color:#0F1A14;">Buat Laporan</span>
+            </div>
+            <div style="padding:0 20px;">
+              <div style="font-size:13px; font-weight:600; color:#6B7B72; margin-bottom:8px;">Kategori</div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <span style="font-size:13px; font-weight:700; color:#15935A; background:#E8F5EE; padding:9px 14px; border-radius:20px; border:1.5px solid #15935A;">Fasilitas Umum</span>
+                <span style="font-size:13px; font-weight:600; color:#6B7B72; background:#fff; padding:9px 14px; border-radius:20px; border:1.5px solid #E6EBE7;">Kebersihan</span>
+                <span style="font-size:13px; font-weight:600; color:#6B7B72; background:#fff; padding:9px 14px; border-radius:20px; border:1.5px solid #E6EBE7;">Keamanan</span>
+                <span style="font-size:13px; font-weight:600; color:#6B7B72; background:#fff; padding:9px 14px; border-radius:20px; border:1.5px solid #E6EBE7;">Drainase</span>
+              </div>
+
+              <div style="margin-top:20px; font-size:13px; font-weight:600; color:#6B7B72; margin-bottom:8px;">Judul laporan</div>
+              <div style="height:52px; background:#fff; border:1.5px solid #E6EBE7; border-radius:14px; display:flex; align-items:center; padding:0 16px; font-size:15px; color:#0F1A14; font-weight:600;">Lampu jalan mati di Blok C3</div>
+
+              <div style="margin-top:18px; font-size:13px; font-weight:600; color:#6B7B72; margin-bottom:8px;">Deskripsi</div>
+              <div style="min-height:96px; background:#fff; border:1.5px solid #E6EBE7; border-radius:14px; padding:14px 16px; font-size:14px; color:#3A453F; line-height:1.5;">Sudah 3 hari lampu jalan di depan Blok C3 mati total, malam jadi gelap dan rawan.</div>
+
+              <div style="margin-top:18px; font-size:13px; font-weight:600; color:#6B7B72; margin-bottom:8px;">Foto</div>
+              <div style="display:flex; gap:12px;">
+                <div style="width:84px; height:84px; border-radius:14px; background:#3A4A5A; display:flex; align-items:flex-start; justify-content:flex-end; padding:6px;"><span style="width:20px; height:20px; border-radius:50%; background:rgba(15,26,20,.4); color:#fff; font-size:14px; display:flex; align-items:center; justify-content:center;">×</span></div>
+                <div style="width:84px; height:84px; border-radius:14px; border:1.5px dashed #B7C6BD; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:#15935A;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 8v8M8 12h8" stroke="#15935A" stroke-width="2" stroke-linecap="round"/><rect x="3" y="4" width="18" height="16" rx="3" stroke="#15935A" stroke-width="1.6"/></svg><span style="font-size:10px; font-weight:700;">Tambah</span></div>
+              </div>
+
+              <div style="margin-top:18px; font-size:13px; font-weight:600; color:#6B7B72; margin-bottom:8px;">Lokasi</div>
+              <div style="height:52px; background:#fff; border:1.5px solid #E6EBE7; border-radius:14px; display:flex; align-items:center; gap:10px; padding:0 16px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 21s7-5.5 7-11a7 7 0 10-14 0c0 5.5 7 11 7 11z" stroke="#15935A" stroke-width="1.8"/><circle cx="12" cy="10" r="2.5" stroke="#15935A" stroke-width="1.8"/></svg><span style="font-size:14px; color:#0F1A14; font-weight:600;">Blok C3, RT 03 / RW 04</span></div>
+
+              <button onClick="{{ submitReport }}" style="margin-top:26px; width:100%; height:54px; border:none; background:#15935A; color:#fff; border-radius:16px; font-size:16px; font-weight:700; cursor:pointer; font-family:inherit; box-shadow:0 12px 24px -10px rgba(21,147,90,.6);">Kirim laporan</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ INFO LIST ============ -->
+        <sc-if value="{{ isInfo }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:8px 20px 28px;">
+            <div style="padding:8px 0 16px;"><span style="font-size:22px; font-weight:800; color:#0F1A14; letter-spacing:-0.02em;">Informasi</span></div>
+            <div style="display:flex; flex-direction:column; gap:12px;">
+              <sc-for list="{{ news }}" as="a" hint-placeholder-count="3">
+                <button onClick="{{ a.open }}" style="text-align:left; border:none; background:#fff; border-radius:18px; padding:16px; cursor:pointer; font-family:inherit; box-shadow:0 1px 2px rgba(15,26,20,.04);">
+                  <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <span style="font-size:10px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:{{ a.tColor }}; background:{{ a.tBg }}; padding:4px 9px; border-radius:6px;">{{ a.tag }}</span>
+                    <span style="font-size:12px; color:#8A9991;">{{ a.date }}</span>
+                  </div>
+                  <div style="margin-top:10px; font-size:15.5px; font-weight:700; color:#0F1A14; line-height:1.35;">{{ a.title }}</div>
+                  <div style="margin-top:6px; font-size:13px; color:#6B7B72; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">{{ a.body }}</div>
+                  <div style="margin-top:10px; font-size:12px; font-weight:600; color:#8A9991;">{{ a.author }}</div>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ INFO DETAIL ============ -->
+        <sc-if value="{{ isInfoDetail }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 0 32px;">
+            <div style="position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:12px; padding:8px 20px 14px; background:#F4F6F4;">
+              <button onClick="{{ goInfo }}" style="width:38px; height:38px; border-radius:12px; border:none; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 1px 2px rgba(15,26,20,.06);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#0F1A14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <span style="font-size:18px; font-weight:800; color:#0F1A14;">Pengumuman</span>
+            </div>
+            <div style="padding:0 20px;">
+              <span style="display:inline-block; font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:{{ selInfo.tColor }}; background:{{ selInfo.tBg }}; padding:5px 11px; border-radius:8px;">{{ selInfo.tag }}</span>
+              <div style="margin-top:14px; font-size:23px; font-weight:800; color:#0F1A14; line-height:1.25; letter-spacing:-0.02em;">{{ selInfo.title }}</div>
+              <div style="margin-top:12px; display:flex; align-items:center; gap:10px; padding-bottom:16px; border-bottom:1px solid #E6EBE7;">
+                <span style="width:36px; height:36px; border-radius:50%; background:#E8F5EE; display:flex; align-items:center; justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#15935A" stroke-width="1.8"/><path d="M5 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5" stroke="#15935A" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                <div><div style="font-size:13px; font-weight:700; color:#0F1A14;">{{ selInfo.author }}</div><div style="font-size:12px; color:#8A9991;">{{ selInfo.date }}</div></div>
+              </div>
+              <div style="margin-top:16px; font-size:15px; color:#3A453F; line-height:1.65;">{{ selInfo.body }}</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ KAS ============ -->
+        <sc-if value="{{ isKas }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 0 28px;">
+            <div style="position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:12px; padding:8px 20px 14px; background:#F4F6F4;">
+              <button onClick="{{ goHome }}" style="width:38px; height:38px; border-radius:12px; border:none; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 1px 2px rgba(15,26,20,.06);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#0F1A14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <span style="font-size:18px; font-weight:800; color:#0F1A14;">Kas RT — Transparan</span>
+            </div>
+            <div style="padding:0 20px;">
+              <div style="background:linear-gradient(160deg,#147a4a,#0C6B40); border-radius:22px; padding:22px; color:#fff;">
+                <div style="font-size:13px; opacity:.8; font-weight:600;">Saldo kas saat ini</div>
+                <div style="margin-top:6px; font-size:30px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-0.02em;">{{ kasBalance }}</div>
+                <div style="margin-top:18px; display:flex; gap:12px;">
+                  <div style="flex:1; background:rgba(255,255,255,.12); border-radius:14px; padding:12px 14px;"><div style="font-size:11px; opacity:.8;">Pemasukan (Jun)</div><div style="margin-top:3px; font-size:15px; font-weight:800; font-variant-numeric:tabular-nums;">{{ kasIn }}</div></div>
+                  <div style="flex:1; background:rgba(255,255,255,.12); border-radius:14px; padding:12px 14px;"><div style="font-size:11px; opacity:.8;">Pengeluaran (Jun)</div><div style="margin-top:3px; font-size:15px; font-weight:800; font-variant-numeric:tabular-nums;">{{ kasOut }}</div></div>
+                </div>
+              </div>
+              <div style="margin-top:20px; font-size:13px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#8A9991;">Mutasi terbaru</div>
+              <div style="margin-top:12px; display:flex; flex-direction:column; gap:10px;">
+                <sc-for list="{{ kasTx }}" as="t" hint-placeholder-count="5">
+                  <div style="background:#fff; border-radius:16px; padding:14px 16px; display:flex; align-items:center; gap:14px; box-shadow:0 1px 2px rgba(15,26,20,.04);">
+                    <span style="flex:none; width:40px; height:40px; border-radius:12px; background:{{ t.bg }}; display:flex; align-items:center; justify-content:center; color:{{ t.color }}; font-size:20px; font-weight:800;">{{ t.sign }}</span>
+                    <span style="flex:1;"><span style="display:block; font-size:14px; font-weight:700; color:#0F1A14;">{{ t.title }}</span><span style="display:block; margin-top:2px; font-size:12px; color:#8A9991;">{{ t.date }}</span></span>
+                    <span style="font-size:14px; font-weight:800; color:{{ t.color }}; font-variant-numeric:tabular-nums;">{{ t.amountStr }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ PROFIL ============ -->
+        <sc-if value="{{ isProfil }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:8px 20px 28px;">
+            <div style="padding:8px 0 16px;"><span style="font-size:22px; font-weight:800; color:#0F1A14; letter-spacing:-0.02em;">Profil</span></div>
+            <div style="background:#fff; border-radius:22px; padding:20px; box-shadow:0 1px 2px rgba(15,26,20,.04); display:flex; align-items:center; gap:16px;">
+              <div style="width:60px; height:60px; border-radius:20px; background:linear-gradient(150deg,#1FAE69,#0C6B40); display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; font-weight:800;">BS</div>
+              <div style="flex:1;"><div style="font-size:18px; font-weight:800; color:#0F1A14;">Budi Santoso</div><div style="margin-top:3px; font-size:13px; color:#8A9991;">Blok C2 No. 14 · RT 03 / RW 04</div></div>
+            </div>
+
+            <!-- role switch -->
+            <div style="margin-top:16px; background:#fff; border-radius:18px; padding:16px 18px; box-shadow:0 1px 2px rgba(15,26,20,.04); display:flex; align-items:center; gap:14px;">
+              <span style="width:42px; height:42px; border-radius:12px; background:#0F1A14; display:flex; align-items:center; justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-3z" stroke="#5BDCA0" stroke-width="1.8" stroke-linejoin="round"/></svg></span>
+              <span style="flex:1;"><span style="display:block; font-size:14px; font-weight:700; color:#0F1A14;">Mode Pengurus RT</span><span style="display:block; font-size:12px; color:#8A9991;">Akses verifikasi pembayaran</span></span>
+              <button onClick="{{ toggleRole }}" style="border:none; cursor:pointer; padding:0; background:none;">
+                <span style="display:block; width:50px; height:30px; border-radius:20px; background:{{ roleSwitchBg }}; position:relative; transition:background .2s;"><span style="position:absolute; top:3px; left:{{ roleSwitchX }}; width:24px; height:24px; border-radius:50%; background:#fff; transition:left .2s; box-shadow:0 2px 4px rgba(0,0,0,.2);"></span></span>
+              </button>
+            </div>
+
+            <div style="margin-top:20px; font-size:13px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#8A9991;">Data keluarga</div>
+            <div style="margin-top:12px; background:#fff; border-radius:18px; padding:6px 18px; box-shadow:0 1px 2px rgba(15,26,20,.04);">
+              <sc-for list="{{ family }}" as="m" hint-placeholder-count="4">
+                <div style="display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid #F0F2F0;" data-fam>
+                  <span style="flex:none; width:40px; height:40px; border-radius:50%; background:{{ m.color }}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; font-weight:800;">{{ m.init }}</span>
+                  <span style="flex:1;"><span style="display:block; font-size:14.5px; font-weight:700; color:#0F1A14;">{{ m.name }}</span><span style="display:block; font-size:12px; color:#8A9991;">{{ m.role }}</span></span>
+                  <sc-if value="{{ m.tag }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px; font-weight:700; color:#15935A; background:#E8F5EE; padding:4px 10px; border-radius:20px;">{{ m.tag }}</span></sc-if>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="margin-top:16px; background:#fff; border-radius:18px; box-shadow:0 1px 2px rgba(15,26,20,.04); overflow:hidden;">
+              <div style="display:flex; align-items:center; gap:14px; padding:16px 18px; border-bottom:1px solid #F0F2F0;"><span style="width:34px; height:34px; border-radius:10px; background:#EEF1EF; display:flex; align-items:center; justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="#6B7B72" stroke-width="1.8"/><path d="M19 12a7 7 0 00-.1-1l2-1.6-2-3.4-2.3 1a7 7 0 00-1.7-1l-.3-2.5h-4l-.3 2.5a7 7 0 00-1.7 1l-2.3-1-2 3.4 2 1.6a7 7 0 000 2l-2 1.6 2 3.4 2.3-1a7 7 0 001.7 1l.3 2.5h4l.3-2.5a7 7 0 001.7-1l2.3 1 2-3.4-2-1.6a7 7 0 00.1-1z" stroke="#6B7B72" stroke-width="1.4" stroke-linejoin="round"/></svg></span><span style="flex:1; font-size:14.5px; font-weight:600; color:#0F1A14;">Pengaturan akun</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="#C2CCC6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div style="display:flex; align-items:center; gap:14px; padding:16px 18px;"><span style="width:34px; height:34px; border-radius:10px; background:#FBE9E9; display:flex; align-items:center; justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h9" stroke="#C24A4A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span style="flex:1; font-size:14.5px; font-weight:600; color:#C24A4A;">Keluar</span></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ============ VERIFIKASI (pengurus) ============ -->
+        <sc-if value="{{ isVerifikasi }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0 0 28px;">
+            <div style="position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:12px; padding:8px 20px 14px; background:#F4F6F4;">
+              <button onClick="{{ goHome }}" style="width:38px; height:38px; border-radius:12px; border:none; background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 1px 2px rgba(15,26,20,.06);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#0F1A14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <span style="font-size:18px; font-weight:800; color:#0F1A14;">Verifikasi Pembayaran</span>
+            </div>
+            <div style="padding:0 20px;">
+              <div style="font-size:13px; color:#8A9991; margin-bottom:12px;">{{ verifCount }} pembayaran menunggu konfirmasi Anda</div>
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <sc-for list="{{ verif }}" as="v" hint-placeholder-count="3">
+                  <div style="background:#fff; border-radius:18px; padding:16px; box-shadow:0 1px 2px rgba(15,26,20,.04);">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                      <span style="flex:none; width:42px; height:42px; border-radius:12px; background:#E8F5EE; display:flex; align-items:center; justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="#15935A" stroke-width="1.8"/><path d="M5 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5" stroke="#15935A" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+                      <span style="flex:1;"><span style="display:block; font-size:15px; font-weight:700; color:#0F1A14;">{{ v.name }}</span><span style="display:block; font-size:12px; color:#8A9991;">{{ v.sub }}</span></span>
+                      <span style="text-align:right;"><span style="display:block; font-size:15px; font-weight:800; color:#0F1A14; font-variant-numeric:tabular-nums;">{{ v.amountStr }}</span><span style="display:block; font-size:11px; color:#8A9991;">{{ v.when }}</span></span>
+                    </div>
+                    <div style="margin-top:10px; padding-top:12px; border-top:1px solid #F0F2F0; font-size:13px; color:#6B7B72;">{{ v.item }}</div>
+                    <div style="margin-top:12px; display:flex; gap:10px;">
+                      <button onClick="{{ approve }}" style="flex:1; height:42px; border:none; background:#15935A; color:#fff; border-radius:12px; font-size:13.5px; font-weight:700; cursor:pointer; font-family:inherit;">Setujui</button>
+                      <button onClick="{{ approve }}" style="flex:none; width:42px; height:42px; border:1.5px solid #E6EBE7; background:#fff; border-radius:12px; cursor:pointer; display:flex; align-items:center; justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#C24A4A" stroke-width="2" stroke-linecap="round"/></svg></button>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+      </div>
+
+      <!-- ============ BOTTOM NAV ============ -->
+      <sc-if value="{{ showNav }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:none; display:flex; background:#fff; border-top:1px solid #EEF1EF; padding:8px 8px 22px;">
+          <button onClick="{{ goHome }}" style="flex:1; border:none; background:none; cursor:pointer; font-family:inherit; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 0;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 11l9-7 9 7" stroke="{{ navHomeColor }}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v9h14v-9" stroke="{{ navHomeColor }}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span style="font-size:10.5px; font-weight:700; color:{{ navHomeColor }};">Beranda</span>
+          </button>
+          <button onClick="{{ goIuran }}" style="flex:1; border:none; background:none; cursor:pointer; font-family:inherit; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 0;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="3" stroke="{{ navIuranColor }}" stroke-width="1.9"/><path d="M3 10h18" stroke="{{ navIuranColor }}" stroke-width="1.9"/></svg>
+            <span style="font-size:10.5px; font-weight:700; color:{{ navIuranColor }};">Iuran</span>
+          </button>
+          <button onClick="{{ goLapor }}" style="flex:1; border:none; background:none; cursor:pointer; font-family:inherit; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 0;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.4 8.4 0 01-9 8.4L4 21l1.1-4A8.4 8.4 0 1121 11.5z" stroke="{{ navLaporColor }}" stroke-width="1.9" stroke-linejoin="round"/></svg>
+            <span style="font-size:10.5px; font-weight:700; color:{{ navLaporColor }};">Lapor</span>
+          </button>
+          <button onClick="{{ goInfo }}" style="flex:1; border:none; background:none; cursor:pointer; font-family:inherit; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 0;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="{{ navInfoColor }}" stroke-width="1.9"/><path d="M12 11v5" stroke="{{ navInfoColor }}" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="{{ navInfoColor }}"/></svg>
+            <span style="font-size:10.5px; font-weight:700; color:{{ navInfoColor }};">Info</span>
+          </button>
+          <button onClick="{{ goProfil }}" style="flex:1; border:none; background:none; cursor:pointer; font-family:inherit; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 0;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="{{ navProfilColor }}" stroke-width="1.9"/><path d="M5 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5" stroke="{{ navProfilColor }}" stroke-width="1.9" stroke-linecap="round"/></svg>
+            <span style="font-size:10.5px; font-weight:700; color:{{ navProfilColor }};">Profil</span>
+          </button>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { screen:'login', role:'warga', pin:'', selBill:null, selReport:null, selInfo:null, payMethod:'qris' };
+
+  rupiah(n){ return 'Rp ' + (n||0).toLocaleString('id-ID'); }
+
+  go(screen){ this.setState({ screen }); requestAnimationFrame(()=>{ const v=this.base&&this.base.querySelector?this.base.querySelector('[data-appscroll]'):document.querySelector('[data-appscroll]'); if(v) v.scrollTop=0; }); }
+
+  qr(){
+    const n=25, cell=8, rng=(s)=>{ const x=Math.sin(s)*10000; return x-Math.floor(x); };
+    const inB=(r,c,R,C)=>r>=R&&r<R+7&&c>=C&&c<C+7;
+    const isFinder=(r,c)=>inB(r,c,0,0)||inB(r,c,0,n-7)||inB(r,c,n-7,0);
+    const finderOn=(r,c)=>{ const f=(R,C)=>{ const dr=r-R,dc=c-C; if(dr<0||dc<0||dr>6||dc>6)return null; const edge=dr===0||dr===6||dc===0||dc===6; const center=dr>=2&&dr<=4&&dc>=2&&dc<=4; return edge||center; }; const a=f(0,0); if(a!==null)return a; const b=f(0,n-7); if(b!==null)return b; const d=f(n-7,0); if(d!==null)return d; return false; };
+    const rects=[];
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++){ let on; if(isFinder(r,c)) on=finderOn(r,c); else on=rng(r*31+c*17+7)>0.52; if(on) rects.push(React.createElement('rect',{key:r+'-'+c,x:c*cell,y:r*cell,width:cell,height:cell,rx:1,fill:'#0F1A14'})); }
+    return React.createElement('svg',{viewBox:'0 0 '+(n*cell)+' '+(n*cell),width:'100%',height:'100%',style:{display:'block'}},rects);
+  }
+
+  renderVals(){
+    const self=this, s=this.state;
+    const go=(scr)=>()=>self.go(scr);
+    const rupiah=(n)=>this.rupiah(n);
+
+    const billsRaw=[
+      { id:'b1', icon:'shield', title:'Keamanan & Kebersihan', period:'Juni 2026', amount:150000, due:'25 Jun', status:'unpaid' },
+      { id:'b2', icon:'home', title:'Iuran Bulanan RT', period:'Juni 2026', amount:50000, due:'25 Jun', status:'unpaid' },
+      { id:'b3', icon:'heart', title:'Dana Sosial', period:'Juni 2026', amount:25000, due:'25 Jun', status:'unpaid' },
+    ];
+    const bills = billsRaw.map(b=>{ const m={ ...b, amountStr:rupiah(b.amount) }; m.open=()=>{ self.setState({ selBill:m, payMethod:'qris', screen:'pay' }); self.go('pay'); }; return m; });
+    const totalDue = billsRaw.reduce((a,b)=>a+b.amount,0);
+
+    const riwayatRaw=[
+      { id:'r1', title:'Keamanan & Kebersihan', period:'Mei 2026', amount:150000, date:'24 Mei 2026', method:'QRIS' },
+      { id:'r2', title:'Iuran Bulanan RT', period:'Mei 2026', amount:50000, date:'24 Mei 2026', method:'QRIS' },
+      { id:'r3', title:'Dana Sosial', period:'Apr 2026', amount:25000, date:'19 Apr 2026', method:'Transfer BCA' },
+      { id:'r4', title:'Keamanan & Kebersihan', period:'Apr 2026', amount:150000, date:'19 Apr 2026', method:'Transfer BCA' },
+    ];
+    const riwayat = riwayatRaw.map(r=>({ ...r, amountStr:'-'+rupiah(r.amount), sub:r.period+' · '+r.date }));
+
+    const statusColor={ 'Selesai':'#15935A','Diproses':'#C8821A','Menunggu':'#6B7B72' };
+    const statusBg={ 'Selesai':'#E8F5EE','Diproses':'#FBF1DD','Menunggu':'#EEF1EF' };
+    const reportsRaw=[
+      { id:'l1', title:'Lampu jalan mati di depan Blok C3', cat:'Fasilitas Umum', date:'17 Jun 2026', status:'Diproses', photo:'#3A4A5A', desc:'Sudah 3 hari lampu jalan di depan Blok C3 mati total, malam jadi gelap dan rawan.', steps:[['Laporan diterima','17 Jun, 20:14',true],['Diverifikasi pengurus','18 Jun, 08:30',true],['Sedang ditangani','18 Jun, 14:00',true],['Selesai','',false]] },
+      { id:'l2', title:'Tumpukan sampah belum diangkut', cat:'Kebersihan', date:'15 Jun 2026', status:'Selesai', photo:'#4A5A3A', desc:'Sampah di TPS Blok A sudah menumpuk 2 hari belum diangkut.', steps:[['Laporan diterima','15 Jun, 09:02',true],['Diverifikasi pengurus','15 Jun, 10:15',true],['Sedang ditangani','15 Jun, 13:40',true],['Selesai','16 Jun, 07:50',true]] },
+      { id:'l3', title:'Saluran air tersumbat di Blok B', cat:'Drainase', date:'19 Jun 2026', status:'Menunggu', photo:'#3A4350', desc:'Got di samping rumah B12 mampet, air meluap saat hujan.', steps:[['Laporan diterima','19 Jun, 06:40',true],['Diverifikasi pengurus','',false],['Sedang ditangani','',false],['Selesai','',false]] },
+    ];
+    const mapSteps=(steps)=>steps.map(st=>({ label:st[0], time:st[1], labelColor:st[2]?'#0F1A14':'#A6B0AA', dotBg:st[2]?'#15935A':'#fff', dotBorder:st[2]?'#15935A':'#D5DCD7', inner:st[2]?'#fff':'#D5DCD7' }));
+    const reports = reportsRaw.map(r=>{ const m={ ...r, sColor:statusColor[r.status], sBg:statusBg[r.status], sub:r.cat+' · '+r.date, steps:mapSteps(r.steps) }; m.open=()=>{ self.setState({ selReport:m, screen:'laporDetail' }); self.go('laporDetail'); }; return m; });
+
+    const tagColor={ 'Penting':'#C24A4A','Info':'#2E7D8A','Kegiatan':'#15935A' };
+    const tagBg={ 'Penting':'#FBE9E9','Info':'#E5F2F4','Kegiatan':'#E8F5EE' };
+    const newsRaw=[
+      { id:'n1', tag:'Penting', title:'Kerja bakti bersama Minggu, 22 Juni', date:'18 Jun 2026', author:'Pengurus RW 04', body:'Diberitahukan kepada seluruh warga, akan diadakan kerja bakti membersihkan saluran air dan lingkungan pada Minggu, 22 Juni 2026 pukul 07.00 WIB. Mohon partisipasi minimal satu anggota per rumah. Peralatan disediakan di pos RT.' },
+      { id:'n2', tag:'Info', title:'Perubahan jadwal pengangkutan sampah', date:'16 Jun 2026', author:'Bendahara RT 03', body:'Mulai 1 Juli 2026, pengangkutan sampah berubah menjadi Senin, Rabu, dan Jumat pukul 06.00. Mohon sampah sudah dikeluarkan sebelum jam tersebut.' },
+      { id:'n3', tag:'Kegiatan', title:'Pendaftaran lomba HUT RI ke-81', date:'14 Jun 2026', author:'Panitia 17 Agustus', body:'Telah dibuka pendaftaran lomba memperingati HUT RI ke-81. Tersedia lomba anak, remaja, dan dewasa. Daftar melalui ketua RT masing-masing paling lambat 5 Agustus 2026.' },
+    ];
+    const news = newsRaw.map(a=>({ ...a, tColor:tagColor[a.tag], tBg:tagBg[a.tag], open:()=>{ self.setState({ selInfo:a, screen:'infoDetail' }); self.go('infoDetail'); } }));
+
+    const kasTxRaw=[
+      { id:'k1', dir:'in', title:'Iuran bulanan warga', date:'Jun 2026', amount:6200000 },
+      { id:'k2', dir:'out', title:'Honor petugas keamanan', date:'10 Jun 2026', amount:2400000 },
+      { id:'k3', dir:'out', title:'Perbaikan lampu jalan', date:'12 Jun 2026', amount:850000 },
+      { id:'k4', dir:'in', title:'Donasi warga (dana sosial)', date:'08 Jun 2026', amount:1500000 },
+      { id:'k5', dir:'out', title:'Pengangkutan sampah', date:'05 Jun 2026', amount:600000 },
+    ];
+    const kasTx = kasTxRaw.map(t=>({ ...t, sign:t.dir==='in'?'+':'−', amountStr:(t.dir==='in'?'+ ':'− ')+rupiah(t.amount), color:t.dir==='in'?'#15935A':'#C24A4A', bg:t.dir==='in'?'#E8F5EE':'#FBE9E9' }));
+    const kasBalance = rupiah(12450000);
+    const kasIn = rupiah(7700000); const kasOut = rupiah(3850000);
+
+    const family=[
+      { id:'f1', name:'Budi Santoso', role:'Kepala Keluarga', tag:'Anda', init:'BS', color:'#15935A' },
+      { id:'f2', name:'Siti Rahayu', role:'Istri', tag:'', init:'SR', color:'#2E7D8A' },
+      { id:'f3', name:'Andi Santoso', role:'Anak', tag:'', init:'AS', color:'#C8821A' },
+      { id:'f4', name:'Dewi Santoso', role:'Anak', tag:'', init:'DS', color:'#8A5CC2' },
+    ];
+
+    const verifRaw=[
+      { id:'v1', name:'Ahmad Fauzi', unit:'Blok C2', item:'Keamanan & Kebersihan', amount:150000, when:'2 menit lalu', method:'QRIS' },
+      { id:'v2', name:'Rina Wijaya', unit:'Blok A5', item:'Iuran Bulanan RT', amount:50000, when:'18 menit lalu', method:'Transfer BCA' },
+      { id:'v3', name:'Joko Prasetyo', unit:'Blok B8', item:'Dana Sosial', amount:25000, when:'1 jam lalu', method:'QRIS' },
+    ];
+    const verif = verifRaw.map(v=>({ ...v, amountStr:rupiah(v.amount), sub:v.unit+' · '+v.method }));
+
+    const keys=['1','2','3','4','5','6','7','8','9','','0','del'].map(k=>({
+      label:k==='del'?'⌫':k, val:k, empty:k==='',
+      press:()=>{ if(k==='') return; if(k==='del'){ self.setState({ pin:s.pin.slice(0,-1) }); } else if(s.pin.length<6){ const np=s.pin+k; self.setState({ pin:np }); if(np.length===6){ setTimeout(()=>self.go('home'),260); } } }
+    }));
+    const pinDots=[0,1,2,3,4,5].map(i=>({ on:i<s.pin.length }));
+
+    const screen=s.screen;
+    const isPengurus = s.role==='pengurus';
+    const screensList=['login','home','iuran','pay','qris','success','riwayat','lapor','laporDetail','laporNew','info','infoDetail','kas','profil','verifikasi'];
+    const flags={};
+    screensList.forEach(x=>{ flags['is'+x.charAt(0).toUpperCase()+x.slice(1)]=screen===x; });
+    const showNav=['home','iuran','lapor','info','profil'].includes(screen);
+
+    const selBill=s.selBill; const selReport=s.selReport; const selInfo=s.selInfo;
+
+    return {
+      ...flags, showNav, isPengurus,
+      roleLabel: isPengurus?'Pengurus RT':'Warga',
+      bills, totalDue, totalDueStr:rupiah(totalDue), billCount:billsRaw.length,
+      riwayat, reports, news, kasTx, kasBalance, kasIn, kasOut, family, verif, verifCount:verifRaw.length,
+      pinDots, keys, qr:this.qr(),
+      selBill, selBillAmountStr:selBill?rupiah(selBill.amount):'', selBillFee:selBill?rupiah(selBill.amount):'',
+      payMethod:s.payMethod, methodQris:s.payMethod==='qris', methodVa:s.payMethod==='va',
+      payMethodQrisBorder:s.payMethod==='qris'?'#15935A':'#E6EBE7', payMethodVaBorder:s.payMethod==='va'?'#15935A':'#E6EBE7',
+      navHomeColor:screen==='home'?'#15935A':'#A6B0AA', navIuranColor:screen==='iuran'?'#15935A':'#A6B0AA', navLaporColor:screen==='lapor'?'#15935A':'#A6B0AA', navInfoColor:screen==='info'?'#15935A':'#A6B0AA', navProfilColor:screen==='profil'?'#15935A':'#A6B0AA',
+      roleSwitchBg:isPengurus?'#15935A':'#D5DCD7', roleSwitchX:isPengurus?'23px':'3px',
+      selReport, selInfo,
+      navHome:screen==='home', navIuran:screen==='iuran', navLapor:screen==='lapor', navInfo:screen==='info', navProfil:screen==='profil',
+      // handlers
+      goHome:go('home'), goIuran:go('iuran'), goLapor:go('lapor'), goInfo:go('info'), goProfil:go('profil'),
+      goRiwayat:go('riwayat'), goKas:go('kas'), goLaporNew:go('laporNew'), goVerifikasi:go('verifikasi'),
+      goPayQris:()=>{ self.setState({ payMethod:'qris' }); }, goPayVa:()=>{ self.setState({ payMethod:'va' }); },
+      payNow:()=>{ if(s.payMethod==='qris'){ self.go('qris'); } else { self.go('success'); } },
+      confirmQris:go('success'),
+      doneToHome:go('home'),
+      pickQris:()=>self.setState({ payMethod:'qris' }), pickVa:()=>self.setState({ payMethod:'va' }),
+      submitReport:go('lapor'),
+      toggleRole:()=>self.setState({ role: isPengurus?'warga':'pengurus' }),
+      approve:go('verifikasi'),
+    };
+  }
+}
+</script>
+</body>
+</html>

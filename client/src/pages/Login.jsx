@@ -4,7 +4,7 @@ import { pb } from '../lib/pocketbase';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [identity, setIdentity] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,57 +15,69 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await pb.collection('users').authWithPassword(email, password);
+      let loginIdentity = identity;
+      if (/^\d+$/.test(identity)) {
+        loginIdentity = "hp_" + identity;
+      }
+      await pb.collection('users').authWithPassword(loginIdentity, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Failed to login. Please check your credentials.');
+      setError('Nomor HP / Email atau Password salah.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="center-wrapper">
-      <div className="glass-panel auth-card">
-        <div className="auth-header">
-          <h2>Welcome Back</h2>
-          <p>Login to your account</p>
+    <div className="auth-page">
+      <div style={{ flex: 'none', paddingTop: 24 }}>
+        <div className="auth-logo">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+            <path d="M3 11.5L12 4l9 7.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M5 10.5V20h14v-9.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M10 20v-5h4v5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </div>
-
-        {error && <div className="error-message">{error}</div>}
-
-        <form onSubmit={handleLogin}>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              className="form-control"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              className="form-control"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-
-        <div className="auth-footer">
-          Don't have an account? <Link to="/register">Register here</Link>
-        </div>
+        <h1 style={{ marginTop: 24 }}>Masuk ke Warga P2S</h1>
+        <p style={{ marginTop: 8, fontSize: 15, lineHeight: 1.5 }}>
+          Satu pintu untuk iuran, laporan, dan informasi warga.
+        </p>
       </div>
+
+      {error && <div className="alert alert-error" style={{ marginTop: 20 }}>{error}</div>}
+
+      <form onSubmit={handleLogin} style={{ marginTop: 28 }}>
+        <div className="form-group">
+          <label>Nomor HP atau Email</label>
+          <input
+            type="text"
+            className="form-control"
+            value={identity}
+            onChange={(e) => setIdentity(e.target.value)}
+            placeholder="08123456789 atau email@mail.com"
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>Password</label>
+          <input
+            type="password"
+            className="form-control"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Masukkan password"
+            required
+          />
+        </div>
+        <button type="submit" className="btn btn-primary" disabled={loading}>
+          {loading ? 'Sedang masuk...' : 'Masuk'}
+        </button>
+      </form>
+
+      <div style={{ flex: 1 }} />
+      <p style={{ textAlign: 'center', marginTop: 24, fontSize: 14 }}>
+        Belum punya akun? <Link to="/register">Daftar di sini</Link>
+      </p>
     </div>
   );
 }

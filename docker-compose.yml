@@ -8,7 +8,6 @@ services:
     command:
       - --encryptionEnv=PB_ENCRYPTION_KEY
       - --migrationsDir=/pb_migrations
-      - --debug=1
     environment:
       PB_ENCRYPTION_KEY: "" # optional
     ports:
