@@ -12,22 +12,31 @@ const tabs = [
     ),
   },
   {
-    path: '/lapor',
-    label: 'Lapor',
-    icon: (c) => (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M4 14V6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V14C20 15.1046 19.1046 16 18 16H8L4 20V14Z" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
-        <circle cx="12" cy="10" r="1" fill={c}/>
-      </svg>
-    ),
-  },
-  {
     path: '/tagihan',
     label: 'Tagihan',
     icon: (c) => (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
         <rect x="4" y="3" width="16" height="18" rx="3" stroke={c} strokeWidth="1.9"/>
         <path d="M8 8h8M8 12h8M8 16h5" stroke={c} strokeWidth="1.9" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  {
+    path: '/lampiran',
+    label: 'Lampiran',
+    icon: (c) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+  },
+  {
+    path: '/lapor',
+    label: 'Lapor',
+    icon: (c) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M4 14V6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V14C20 15.1046 19.1046 16 18 16H8L4 20V14Z" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx="12" cy="10" r="1" fill={c}/>
       </svg>
     ),
   },

@@ -6,6 +6,7 @@ import Iuran from './pages/Iuran'
 import Lapor from './pages/Lapor'
 import Tagihan from './pages/Tagihan'
 import Profil from './pages/Profil'
+import Lampiran from './pages/Lampiran'
 import ProtectedRoute from './components/ProtectedRoute'
 import { pb } from './lib/pocketbase'
 
@@ -26,6 +27,7 @@ function App() {
       <Route path="/iuran" element={<ProtectedRoute><Iuran /></ProtectedRoute>} />
       <Route path="/lapor" element={<ProtectedRoute><Lapor /></ProtectedRoute>} />
       <Route path="/tagihan" element={<ProtectedRoute><Tagihan /></ProtectedRoute>} />
+      <Route path="/lampiran" element={<ProtectedRoute><Lampiran /></ProtectedRoute>} />
       <Route path="/profil" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
