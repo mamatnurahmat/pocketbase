@@ -77,6 +77,19 @@ export default function Iuran() {
       formData.append('approval', false);
 
       await pb.collection('lampiran').create(formData);
+
+      const tagihanPromises = selectedIurans.map(iuranId => {
+        const iuranData = iuranList.find(x => x.id === iuranId);
+        return pb.collection('tagihan').create({
+          warga: warga.id,
+          jatuh_tempo: new Date().toISOString(),
+          nominal: iuranData?.nominal || 0,
+          status_pembayaran: "Menunggu Konfirmasi",
+          iuran: iuranId
+        });
+      });
+      await Promise.all(tagihanPromises);
+
       setMessage({ text: 'Bukti pembayaran berhasil diupload!', type: 'success' });
       setSelectedIurans([]);
       if (fileInputRef.current) fileInputRef.current.value = "";
