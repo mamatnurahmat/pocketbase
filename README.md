@@ -808,4 +808,36 @@ Periksa `client/vite.config.js` ⇒ `build.outDir` harus `../pb_public` (relatif
 
 ---
 
+## 📋 Changelog
+
+### 2026-06-21 — Perbaikan LaporanWarga & Migrasi v0.39.x
+
+#### 🔧 Perbaikan UI LaporanWarga
+- **Bottom Sheet Modal** untuk edit status laporan (mengganti form inline)
+  - Pill buttons pemilih status (Menunggu/Diproses/Selesai/Ditolak)
+  - Textarea tanggapan dengan auto-focus
+  - Loading spinner saat menyimpan
+  - Tombol Simpan & Batal dengan touch target minimal 44px
+- **Toast notification** menggantikan `alert()` — muncul dari bawah, auto-dismiss
+- **Statistik** otomatis (Total / Selesai / Diproses) di atas list
+- **Card redesain** dengan border-left berwarna sesuai status
+- **Status badge** dengan ikon visual (✓ ⟳ ✕)
+- **Image preview** full-screen dengan backdrop blur
+- **Empty state** ilustrasi saat belum ada laporan
+
+#### 🐛 Fix Critical — Data Tidak Muncul
+**Masalah**: PocketBase v0.39.x tidak menyertakan field `created`/`updated` untuk base collections secara default. Ini menyebabkan:
+- `sort=-created` di API mengembalikan **0 item** (field tidak dikenal)
+- `item.created` bernilai `undefined` di komponen
+
+**Perbaikan**:
+- Migrasi `1782031668_updated_lapor.js` menambahkan field `created` (autodate onCreate) dan `updated` (autodate onUpdate) ke collection `lapor`
+- Kode frontend menggunakan `sort=-created` dan menampilkan tanggal dengan fallback `—`
+
+#### ⚙️ Konfigurasi Build
+- `vite.config.js`: `build.outDir` diubah ke `/var/data/pocketbase/pb_public` (Docker volume)
+- Build output langsung tersaji oleh PocketBase container
+
+---
+
 > ✨ Dibuat sebagai starter kit untuk eksplorasi **BaaS + SPA monolith**. Silakan fork, modifikasi, dan sesuaikan dengan kebutuhan Anda.

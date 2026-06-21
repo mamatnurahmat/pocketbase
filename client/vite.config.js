@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: '../pb_public',
+    outDir: '/var/data/pocketbase/pb_public',
     emptyOutDir: true,
   }
 })
