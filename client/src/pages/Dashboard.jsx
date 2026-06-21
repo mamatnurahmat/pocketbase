@@ -142,24 +142,7 @@ export default function Dashboard() {
               </span>
               <span>Upload Bukti</span>
             </button>
-            <button className="quick-action" onClick={() => navigate('/tagihan')}>
-              <span className="quick-action-icon" style={{ background: '#FBF1DD' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <rect x="4" y="3" width="16" height="18" rx="3" stroke="#C8821A" strokeWidth="1.8"/>
-                  <path d="M8 8h8M8 12h8M8 16h5" stroke="#C8821A" strokeWidth="1.8" strokeLinecap="round"/>
-                </svg>
-              </span>
-              <span>Tagihan</span>
-            </button>
-            <button className="quick-action" onClick={() => navigate('/profil')}>
-              <span className="quick-action-icon" style={{ background: '#E5F2F4' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="8" r="3.5" stroke="#2E7D8A" strokeWidth="1.8"/>
-                  <path d="M5 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5" stroke="#2E7D8A" strokeWidth="1.8" strokeLinecap="round"/>
-                </svg>
-              </span>
-              <span>Profil</span>
-            </button>
+
             <button className="quick-action" onClick={() => navigate('/iuran')}>
               <span className="quick-action-icon" style={{ background: '#EDEAF6' }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">

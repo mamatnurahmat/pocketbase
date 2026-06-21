@@ -8,7 +8,7 @@ sudo mkdir -p /var/data/pocketbase/pb_public
 # Build project menggunakan Docker container (node:20-alpine)
 # Kita mount seluruh folder root project agar vite bisa menulis ke ../pb_public secara lokal.
 docker run --rm \
-  --platform linux/arm64 \
+  --platform linux/amd64 \
   -v "$(pwd)":/app \
   -w /app/client \
   node:20-alpine \
