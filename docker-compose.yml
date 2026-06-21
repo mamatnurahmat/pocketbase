@@ -13,9 +13,10 @@ services:
     ports:
       - "8090:8090"
     volumes:
-      - ./pb_data:/pb_data
-      - ./pb_public:/pb_public
+      - /var/data/pocketbase/pb_data:/pb_data
+      - /var/data/pocketbase/pb_public:/pb_public
       - ./pb_migrations:/pb_migrations
+      # - /var/data/pocketbase/pb_migrations:/pb_migrations
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:8090/api/health || exit 1
       interval: 5s
@@ -29,10 +30,9 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./swagger/openapi.yaml:/openapi.yaml
+      - /var/data/pocketbase/swagger/openapi.yaml:/openapi.yaml
     environment:
       SWAGGER_JSON: /openapi.yaml
-
   caddy:
     image: caddy:latest
     container_name: caddy
@@ -41,8 +41,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - ./caddy_data:/data
-      - ./caddy_config:/config
+      - /var/data/pocketbase/Caddyfile:/etc/caddy/Caddyfile
+      - /var/data/pocketbase/caddy_data:/data
+      - /var/data/pocketbase/caddy_config:/config
     depends_on:
       - pocketbase

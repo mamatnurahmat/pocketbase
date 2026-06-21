@@ -1,0 +1,19 @@
+{
+	"sans": [
+		"prestige2.sawangan.web.id"
+	],
+	"issuer_data": {
+		"url": "https://acme-v02.api.letsencrypt.org/acme/cert/051936a2745d421d8455a42b8de8ea21eda7",
+		"ca": "https://acme-v02.api.letsencrypt.org/directory",
+		"account": "https://acme-v02.api.letsencrypt.org/acme/acct/3457556936",
+		"renewal_info": {
+			"suggestedWindow": {
+				"start": "2026-08-19T05:34:19Z",
+				"end": "2026-08-21T00:45:08Z"
+			},
+			"_uniqueIdentifier": "uVnyjs8i8IbTN0j_dhQYuoLYVYc.BRk2onRdQh2EVaQrjejqIe2n",
+			"_retryAfter": "2026-06-21T09:57:53.47168928Z",
+			"_selectedTime": "2026-08-19T17:57:38Z"
+		}
+	}
+}

@@ -1,22 +1,26 @@
 #!/bin/bash
 
-echo "Memulai proses build client (React/Vite)..."
+echo "Memulai proses build client (React/Vite) menggunakan Docker..."
 
-# Masuk ke folder client
-cd client || exit 1
+# Pastikan direktori tujuan ada
+sudo mkdir -p /var/data/pocketbase/pb_public
 
-# Install dependencies (jika ada yang baru)
-echo "1. Install NPM dependencies..."
-npm install
-
-# Build production
-# Catatan: vite.config.js sudah diset untuk melakukan build langsung ke ../pb_public
-echo "2. Build project ke folder pb_public..."
-npm run build
+# Build project menggunakan Docker container (node:20-alpine)
+# Kita mount seluruh folder root project agar vite bisa menulis ke ../pb_public secara lokal.
+docker run --rm \
+  --platform linux/arm64 \
+  -v "$(pwd)":/app \
+  -w /app/client \
+  node:20-alpine \
+  sh -c "npm install && npm run build"
 
 if [ $? -ne 0 ]; then
     echo "❌ Build gagal!"
     exit 1
 fi
 
-echo "✅ Selesai! Client berhasil dibuild dan disiapkan di folder pb_public."
+# Salin hasil build dari ./pb_public lokal ke target absolut /var/data/pocketbase/pb_public
+echo "Menyalin hasil build ke /var/data/pocketbase/pb_public..."
+sudo cp -r ./pb_public/* /var/data/pocketbase/pb_public/ 2>/dev/null || sudo cp -r ./pb_public/. /var/data/pocketbase/pb_public/
+
+echo "✅ Selesai! Client berhasil dibuild dan disiapkan di folder /var/data/pocketbase/pb_public."
