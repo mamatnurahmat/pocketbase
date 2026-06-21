@@ -5,11 +5,15 @@ import BottomNav from '../components/BottomNav';
 export default function Lampiran() {
   const [lampiranList, setLampiranList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isPengurus, setIsPengurus] = useState(false);
+  const [isPengurus, setIsPengurus] = useState(() => localStorage.getItem('isPengurus') === 'true');
   const [modePengurus, setModePengurus] = useState(() => {
-    return localStorage.getItem('modePengurus') === 'true';
+    if (localStorage.getItem('isPengurus') !== 'true') return false;
+    const saved = localStorage.getItem('modePengurus');
+    // Default ON untuk pengurus, kecuali pernah di-toggle manual
+    return saved === null ? true : saved === 'true';
   });
   const [previewImage, setPreviewImage] = useState(null);
+  const [confirmApproveId, setConfirmApproveId] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('modePengurus', modePengurus);
@@ -21,10 +25,12 @@ export default function Lampiran() {
       try {
         const userId = pb.authStore.model.id;
         const warga = await pb.collection('warga').getFirstListItem(`user="${userId}"`);
-        setIsPengurus(warga.pengurus || false);
+        const isPengurusDb = warga.pengurus || false;
+        setIsPengurus(isPengurusDb);
+        localStorage.setItem('isPengurus', isPengurusDb ? 'true' : 'false');
 
         let records = [];
-        if (warga.pengurus && modePengurus) {
+        if (isPengurusDb && modePengurus) {
           records = await pb.collection('lampiran').getFullList({
             expand: 'warga,warga.user,iuran'
           });
@@ -45,6 +51,21 @@ export default function Lampiran() {
 
     if (pb.authStore.isValid) fetchData();
   }, [modePengurus]);
+
+  const handleApprove = async () => {
+    if (!confirmApproveId) return;
+    try {
+      await pb.collection('lampiran').update(confirmApproveId, {
+        approval: true
+      });
+      setLampiranList(prev => prev.map(t => t.id === confirmApproveId ? { ...t, approval: true } : t));
+      setConfirmApproveId(null);
+    } catch (e) {
+      console.error(e);
+      alert('Gagal menyetujui lampiran: ' + e.message);
+      setConfirmApproveId(null);
+    }
+  };
 
   const getFileUrl = (record) => {
     if (!record.file_bukti) return null;
@@ -217,9 +238,20 @@ export default function Lampiran() {
 
                     {/* Status & Date */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span className={`badge ${item.approval ? 'badge-success' : 'badge-warning'}`}>
-                        {item.approval ? '✅ Disetujui' : '⏳ Menunggu'}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span className={`badge ${item.approval ? 'badge-success' : 'badge-warning'}`}>
+                          {item.approval ? '✅ Disetujui' : '⏳ Menunggu'}
+                        </span>
+                        {modePengurus && !item.approval && (
+                          <button 
+                            className="btn" 
+                            style={{ background: '#15935A', color: '#fff', fontSize: 11, padding: '4px 10px', height: 'auto', borderRadius: 8 }}
+                            onClick={(e) => { e.stopPropagation(); setConfirmApproveId(item.id); }}
+                          >
+                            Setujui
+                          </button>
+                        )}
+                      </div>
                       <span style={{ fontSize: 11, color: '#8A9991' }}>
                         {formatDate(item.created)}
                       </span>
@@ -270,6 +302,49 @@ export default function Lampiran() {
               boxShadow: '0 8px 40px rgba(0,0,0,0.5)'
             }}
           />
+        </div>
+      )}
+
+      {/* Modal Confirm Approve */}
+      {confirmApproveId && (
+        <div className="modal-overlay" onClick={() => setConfirmApproveId(null)} style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 20
+        }}>
+          <div 
+            style={{ 
+              background: '#fff', padding: 24, borderRadius: 12, width: '100%', maxWidth: 320, 
+              boxShadow: '0 8px 24px rgba(0,0,0,0.15)', textAlign: 'center' 
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 12px 0', fontSize: 18, color: '#1B211E' }}>Konfirmasi</h3>
+            <p style={{ margin: '0 0 24px 0', fontSize: 14, color: '#6B7B72', lineHeight: 1.5 }}>
+              Tandai lampiran ini sebagai Disetujui?
+            </p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button 
+                onClick={() => setConfirmApproveId(null)}
+                style={{ 
+                  flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid #E6EBE7', 
+                  background: '#fff', color: '#6B7B72', fontSize: 14, fontWeight: 600, cursor: 'pointer' 
+                }}
+              >
+                Batal
+              </button>
+              <button 
+                onClick={() => handleApprove()}
+                style={{ 
+                  flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', 
+                  background: '#15935A', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' 
+                }}
+              >
+                Ya, Setujui
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

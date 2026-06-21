@@ -19,7 +19,13 @@ export default function Login() {
       if (/^\d+$/.test(identity)) {
         loginIdentity = "hp_" + identity;
       }
-      await pb.collection('users').authWithPassword(loginIdentity, password);
+      const authData = await pb.collection('users').authWithPassword(loginIdentity, password);
+      try {
+        const w = await pb.collection('warga').getFirstListItem(`user="${authData.record.id}"`);
+        localStorage.setItem('isPengurus', w.pengurus ? 'true' : 'false');
+      } catch (e) {
+        localStorage.setItem('isPengurus', 'false');
+      }
       navigate('/dashboard');
     } catch (err) {
       setError('Nomor HP / Email atau Password salah.');

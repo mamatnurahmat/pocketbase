@@ -37,12 +37,19 @@ export default function Dashboard() {
         try {
           const w = await pb.collection('warga').getFirstListItem(`user="${userId}"`);
           setWarga(w);
+          localStorage.setItem('isPengurus', w.pengurus ? 'true' : 'false');
           // Fetch tagihan for this warga
           try {
-            const t = await pb.collection('tagihan').getFullList({ 
-              filter: `warga="${w.id}"`,
-              expand: 'iuran'
-            });
+            const isPengurusMode = localStorage.getItem('modePengurus') === null ? true : localStorage.getItem('modePengurus') === 'true';
+            let t = [];
+            if (w.pengurus && isPengurusMode) {
+                t = await pb.collection('tagihan').getFullList({ expand: 'iuran' });
+            } else {
+                t = await pb.collection('tagihan').getFullList({ 
+                  filter: `warga="${w.id}"`,
+                  expand: 'iuran'
+                });
+            }
             setTagihan(t);
           } catch (e) { console.warn("Tagihan fetch:", e); }
         } catch (e) { console.warn("Warga not found:", e); }
@@ -51,8 +58,19 @@ export default function Dashboard() {
     if (pb.authStore.isValid) fetchData();
   }, []);
 
-  const unpaid = tagihan.filter(t => t.status_pembayaran === 'Belum Dibayar');
+  const unpaid = tagihan.filter(t => t.status_pembayaran !== 'Lunas');
   const totalUnpaid = unpaid.reduce((sum, t) => sum + (t.nominal || 0), 0);
+  
+  const now = new Date();
+  const isCurrentMonth = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  };
+
+  const unpaidThisMonth = tagihan.filter(t => t.status_pembayaran !== 'Lunas' && isCurrentMonth(t.jatuh_tempo)).length;
+  const lunasThisMonth = tagihan.filter(t => t.status_pembayaran === 'Lunas' && isCurrentMonth(t.jatuh_tempo)).length;
+  
   const displayName = user?.name || user?.username?.replace('hp_', '') || 'Warga';
 
   return (
@@ -80,7 +98,9 @@ export default function Dashboard() {
         {/* Tagihan Card */}
         <div className="card" style={{ boxShadow: '0 10px 30px -12px rgba(15,26,20,.18)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 13, color: '#6B7B72', fontWeight: 600 }}>Total tagihan belum dibayar</span>
+            <span style={{ fontSize: 13, color: '#6B7B72', fontWeight: 600 }}>
+              Total tagihan {warga?.pengurus && (localStorage.getItem('modePengurus') === null || localStorage.getItem('modePengurus') === 'true') && localStorage.getItem('isPengurus') === 'true' ? 'semua warga ' : ''}belum dibayar
+            </span>
             {unpaid.length > 0 && (
               <span className="badge badge-warning">{unpaid.length} tagihan</span>
             )}
@@ -95,6 +115,18 @@ export default function Dashboard() {
           >
             Lihat tagihan
           </button>
+        </div>
+
+        {/* Summary Laporan */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
+          <div className="card text-center" style={{ padding: '16px 12px' }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: '#E53935' }}>{unpaidThisMonth}</div>
+            <div style={{ fontSize: 12, color: '#6B7B72', marginTop: 4 }}>Belum Bayar (Bulan Ini)</div>
+          </div>
+          <div className="card text-center" style={{ padding: '16px 12px' }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: '#15935A' }}>{lunasThisMonth}</div>
+            <div style={{ fontSize: 12, color: '#6B7B72', marginTop: 4 }}>Lunas (Bulan Ini)</div>
+          </div>
         </div>
 
         {/* Quick Actions */}

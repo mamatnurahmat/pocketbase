@@ -102,6 +102,8 @@ export default function Profil() {
 
   const handleLogout = () => {
     pb.authStore.clear();
+    localStorage.clear();
+    sessionStorage.clear();
     navigate('/login');
   };
 
