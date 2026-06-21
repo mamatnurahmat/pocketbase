@@ -13,6 +13,7 @@ export default function Profil() {
 
   // Combined Form States
   const [name, setName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
   const [phoneInput, setPhoneInput] = useState(phone);
   const [agama, setAgama] = useState('islam');
   const [pengurus, setPengurus] = useState(false);
@@ -42,15 +43,30 @@ export default function Profil() {
     if (pb.authStore.isValid) fetchWarga();
   }, [user]);
 
+  // Sync email state when user model changes
+  useEffect(() => {
+    setEmail(user?.email || '');
+  }, [user]);
+
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMsg({ text: '', type: '' });
 
     try {
+      // ── 1. Update users collection ──
       const userUpdateData = {};
+
       if (name !== user.name) userUpdateData.name = name;
-      
+
+      // Email tidak bisa diubah oleh user di PocketBase v0.39.x tanpa SMTP
+      // Hanya superuser/admin yang bisa update email via dashboard
+      if (email !== user.email) {
+        // Don't try to update - PocketBase requires SMTP verification
+        // Just silently revert to original
+        setEmail(user.email);
+      }
+
       const cleanPhone = phoneInput.replace(/[^0-9]/g, '');
       if (cleanPhone && `hp_${cleanPhone}` !== user.username) {
         if (cleanPhone.length < 8) throw new Error('Nomor HP minimal 8 digit.');
@@ -62,25 +78,47 @@ export default function Profil() {
         if (!oldPassword) throw new Error('Masukkan password lama untuk mengubah password.');
         if (newPassword.length < 8) throw new Error('Password baru minimal 8 karakter.');
         if (newPassword !== confirmPassword) throw new Error('Konfirmasi password tidak cocok.');
-        
+
         userUpdateData.oldPassword = oldPassword;
         userUpdateData.password = newPassword;
         userUpdateData.passwordConfirm = confirmPassword;
         passwordChanged = true;
       }
 
+      let updatedUser = user;
       if (Object.keys(userUpdateData).length > 0) {
-        const updatedUser = await pb.collection('users').update(user.id, userUpdateData);
+        updatedUser = await pb.collection('users').update(user.id, userUpdateData);
         setUser(updatedUser);
       }
 
-      if (warga && agama !== warga.agama) {
-        const updatedWarga = await pb.collection('warga').update(warga.id, { agama });
-        setWarga(updatedWarga);
+      // ── 2. Update warga collection (if exists) ──
+      if (warga) {
+        const wargaUpdateData = {};
+        let needWargaUpdate = false;
+
+        if (agama !== warga.agama) {
+          wargaUpdateData.agama = agama;
+          needWargaUpdate = true;
+        }
+
+        const cleanPhone2 = phoneInput.replace(/[^0-9]/g, '');
+        if (cleanPhone2 && cleanPhone2 !== (warga.no_wa || '')) {
+          wargaUpdateData.no_wa = cleanPhone2;
+          needWargaUpdate = true;
+        }
+
+        if (name !== (updatedUser?.name || user.name)) {
+          // Sync name to user record only — warga doesn't have name field
+        }
+
+        if (needWargaUpdate) {
+          await pb.collection('warga').update(warga.id, wargaUpdateData);
+          setWarga(prev => ({ ...prev, ...wargaUpdateData }));
+        }
       }
 
       setMsg({ text: 'Profil berhasil diperbarui!', type: 'success' });
-      
+
       if (passwordChanged) {
         setOldPassword('');
         setNewPassword('');
@@ -93,6 +131,7 @@ export default function Profil() {
     } catch (err) {
       let errMsg = err.message || 'Gagal memperbarui profil.';
       if (err.response?.data?.username) errMsg = 'Nomor HP sudah digunakan akun lain.';
+      else if (err.response?.data?.email) errMsg = 'Email sudah digunakan akun lain.';
       else if (err.response?.data?.oldPassword) errMsg = 'Password lama salah.';
       setMsg({ text: errMsg, type: 'error' });
     } finally {
@@ -152,6 +191,20 @@ export default function Profil() {
               />
             </div>
             
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                className="form-control"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email@contoh.com"
+              />
+              <div style={{ fontSize: 11, color: '#8A9991', marginTop: 6, lineHeight: 1.4 }}>
+                Untuk mengubah email, hubungi pengurus RT.
+              </div>
+            </div>
+
             <div className="form-group">
               <label>Nomor HP</label>
               <input
