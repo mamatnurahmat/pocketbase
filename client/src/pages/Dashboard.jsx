@@ -142,8 +142,6 @@ export default function Dashboard() {
               </span>
               <span>Upload Bukti</span>
             </button>
-
-
             <button className="quick-action" onClick={() => navigate('/laporan-warga')}>
               <span className="quick-action-icon" style={{ background: '#FCE4EC' }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -153,8 +151,6 @@ export default function Dashboard() {
               </span>
               <span>Lap. Warga</span>
             </button>
-          </div>
-          <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
             <button className="quick-action" onClick={() => navigate('/warga')}>
               <span className="quick-action-icon" style={{ background: '#E3F2FD' }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
