@@ -6,8 +6,8 @@ export default function Tagihan() {
   const [tagihan, setTagihan] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
-  const [selectedMonth, setSelectedMonth] = useState('all');
-  const [selectedYear, setSelectedYear] = useState('all');
+  const [selectedKode, setSelectedKode] = useState('all');
+  const [availableKodes, setAvailableKodes] = useState([]);
 
   const [isPengurus, setIsPengurus] = useState(() => localStorage.getItem('isPengurus') === 'true');
   const [modePengurus, setModePengurus] = useState(() => {
@@ -16,6 +16,7 @@ export default function Tagihan() {
     // Default ON untuk pengurus, kecuali pernah di-toggle manual
     return saved === null ? true : saved === 'true';
   });
+  const [searchRumah, setSearchRumah] = useState('');
   const [confirmApproveId, setConfirmApproveId] = useState(null);
   const [previewFile, setPreviewFile] = useState(null); // { url, name, isImage, isPdf }
 
@@ -24,6 +25,17 @@ export default function Tagihan() {
   }, [modePengurus]);
 
   const rupiah = (n) => 'Rp ' + (n || 0).toLocaleString('id-ID');
+
+  // Fetch available kode from iuran collection + rumah codes (mode pengurus only)
+  useEffect(() => {
+    const fetchKodes = async () => {
+      try {
+        const iuranRecords = await pb.collection('iuran').getFullList({ sort: 'kode' });
+        setAvailableKodes(iuranRecords.map(r => r.kode).filter(Boolean));
+      } catch (e) { console.error(e); }
+    };
+    if (pb.authStore.isValid) fetchKodes();
+  }, []);
 
   useEffect(() => {
     const fetchTagihan = async () => {
@@ -76,24 +88,19 @@ export default function Tagihan() {
     }
   };
 
-  // Extract available years from tagihan data
-  const availableYears = [...new Set(tagihan.map(t => {
-    const d = t.jatuh_tempo ? new Date(t.jatuh_tempo) : null;
-    return d ? d.getFullYear() : null;
-  }).filter(Boolean))].sort((a, b) => b - a);
-
   const filtered = tagihan.filter(t => {
     // Status filter
     if (filter !== 'all' && t.status_pembayaran !== filter) return false;
-    // Month filter
-    if (selectedMonth !== 'all') {
-      const d = t.jatuh_tempo ? new Date(t.jatuh_tempo) : null;
-      if (!d || d.getMonth() + 1 !== parseInt(selectedMonth)) return false;
+    // Kode filter (iuran relation)
+    if (selectedKode !== 'all') {
+      if ((t.expand?.iuran?.kode || '-') !== selectedKode) return false;
     }
-    // Year filter
-    if (selectedYear !== 'all') {
-      const d = t.jatuh_tempo ? new Date(t.jatuh_tempo) : null;
-      if (!d || d.getFullYear() !== parseInt(selectedYear)) return false;
+    // Kode Rumah filter (search by no_rumah) — hanya untuk pengurus
+    if (isPengurus && searchRumah.trim()) {
+      const q = searchRumah.trim().toLowerCase();
+      const rumah = (t.expand?.warga?.no_rumah || '').toLowerCase();
+      const nama = (t.expand?.warga?.expand?.user?.name || '').toLowerCase();
+      if (!rumah.includes(q) && !nama.includes(q)) return false;
     }
     return true;
   });
@@ -112,21 +119,7 @@ export default function Tagihan() {
     { key: 'Lunas', label: 'Lunas' },
   ];
 
-  const months = [
-    { key: 'all', label: 'Semua Bulan' },
-    { key: '1', label: 'Januari' },
-    { key: '2', label: 'Februari' },
-    { key: '3', label: 'Maret' },
-    { key: '4', label: 'April' },
-    { key: '5', label: 'Mei' },
-    { key: '6', label: 'Juni' },
-    { key: '7', label: 'Juli' },
-    { key: '8', label: 'Agustus' },
-    { key: '9', label: 'September' },
-    { key: '10', label: 'Oktober' },
-    { key: '11', label: 'November' },
-    { key: '12', label: 'Desember' },
-  ];
+
 
   return (
     <div className="page-padded">
@@ -162,93 +155,106 @@ export default function Tagihan() {
           </div>
         </div>
 
-        {/* Filters - Status */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 20 }}>
-          {filters.map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              style={{
-                border: filter === f.key ? '1.5px solid #15935A' : '1.5px solid #E6EBE7',
-                background: filter === f.key ? '#E8F5EE' : '#fff',
-                color: filter === f.key ? '#15935A' : '#6B7B72',
-                padding: '9px 14px',
-                borderRadius: 20,
-                fontSize: 13,
-                fontWeight: filter === f.key ? 700 : 600,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
-            >
-              {f.label}
-            </button>
-          ))}
+        {/* Filters - Status (horizontal scroll pills) */}
+        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none', marginTop: 20 }}>
+          <div style={{ display: 'flex', gap: 8, paddingBottom: 4, flexWrap: 'nowrap' }}>
+            {filters.map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                style={{
+                  flex: 'none',
+                  border: filter === f.key ? '1.5px solid #15935A' : '1.5px solid #E6EBE7',
+                  background: filter === f.key ? '#E8F5EE' : '#fff',
+                  color: filter === f.key ? '#15935A' : '#6B7B72',
+                  padding: '9px 14px',
+                  borderRadius: 20,
+                  fontSize: 13,
+                  fontWeight: filter === f.key ? 700 : 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Filters - Bulan & Tahun */}
-        <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            style={{
-              flex: 1,
-              padding: '9px 12px',
-              borderRadius: 10,
-              border: '1.5px solid #E6EBE7',
-              background: '#fff',
-              color: selectedMonth !== 'all' ? '#15935A' : '#6B7B72',
-              fontSize: 13,
-              fontWeight: 600,
-              fontFamily: 'inherit',
-              cursor: 'pointer',
-              outline: 'none',
-              appearance: 'none',
-              WebkitAppearance: 'none',
-              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=%2710%27 height=%276%27 viewBox=%270 0 10 6%27 fill=%27none%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cpath d=%27M1 1L5 5L9 1%27 stroke=%27%236B7B72%27 stroke-width=%271.5%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E")',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 12px center',
-              paddingRight: 32,
-            }}
-          >
-            {months.map(m => (
-              <option key={m.key} value={m.key}>{m.label}</option>
-            ))}
-          </select>
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
-            style={{
-              flex: 1,
-              padding: '9px 12px',
-              borderRadius: 10,
-              border: '1.5px solid #E6EBE7',
-              background: '#fff',
-              color: selectedYear !== 'all' ? '#15935A' : '#6B7B72',
-              fontSize: 13,
-              fontWeight: 600,
-              fontFamily: 'inherit',
-              cursor: 'pointer',
-              outline: 'none',
-              appearance: 'none',
-              WebkitAppearance: 'none',
-              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=%2710%27 height=%276%27 viewBox=%270 0 10 6%27 fill=%27none%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cpath d=%27M1 1L5 5L9 1%27 stroke=%27%236B7B72%27 stroke-width=%271.5%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E")',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 12px center',
-              paddingRight: 32,
-            }}
-          >
-            <option value="all">Semua Tahun</option>
-            {availableYears.map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-          {(selectedMonth !== 'all' || selectedYear !== 'all') && (
-            <button
-              onClick={() => { setSelectedMonth('all'); setSelectedYear('all'); }}
+        {/* Filter Bar — Kode Rumah + Bulan Iuran */}
+        <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
+          {/* Kode Rumah — tampil untuk semua pengurus */}
+          {isPengurus && (
+            <div style={{ position: 'relative', flex: 1, minWidth: 130 }}>
+              <input
+                type="text"
+                placeholder="� Cari No. Rumah…"
+                value={searchRumah}
+                onChange={e => setSearchRumah(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: 14,
+                  border: searchRumah ? '1.5px solid #15935A' : '1.5px solid #E6EBE7',
+                  background: searchRumah ? '#F8FDFA' : '#fff',
+                  color: searchRumah ? '#15935A' : '#3A453F',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  fontFamily: 'inherit',
+                  outline: 'none',
+                }}
+              />
+              {searchRumah && (
+                <button
+                  onClick={() => setSearchRumah('')}
+                  style={{
+                    position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', fontSize: 16, color: '#8A9991',
+                    cursor: 'pointer', padding: '4px 8px', fontFamily: 'inherit', lineHeight: 1,
+                  }}
+                  aria-label="Reset"
+                >✕</button>
+              )}
+            </div>
+          )}
+          <div style={{ flex: modePengurus ? 1 : 2, minWidth: 130, position: 'relative' }}>
+            <select
+              value={selectedKode}
+              onChange={(e) => setSelectedKode(e.target.value)}
               style={{
-                padding: '9px 14px',
-                borderRadius: 10,
-                border: '1.5px solid #E6EBE7',
+                width: '100%',
+                padding: '10px 14px',
+                paddingRight: 36,
+                borderRadius: 14,
+                border: selectedKode !== 'all' ? '1.5px solid #15935A' : '1.5px solid #E6EBE7',
+                background: selectedKode !== 'all' ? '#F8FDFA' : '#fff',
+                color: selectedKode !== 'all' ? '#15935A' : '#6B7B72',
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                outline: 'none',
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                backgroundImage: 'url("data:image/svg+xml,%3Csvg width=%2710%27 height=%276%27 viewBox=%270 0 10 6%27 fill=%27none%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cpath d=%27M1 1L5 5L9 1%27 stroke=%27%236B7B72%27 stroke-width=%271.5%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E")',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 14px center',
+              }}
+            >
+              <option value="all">Semua Bulan</option>
+              {availableKodes.map(k => (
+                <option key={k} value={k}>{k}</option>
+              ))}
+            </select>
+          </div>
+          {(selectedKode !== 'all' || (isPengurus && searchRumah)) && (
+            <button
+              onClick={() => { setSelectedKode('all'); setSearchRumah(''); setFilter('all'); }}
+              style={{
+                padding: '10px 14px',
+                borderRadius: 14,
+                border: '1.5px solid #E8E5E4',
                 background: '#fff',
                 color: '#6B7B72',
                 fontSize: 13,
@@ -264,37 +270,46 @@ export default function Tagihan() {
         </div>
 
         {/* List */}
-        <div className="mt-3 section-title">Daftar tagihan {modePengurus && 'Warga'}</div>
+        <div className="mt-3" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <div className="section-title" style={{ marginBottom: 0 }}>Daftar tagihan</div>
+          {filtered.length > 0 && (
+            <span style={{ fontSize: 11, color: '#8A9991', fontWeight: 600 }}>{filtered.length} item</span>
+          )}
+        </div>
         {loading ? (
-          <p style={{ textAlign: 'center', padding: 20 }}>Memuat data...</p>
+          <div className="card text-center" style={{ padding: 40, marginTop: 12 }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #E6EBE7', borderTopColor: '#15935A', animation: 'spin 0.6s linear infinite', margin: '0 auto 12px' }} />
+            <p style={{ color: '#8A9991', fontSize: 13 }}>Memuat data...</p>
+          </div>
         ) : filtered.length === 0 ? (
-          <div className="card text-center" style={{ padding: 32 }}>
-            <p style={{ color: '#8A9991' }}>Belum ada tagihan.</p>
+          <div className="card text-center" style={{ padding: 32, marginTop: 12 }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>📭</div>
+            <p style={{ color: '#8A9991', fontSize: 14, fontWeight: 600 }}>Tidak ada tagihan.</p>
+            <p style={{ color: '#B0B8B2', fontSize: 12, marginTop: 4 }}>Coba ubah filter atau status.</p>
           </div>
         ) : (
-          <div className="flex-col gap-sm">
+          <div className="flex-col gap-sm" style={{ marginTop: 8 }}>
             {filtered.map((t) => (
-              <div key={t.id} className="list-card" style={{ cursor: 'default' }}>
-                <div className="list-icon" style={{ background: '#E8F5EE' }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <div key={t.id} className="list-card" style={{ cursor: 'default', padding: '12px 14px', gap: 12 }}>
+                <div className="list-icon" style={{ background: '#E8F5EE', width: 40, height: 40, borderRadius: 12 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                     <rect x="4" y="3" width="16" height="18" rx="3" stroke="#15935A" strokeWidth="1.8"/>
                     <path d="M8 8h8M8 12h8M8 16h5" stroke="#15935A" strokeWidth="1.8" strokeLinecap="round"/>
                   </svg>
                 </div>
-                <div className="list-body">
-                  <span className="list-title">
+                <div className="list-body" style={{ flex: 1, minWidth: 0 }}>
+                  <span className="list-title" style={{ fontSize: 14 }}>
                     {modePengurus && t.expand?.warga 
-                      ? `${t.expand.warga.expand?.user?.name || 'Warga'} - ${t.expand?.iuran?.kode || '-'}` 
-                      : t.expand?.iuran?.kode || '-'}
+                      ? `${t.expand.warga.expand?.user?.name || 'Warga'}` : t.expand?.iuran?.kode || '-'}
                   </span>
-                  <span className="list-sub">
+                  <span className="list-sub" style={{ fontSize: 11 }}>
                     {modePengurus && t.expand?.warga 
-                      ? `No. Rumah: ${t.expand.warga.no_rumah}` 
-                      : (t.jatuh_tempo ? new Date(t.jatuh_tempo).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-')}
+                      ? `🏠 ${t.expand.warga.no_rumah} · ${t.expand?.iuran?.kode || '-'}` 
+                      : ((t.expand?.iuran?.kode || '-') + (t.jatuh_tempo ? ' · Jatuh tempo: ' + new Date(t.jatuh_tempo).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : ''))}
                   </span>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span className="list-amount">{rupiah(t.nominal)}</span>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <span className="list-amount" style={{ fontSize: 14 }}>{rupiah(t.nominal)}</span>
                   <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
                     <span className={`badge ${statusBadge(t.status_pembayaran)}`}>
                       {t.status_pembayaran}
