@@ -1,8 +1,10 @@
-const CACHE_NAME = 'warga-p2s-v2';
+const CACHE_NAME = 'warga-p2s-v3';
 const STATIC_ASSETS = [
-  '/',
   '/manifest.json',
 ];
+
+// Don't cache HTML pages - always fetch from network
+const HTML_ROUTES = ['/', '/login', '/register', '/dashboard', '/iuran', '/tagihan', '/lapor', '/laporan-warga', '/lampiran', '/profil'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -27,6 +29,15 @@ self.addEventListener('fetch', (event) => {
   
   // Skip API requests - always go to network
   if (url.pathname.startsWith('/api/')) return;
+  
+  // For HTML pages, use network-first (don't serve stale cache)
+  const isHtmlRoute = HTML_ROUTES.includes(url.pathname);
+  if (isHtmlRoute) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
   
   event.respondWith(
     caches.match(event.request).then((cached) => {
