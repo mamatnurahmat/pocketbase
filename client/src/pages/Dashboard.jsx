@@ -212,10 +212,10 @@ export default function Dashboard() {
                     <span className="list-title">{t.expand?.iuran?.kode || '-'}</span>
                     <span className="list-sub">{t.jatuh_tempo ? new Date(t.jatuh_tempo).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</span>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
+                  <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 'auto' }}>
                     <span className="list-amount">{rupiah(t.nominal)}</span>
                     <span className={`badge ${statusBadge(t.status_pembayaran)}`} style={{ marginTop: 4, display: 'inline-block' }}>
-                      {t.status_pembayaran}
+                      {t.status_pembayaran === 'Menunggu Konfirmasi' ? 'Menunggu' : t.status_pembayaran}
                     </span>
                   </div>
                 </div>
