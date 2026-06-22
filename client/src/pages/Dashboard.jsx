@@ -162,6 +162,19 @@ export default function Dashboard() {
               <span>Lap. Warga</span>
             </button>
           </div>
+          <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <button className="quick-action" onClick={() => navigate('/warga')}>
+              <span className="quick-action-icon" style={{ background: '#E3F2FD' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="#1976D2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="9" cy="7" r="4" stroke="#1976D2" strokeWidth="1.8"/>
+                  <path d="M23 21v-2a4 4 0 00-3-3.87" stroke="#1976D2" strokeWidth="1.8" strokeLinecap="round"/>
+                  <path d="M16 3.13a4 4 0 010 7.75" stroke="#1976D2" strokeWidth="1.8" strokeLinecap="round"/>
+                </svg>
+              </span>
+              <span>Warga</span>
+            </button>
+          </div>
         </div>
 
         {/* Info Warga */}
