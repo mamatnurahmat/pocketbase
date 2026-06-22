@@ -276,8 +276,8 @@ export default function Tagihan() {
             {filtered.length > 0 && (
               <button
                 onClick={() => {
-                  // Generate XLS (HTML table format — compatible with Excel/LibreOffice)
-                  const esc = (s) => String(s ?? '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&/g, '&amp;');
+                  // Generate XLS (Excel XML Spreadsheet 2003 — kompatibel Excel, LibreOffice, Google Sheets)
+                  const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                   const headers = ['No', ...(modePengurus ? ['Warga','No. Rumah'] : []), 'Bulan Iuran', 'Nominal', 'Status', 'Jatuh Tempo', 'Tgl Dibuat'];
                   const bodyRows = filtered.map((t, i) => [
                     i + 1,
@@ -291,17 +291,32 @@ export default function Tagihan() {
                     t.jatuh_tempo ? new Date(t.jatuh_tempo).toLocaleDateString('id-ID') : '-',
                     t.created ? new Date(t.created).toLocaleDateString('id-ID') : '-',
                   ]);
-                  const html = [
-                    '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">',
-                    '<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>',
-                    '<x:Name>Tagihan</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>',
-                    '</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>',
-                    '<body><table>',
-                    '<tr>', headers.map(h => '<th style="background:#15935A;color:#fff;padding:6px 10px;font-weight:700">' + esc(h) + '</th>').join(''), '</tr>',
-                    ...bodyRows.map(row => '<tr>' + row.map(c => '<td style="padding:4px 10px">' + esc(c) + '</td>').join('') + '</tr>'),
-                    '</table></body></html>',
+
+                  const rowToXml = (cells, isHeader) => {
+                    const tag = isHeader ? 'th' : 'td';
+                    return '<Row>' + cells.map(c => `<Cell><Data ss:Type="String">${esc(c)}</Data></Cell>`).join('') + '</Row>';
+                  };
+
+                  const xml = [
+                    '<?xml version="1.0" encoding="UTF-8"?>',
+                    '<?mso-application progid="Excel.Sheet"?>',
+                    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"',
+                    ' xmlns:o="urn:schemas-microsoft-com:office:office"',
+                    ' xmlns:x="urn:schemas-microsoft-com:office:excel"',
+                    ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">',
+                    '<Styles>',
+                    ' <Style ss:ID="header"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#15935A" ss:Pattern="Solid"/></Style>',
+                    '</Styles>',
+                    '<Worksheet ss:Name="Tagihan">',
+                    '<Table>',
+                    '<Row>' + headers.map(h => `<Cell ss:StyleID="header"><Data ss:Type="String">${esc(h)}</Data></Cell>`).join('') + '</Row>',
+                    ...bodyRows.map(row => rowToXml(row)),
+                    '</Table>',
+                    '</Worksheet>',
+                    '</Workbook>',
                   ].join('\n');
-                  const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+
+                  const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
                   a.href = url;
