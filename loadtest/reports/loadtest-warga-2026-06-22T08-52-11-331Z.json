@@ -1,0 +1,406 @@
+{
+  "root_group": {
+    "groups": [
+      {
+        "name": "01-login",
+        "path": "::01-login",
+        "id": "fa3b5403fcf03318277979dca0c326f2",
+        "groups": [],
+        "checks": [
+            {
+              "id": "cc5051555f7d87a5d01c442a59b88cf6",
+              "passes": 540,
+              "fails": 0,
+              "name": "login status 200",
+              "path": "::01-login::login status 200"
+            },
+            {
+              "id": "7f1a38e3945b82c4bde1327fa001aeb0",
+              "passes": 540,
+              "fails": 0,
+              "name": "login punya token",
+              "path": "::01-login::login punya token"
+            },
+            {
+              "name": "login punya record.id",
+              "path": "::01-login::login punya record.id",
+              "id": "95a5c5737f9f5812e7c042add497b2e6",
+              "passes": 540,
+              "fails": 0
+            }
+          ]
+      },
+      {
+        "id": "43e3211ac920ab9688a6da3a96b2aec7",
+        "groups": [],
+        "checks": [
+            {
+              "passes": 540,
+              "fails": 0,
+              "name": "list warga status 200",
+              "path": "::02-get-warga-list::list warga status 200",
+              "id": "30355bef8d5c3142efb43a0463c6896b"
+            },
+            {
+              "path": "::02-get-warga-list::list warga punya items",
+              "id": "7ade9ba50bb13d3950169f93d7ca0916",
+              "passes": 540,
+              "fails": 0,
+              "name": "list warga punya items"
+            },
+            {
+              "name": "list warga totalItems > 0",
+              "path": "::02-get-warga-list::list warga totalItems > 0",
+              "id": "f4f46d6de240a7a4b42f675c6396945a",
+              "passes": 540,
+              "fails": 0
+            }
+          ],
+        "name": "02-get-warga-list",
+        "path": "::02-get-warga-list"
+      },
+      {
+        "name": "03-get-warga-detail",
+        "path": "::03-get-warga-detail",
+        "id": "95f4ca4a1ae4d792971c076c75dc466b",
+        "groups": [],
+        "checks": [
+            {
+              "name": "detail warga status 200",
+              "path": "::03-get-warga-detail::detail warga status 200",
+              "id": "a208c96020e2a55538aebb9709c8cbbb",
+              "passes": 540,
+              "fails": 0
+            },
+            {
+              "passes": 540,
+              "fails": 0,
+              "name": "detail warga items ada",
+              "path": "::03-get-warga-detail::detail warga items ada",
+              "id": "5333139b28dc9d18eff3e6fee25620b6"
+            },
+            {
+              "name": "detail no_rumah ada",
+              "path": "::03-get-warga-detail::detail no_rumah ada",
+              "id": "f9d390ea5361ef98807fdd5e6d1c2504",
+              "passes": 540,
+              "fails": 0
+            }
+          ]
+      }
+    ],
+    "checks": [],
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "options": {
+    "summaryTrendStats": [
+      "avg",
+      "min",
+      "med",
+      "max",
+      "p(50)",
+      "p(90)",
+      "p(95)",
+      "p(99)"
+    ],
+    "summaryTimeUnit": "",
+    "noColor": false
+  },
+  "state": {
+    "isStdErrTTY": false,
+    "testRunDurationMs": 63021.494,
+    "isStdOutTTY": false
+  },
+  "metrics": {
+    "group_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 14.968666,
+        "med": 580.144271,
+        "max": 4998.06975,
+        "p(50)": 580.144271,
+        "p(90)": 3453.8350253000003,
+        "p(95)": 3869.954831599999,
+        "p(99)": 4748.964866,
+        "avg": 1231.5418474888888
+      }
+    },
+    "http_req_tls_handshaking": {
+      "contains": "time",
+      "values": {
+        "p(95)": 0,
+        "p(99)": 108.78219999999999,
+        "avg": 2.627006172839506,
+        "min": 0,
+        "med": 0,
+        "max": 126.987,
+        "p(50)": 0,
+        "p(90)": 0
+      },
+      "type": "trend"
+    },
+    "data_sent": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 361387,
+        "rate": 5734.345174362258
+      }
+    },
+    "warga_data_success_rate": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "passes": 1080,
+        "fails": 0,
+        "rate": 1
+      },
+      "thresholds": {
+        "rate>0.80": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_connecting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 0.7272037037037037,
+        "min": 0,
+        "med": 0,
+        "max": 32.198,
+        "p(50)": 0,
+        "p(90)": 0,
+        "p(95)": 0,
+        "p(99)": 22.643769999999993
+      }
+    },
+    "data_received": {
+      "values": {
+        "rate": 212781.10290435198,
+        "count": 13409783
+      },
+      "type": "counter",
+      "contains": "data"
+    },
+    "iterations": {
+      "contains": "default",
+      "values": {
+        "count": 540,
+        "rate": 8.568505215062023
+      },
+      "type": "counter"
+    },
+    "http_req_blocked": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 161.41,
+        "p(50)": 0.001,
+        "p(90)": 0.002,
+        "p(95)": 0.002,
+        "p(99)": 137.54395999999997,
+        "avg": 3.4299574074075747,
+        "min": 0,
+        "med": 0.001
+      }
+    },
+    "vus": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "max": 50,
+        "value": 1,
+        "min": 1
+      }
+    },
+    "login_success_rate": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "fails": 0,
+        "rate": 1,
+        "passes": 540
+      },
+      "thresholds": {
+        "rate>0.80": {
+          "ok": true
+        }
+      }
+    },
+    "get_warga_list_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(50)": 509,
+        "p(90)": 1159.4,
+        "p(95)": 1284.3,
+        "p(99)": 1542.08,
+        "avg": 593.8944444444444,
+        "min": 30,
+        "med": 509,
+        "max": 1636
+      }
+    },
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 1620,
+        "rate": 25.705515645186072
+      }
+    },
+    "get_warga_detail_duration": {
+      "values": {
+        "min": 15,
+        "med": 265.5,
+        "max": 1686,
+        "p(50)": 265.5,
+        "p(90)": 873.4000000000001,
+        "p(95)": 1005.2499999999999,
+        "p(99)": 1505,
+        "avg": 373.59814814814814
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "http_req_sending": {
+      "values": {
+        "p(95)": 0.188,
+        "p(99)": 0.26542999999999994,
+        "avg": 0.08220123456790143,
+        "min": 0.009,
+        "med": 0.065,
+        "max": 1.162,
+        "p(50)": 0.065,
+        "p(90)": 0.159
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "iteration_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 1366.685917,
+        "med": 6035.8840835,
+        "max": 8400.185,
+        "p(50)": 6035.8840835,
+        "p(90)": 7248.1842131,
+        "p(95)": 7518.58548895,
+        "p(99)": 8184.067470749999,
+        "avg": 5694.378964496296
+      }
+    },
+    "vus_max": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 50,
+        "min": 50,
+        "max": 50
+      }
+    },
+    "http_req_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 579.5135,
+        "max": 4840.409,
+        "p(50)": 579.5135,
+        "p(90)": 3453.447,
+        "p(95)": 3868.33925,
+        "p(99)": 4595.05081,
+        "avg": 1227.6624043209877,
+        "min": 14.722
+      },
+      "thresholds": {
+        "p(95)<5000": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_receiving": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(95)": 37.0267,
+        "p(99)": 48.09752999999999,
+        "avg": 11.440210493827161,
+        "min": 0.008,
+        "med": 5.4835,
+        "max": 164.681,
+        "p(50)": 5.4835,
+        "p(90)": 32.51390000000001
+      }
+    },
+    "http_req_waiting": {
+      "values": {
+        "p(95)": 3866.4098999999997,
+        "p(99)": 4590.98095,
+        "avg": 1216.1399925925923,
+        "min": 14.612,
+        "med": 556.133,
+        "max": 4840.308,
+        "p(50)": 556.133,
+        "p(90)": 3447.2426
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "login_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "min": 112,
+        "med": 3094.5,
+        "max": 4998,
+        "p(50)": 3094.5,
+        "p(90)": 4284.900000000001,
+        "p(95)": 4608.099999999999,
+        "p(99)": 4935.76,
+        "avg": 2726.1574074074074
+      }
+    },
+    "http_req_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 1620
+      },
+      "thresholds": {
+        "rate<0.20": {
+          "ok": true
+        }
+      }
+    },
+    "checks": {
+      "contains": "default",
+      "values": {
+        "rate": 1,
+        "passes": 4860,
+        "fails": 0
+      },
+      "type": "rate"
+    },
+    "http_req_duration{expected_response:true}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(99)": 4595.05081,
+        "avg": 1227.6624043209877,
+        "min": 14.722,
+        "med": 579.5135,
+        "max": 4840.409,
+        "p(50)": 579.5135,
+        "p(90)": 3453.447,
+        "p(95)": 3868.33925
+      }
+    }
+  }
+}
