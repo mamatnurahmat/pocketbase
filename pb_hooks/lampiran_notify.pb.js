@@ -79,8 +79,13 @@ onRecordAfterCreateSuccess((e) => {
     message += `🆔 *ID Lampiran:* ${lampiranId}\n`;
     message += `🕐 *Waktu:* ${currentTime}\n`;
 
+    // Ambil nama file bukti untuk link attachment
+    const fileName = record.getString("file_bukti") || "";
+
     // Kirim notifikasi ke ntfy.sh
-    const adminUrl = "http://p2s.duckdns.org/_/#/collections?collection=lampiran";
+    const baseUrl = "https://prestige2.sawangan.web.id";
+    const adminUrl = baseUrl + "/_/#/collections?collection=lampiran";
+    const fileUrl = fileName ? baseUrl + "/api/files/lampiran/" + lampiranId + "/" + fileName : "";
 
     const payload = {
       topic: "p2s",
@@ -89,7 +94,7 @@ onRecordAfterCreateSuccess((e) => {
       tags: ["money", "pocketbase", "part_alternation_mark"],
       priority: 4,  // high priority
       click: adminUrl,
-      attach: "https://ntfy.sh/static/img/ntfy.png"
+      attach: fileUrl
     };
 
     try {
