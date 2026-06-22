@@ -63,7 +63,8 @@ export default function LaporanWarga() {
   const navigate = useNavigate();
   const [laporanList, setLaporanList] = useState([]);
   const [previewImage, setPreviewImage] = useState(null);
-  const [isPengurus] = useState(() => localStorage.getItem('isPengurus') === 'true');
+  const [isPengurus, setIsPengurus] = useState(() => localStorage.getItem('isPengurus') === 'true');
+  const [currentWarga, setCurrentWarga] = useState(null);
 
   // Edit modal state
   const [editModal, setEditModal] = useState(null); // item object or null
@@ -78,11 +79,40 @@ export default function LaporanWarga() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Ambil data warga yang login untuk cek kepemilikan laporan
+        const userId = pb.authStore.model?.id;
+        let myWarga = null;
+        if (userId) {
+          try {
+            myWarga = await pb.collection('warga').getFirstListItem(`user="${userId}"`);
+            setCurrentWarga(myWarga);
+            if (myWarga.pengurus) {
+              setIsPengurus(true);
+            }
+          } catch (e) {
+            console.warn("Warga not found:", e);
+          }
+        }
+
         const records = await pb.collection('lapor').getFullList({
           expand: 'warga,warga.user',
           sort: '-created',
         });
-        setLaporanList(records);
+
+        // Filter client-side: jika bukan pengurus, sembunyikan laporan "Menunggu Konfirmasi"
+        // yang bukan miliknya (lapisan keamanan tambahan selain backend rule)
+        let filtered = records;
+        if (myWarga && !myWarga.pengurus) {
+          filtered = records.filter(item => {
+            // Tampilkan jika status bukan "Menunggu Konfirmasi"
+            if (item.status !== 'Menunggu Konfirmasi') return true;
+            // Tampilkan jika laporan milik warga yang sedang login
+            if (item.warga === myWarga.id) return true;
+            return false;
+          });
+        }
+
+        setLaporanList(filtered);
       } catch (e) {
         console.warn("Error fetching data:", e);
       }
@@ -161,6 +191,23 @@ export default function LaporanWarga() {
           </div>
         )}
 
+        {/* Info banner untuk warga biasa */}
+        {!isPengurus && laporanList.length > 0 && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: '#FBF1DD', borderRadius: 12,
+            padding: '10px 14px', marginBottom: 16,
+            fontSize: 12, color: '#7A5A14', lineHeight: 1.4,
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{flexShrink: 0}}>
+              <circle cx="12" cy="12" r="9" stroke="#C8821A" strokeWidth="1.8"/>
+              <path d="M12 7v6" stroke="#C8821A" strokeWidth="1.8" strokeLinecap="round"/>
+              <circle cx="12" cy="16" r="1" fill="#C8821A"/>
+            </svg>
+            <span>Laporan menunggu konfirmasi hanya terlihat oleh pengurus dan pelapor.</span>
+          </div>
+        )}
+
         {/* List */}
         <div className="flex-col" style={{ gap: 12 }}>
           {laporanList.length === 0 ? (
@@ -178,7 +225,7 @@ export default function LaporanWarga() {
                 Belum Ada Laporan
               </div>
               <div style={{ fontSize: 13, lineHeight: 1.5, maxWidth: 260 }}>
-                Warga belum mengirim laporan apapun. Laporan akan muncul di sini.
+                {isPengurus ? 'Warga belum mengirim laporan apapun. Laporan akan muncul di sini.' : 'Belum ada laporan yang tersedia. Laporan menunggu konfirmasi tidak ditampilkan.'}
               </div>
             </div>
           ) : (
