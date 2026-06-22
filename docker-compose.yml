@@ -13,7 +13,7 @@ services:
       - "8090:8090"
     volumes:
       - /var/data/pocketbase/pb_data:/pb_data
-      - /var/data/pocketbase/pb_public:/pb_public
+      - ./pb_public:/pb_public
       - ./pb_migrations:/pb_migrations
       - ./pb_hooks:/pb_hooks
       # - /var/data/pocketbase/pb_migrations:/pb_migrations
