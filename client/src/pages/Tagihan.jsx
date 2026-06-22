@@ -276,28 +276,36 @@ export default function Tagihan() {
             {filtered.length > 0 && (
               <button
                 onClick={() => {
-                  // Generate CSV
-                  const rows = [
-                    ['No', ...(modePengurus ? ['Warga','No. Rumah'] : []), 'Bulan Iuran', 'Nominal', 'Status', 'Jatuh Tempo', 'Tgl Dibuat'],
-                    ...filtered.map((t, i) => [
-                      i + 1,
-                      ...(modePengurus ? [
-                        t.expand?.warga?.expand?.user?.name || 'Warga',
-                        t.expand?.warga?.no_rumah || '',
-                      ] : []),
-                      t.expand?.iuran?.kode || '-',
-                      (t.nominal || 0).toString(),
-                      t.status_pembayaran,
-                      t.jatuh_tempo ? new Date(t.jatuh_tempo).toLocaleDateString('id-ID') : '-',
-                      t.created ? new Date(t.created).toLocaleDateString('id-ID') : '-',
-                    ]),
-                  ];
-                  const csv = rows.map(r => r.join(',')).join('\n');
-                  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                  // Generate XLS (HTML table format — compatible with Excel/LibreOffice)
+                  const esc = (s) => String(s ?? '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&/g, '&amp;');
+                  const headers = ['No', ...(modePengurus ? ['Warga','No. Rumah'] : []), 'Bulan Iuran', 'Nominal', 'Status', 'Jatuh Tempo', 'Tgl Dibuat'];
+                  const bodyRows = filtered.map((t, i) => [
+                    i + 1,
+                    ...(modePengurus ? [
+                      t.expand?.warga?.expand?.user?.name || 'Warga',
+                      t.expand?.warga?.no_rumah || '',
+                    ] : []),
+                    t.expand?.iuran?.kode || '-',
+                    'Rp ' + (t.nominal || 0).toLocaleString('id-ID'),
+                    t.status_pembayaran,
+                    t.jatuh_tempo ? new Date(t.jatuh_tempo).toLocaleDateString('id-ID') : '-',
+                    t.created ? new Date(t.created).toLocaleDateString('id-ID') : '-',
+                  ]);
+                  const html = [
+                    '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">',
+                    '<head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>',
+                    '<x:Name>Tagihan</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>',
+                    '</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>',
+                    '<body><table>',
+                    '<tr>', headers.map(h => '<th style="background:#15935A;color:#fff;padding:6px 10px;font-weight:700">' + esc(h) + '</th>').join(''), '</tr>',
+                    ...bodyRows.map(row => '<tr>' + row.map(c => '<td style="padding:4px 10px">' + esc(c) + '</td>').join('') + '</tr>'),
+                    '</table></body></html>',
+                  ].join('\n');
+                  const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
                   a.href = url;
-                  a.download = 'tagihan.csv';
+                  a.download = 'tagihan.xls';
                   a.click();
                   URL.revokeObjectURL(url);
                 }}
@@ -321,7 +329,7 @@ export default function Tagihan() {
                   <path d="M12 3v13m0 0l-4-4m4 4l4-4" stroke="#15935A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M4 17v3h16v-3" stroke="#15935A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                CSV
+                XLS
               </button>
             )}
             {filtered.length > 0 && (
