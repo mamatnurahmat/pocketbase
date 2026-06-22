@@ -6,6 +6,8 @@ export default function Tagihan() {
   const [tagihan, setTagihan] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [selectedMonth, setSelectedMonth] = useState('all');
+  const [selectedYear, setSelectedYear] = useState('all');
 
   const [isPengurus, setIsPengurus] = useState(() => localStorage.getItem('isPengurus') === 'true');
   const [modePengurus, setModePengurus] = useState(() => {
@@ -74,7 +76,27 @@ export default function Tagihan() {
     }
   };
 
-  const filtered = filter === 'all' ? tagihan : tagihan.filter(t => t.status_pembayaran === filter);
+  // Extract available years from tagihan data
+  const availableYears = [...new Set(tagihan.map(t => {
+    const d = t.jatuh_tempo ? new Date(t.jatuh_tempo) : null;
+    return d ? d.getFullYear() : null;
+  }).filter(Boolean))].sort((a, b) => b - a);
+
+  const filtered = tagihan.filter(t => {
+    // Status filter
+    if (filter !== 'all' && t.status_pembayaran !== filter) return false;
+    // Month filter
+    if (selectedMonth !== 'all') {
+      const d = t.jatuh_tempo ? new Date(t.jatuh_tempo) : null;
+      if (!d || d.getMonth() + 1 !== parseInt(selectedMonth)) return false;
+    }
+    // Year filter
+    if (selectedYear !== 'all') {
+      const d = t.jatuh_tempo ? new Date(t.jatuh_tempo) : null;
+      if (!d || d.getFullYear() !== parseInt(selectedYear)) return false;
+    }
+    return true;
+  });
   const totalUnpaid = tagihan.filter(t => t.status_pembayaran !== 'Lunas').reduce((s, t) => s + (t.nominal || 0), 0);
 
   const statusBadge = (status) => {
@@ -88,6 +110,22 @@ export default function Tagihan() {
     { key: 'Belum Dibayar', label: 'Belum Bayar' },
     { key: 'Menunggu Konfirmasi', label: 'Menunggu' },
     { key: 'Lunas', label: 'Lunas' },
+  ];
+
+  const months = [
+    { key: 'all', label: 'Semua Bulan' },
+    { key: '1', label: 'Januari' },
+    { key: '2', label: 'Februari' },
+    { key: '3', label: 'Maret' },
+    { key: '4', label: 'April' },
+    { key: '5', label: 'Mei' },
+    { key: '6', label: 'Juni' },
+    { key: '7', label: 'Juli' },
+    { key: '8', label: 'Agustus' },
+    { key: '9', label: 'September' },
+    { key: '10', label: 'Oktober' },
+    { key: '11', label: 'November' },
+    { key: '12', label: 'Desember' },
   ];
 
   return (
@@ -124,7 +162,7 @@ export default function Tagihan() {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters - Status */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 20 }}>
           {filters.map((f) => (
             <button
@@ -145,6 +183,84 @@ export default function Tagihan() {
               {f.label}
             </button>
           ))}
+        </div>
+
+        {/* Filters - Bulan & Tahun */}
+        <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            style={{
+              flex: 1,
+              padding: '9px 12px',
+              borderRadius: 10,
+              border: '1.5px solid #E6EBE7',
+              background: '#fff',
+              color: selectedMonth !== 'all' ? '#15935A' : '#6B7B72',
+              fontSize: 13,
+              fontWeight: 600,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              outline: 'none',
+              appearance: 'none',
+              WebkitAppearance: 'none',
+              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=%2710%27 height=%276%27 viewBox=%270 0 10 6%27 fill=%27none%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cpath d=%27M1 1L5 5L9 1%27 stroke=%27%236B7B72%27 stroke-width=%271.5%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E")',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 12px center',
+              paddingRight: 32,
+            }}
+          >
+            {months.map(m => (
+              <option key={m.key} value={m.key}>{m.label}</option>
+            ))}
+          </select>
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            style={{
+              flex: 1,
+              padding: '9px 12px',
+              borderRadius: 10,
+              border: '1.5px solid #E6EBE7',
+              background: '#fff',
+              color: selectedYear !== 'all' ? '#15935A' : '#6B7B72',
+              fontSize: 13,
+              fontWeight: 600,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              outline: 'none',
+              appearance: 'none',
+              WebkitAppearance: 'none',
+              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=%2710%27 height=%276%27 viewBox=%270 0 10 6%27 fill=%27none%27 xmlns=%27http://www.w3.org/2000/svg%27%3E%3Cpath d=%27M1 1L5 5L9 1%27 stroke=%27%236B7B72%27 stroke-width=%271.5%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E")',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 12px center',
+              paddingRight: 32,
+            }}
+          >
+            <option value="all">Semua Tahun</option>
+            {availableYears.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+          {(selectedMonth !== 'all' || selectedYear !== 'all') && (
+            <button
+              onClick={() => { setSelectedMonth('all'); setSelectedYear('all'); }}
+              style={{
+                padding: '9px 14px',
+                borderRadius: 10,
+                border: '1.5px solid #E6EBE7',
+                background: '#fff',
+                color: '#6B7B72',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              ✕ Reset
+            </button>
+          )}
         </div>
 
         {/* List */}
