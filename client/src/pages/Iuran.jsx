@@ -72,23 +72,44 @@ export default function Iuran() {
       };
       formData.append('id', generateId());
       formData.append('warga', warga.id);
-      formData.append('iuran', JSON.stringify(selectedIurans));
+      selectedIurans.forEach(id => formData.append('iuran', id));
       formData.append('file_bukti', file);
       formData.append('approval', false);
 
       const lampiranRecord = await pb.collection('lampiran').create(formData);
+      const lampiranId = lampiranRecord.id;
 
-      const tagihanPromises = selectedIurans.map(iuranId => {
+      // Cari atau buat tagihan untuk setiap iuran (sama pola seperti LampiranForm)
+      for (const iuranId of selectedIurans) {
+        let tagihanRecord = null;
+        try {
+          tagihanRecord = await pb.collection('tagihan').getFirstListItem(`warga="${warga.id}" && iuran="${iuranId}"`);
+        } catch (e) {
+          // Tagihan tidak ditemukan, akan dibuat baru
+        }
+
         const iuranData = iuranList.find(x => x.id === iuranId);
-        return pb.collection('tagihan').create({
-          warga: warga.id,
-          jatuh_tempo: new Date().toISOString(),
-          nominal: iuranData?.nominal || 0,
-          status_pembayaran: "Menunggu Konfirmasi",
-          iuran: iuranId
-        });
-      });
-      await Promise.all(tagihanPromises);
+
+        if (tagihanRecord) {
+          // Update tagihan yang sudah ada — simpan lampiranId + ubah status
+          await pb.collection('tagihan').update(tagihanRecord.id, {
+            lampiran: lampiranId,
+            status_pembayaran: 'Menunggu Konfirmasi'
+          });
+        } else {
+          // Buat tagihan baru dengan explicit ID: no_rumah + kode_iuran
+          const tagihanId = `${warga.no_rumah.toLowerCase()}${iuranId}`;
+          await pb.collection('tagihan').create({
+            id: tagihanId,
+            warga: warga.id,
+            iuran: iuranId,
+            jatuh_tempo: new Date().toISOString(),
+            nominal: iuranData?.nominal || 0,
+            status_pembayaran: 'Menunggu Konfirmasi',
+            lampiran: lampiranId
+          });
+        }
+      }
 
       // Tambahkan post ke logs
       try {

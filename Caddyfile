@@ -1,3 +1,5 @@
 prestige2.sawangan.web.id {
+
+    # Reverse proxy ke PocketBase untuk semua request lainnya
     reverse_proxy pocketbase:8090
 }

@@ -166,7 +166,7 @@ export default function Profil() {
               )}
             </div>
             <div style={{ marginTop: 3, fontSize: 13, color: '#8A9991' }}>
-              {warga ? `No. Rumah ${warga.no_rumah}` : `HP: ${phone}`}
+              {warga ? `No. Rumah ${warga.no_rumah}${warga.no_wa ? ` · HP: ${warga.no_wa}` : ''}` : `HP: ${phone}`}
             </div>
           </div>
         </div>
@@ -286,7 +286,7 @@ export default function Profil() {
         <div className="card" style={{ padding: '6px 18px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid #F0F2F0' }}>
             <span style={{ fontSize: 13, color: '#8A9991' }}>Nomor HP</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#3A453F' }}>{phone}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#3A453F' }}>{warga?.no_wa || phone || '-'}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid #F0F2F0' }}>
             <span style={{ fontSize: 13, color: '#8A9991' }}>Email</span>

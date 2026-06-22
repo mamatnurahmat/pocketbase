@@ -1,58 +1,492 @@
 openapi: 3.0.0
 info:
-  title: Aplikasi Warga API (PocketBase)
-  description: Dokumentasi API untuk mengelola Data Warga, Status, Iuran, dan Lampiran.
-  version: 1.0.0
+  title: Aplikasi Warga Prestige 2 — API Documentation
+  description: |
+    Dokumentasi REST API untuk Aplikasi Warga Perumahan Prestige 2 Sawangan.
+
+    ## Autentikasi
+    Semua endpoint (kecuali login) memerlukan header:
+    ```
+    Authorization: Bearer <token_jwt>
+    ```
+    Token didapat dari endpoint Login.
+
+    ## Filter & Sort
+    PocketBase mendukung sintaks filter:
+    - `field = "value"` — equality
+    - `field != "value"`
+    - `field ~ "substring"` — contains (LIKE)
+    - `field >= value`
+    - `cond1 && cond2` — AND
+    - `cond1 || cond2` — OR
+
+    Sort: `?sort=-created,title` (prefix `-` untuk DESC)
+
+    ## Base URL
+    `https://prestige2.sawangan.web.id/api`
+
+  version: 1.2.0
+  contact:
+    name: Pengurus Prestige 2
+    url: https://prestige2.sawangan.web.id
+
 servers:
+  - url: https://prestige2.sawangan.web.id/api
+    description: Production Server
   - url: http://localhost:8090/api
-    description: PocketBase Server
+    description: Local Development
+
+tags:
+  - name: Authentication
+    description: Login dan manajemen session
+  - name: Warga
+    description: Data penghuni perumahan
+  - name: Status
+    description: Tipe/jenis status warga
+  - name: Iuran
+    description: Jenis iuran (IPL bulanan, dll.)
+  - name: Tagihan
+    description: Tagihan per warga per periode
+  - name: Lampiran
+    description: Upload bukti pembayaran
+  - name: Lapor
+    description: Laporan/keluhan warga ke pengurus
+  - name: Aktivitas
+    description: Log aktivitas warga
+  - name: Files
+    description: Download file yang diupload
+
 components:
   securitySchemes:
     UserAuth:
       type: http
       scheme: bearer
-      description: Token otentikasi didapatkan dari endpoint Login.
+      bearerFormat: JWT
+      description: |
+        Token JWT didapat dari endpoint Login.
+        Format: `Authorization: Bearer eyJhbGciOiJ...`
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - identity
+        - password
+      properties:
+        identity:
+          type: string
+          description: Email warga (format `{kode}@warga.local`)
+          example: "c09@warga.local"
+        password:
+          type: string
+          description: "Password (default: sama dengan email saat seed)"
+          example: "c09@warga.local"
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT token untuk Authorization header
+        record:
+          $ref: '#/components/schemas/UserRecord'
+
+    UserRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "usrc090000000000"
+        email:
+          type: string
+        name:
+          type: string
+        emailVisibility:
+          type: boolean
+
+    WargaRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "c09000000000000"
+        no_rumah:
+          type: string
+          example: "C09"
+        no_wa:
+          type: string
+          nullable: true
+        user:
+          type: string
+          description: ID user terkait
+        status:
+          type: string
+          nullable: true
+          description: ID status terkait
+        pengurus:
+          type: boolean
+          default: false
+        agama:
+          type: string
+          enum: [islam, katolik, protestan, hindu, budha, konghucu]
+          nullable: true
+        expand:
+          type: object
+          description: Data relasi yang di-expand (jika pakai ?expand=field)
+
+    WargaCreateRequest:
+      type: object
+      required:
+        - no_rumah
+        - user
+      properties:
+        no_rumah:
+          type: string
+          example: "A01"
+        no_wa:
+          type: string
+          example: "08123456789"
+        user:
+          type: string
+          description: ID dari collection users
+        status:
+          type: string
+          description: ID dari collection status
+        pengurus:
+          type: boolean
+        agama:
+          type: string
+
+    StatusRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        nama:
+          type: string
+          example: "Tetap"
+        jumlah_iuran:
+          type: number
+          example: 170000
+
+    IuranRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "iuranipl26bln01"
+        kode:
+          type: string
+          example: "IPL-01-26"
+        nominal:
+          type: number
+          example: 170000
+        keterangan:
+          type: string
+          nullable: true
+          example: "Iuran Pengelolaan Lingkungan Bulan 1 2026"
+        jatuh_tempo:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-01-20 00:00:00.000Z"
+
+    IuranCreateRequest:
+      type: object
+      required:
+        - kode
+        - nominal
+      properties:
+        kode:
+          type: string
+        nominal:
+          type: number
+        keterangan:
+          type: string
+        jatuh_tempo:
+          type: string
+          format: date-time
+
+    TagihanRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "a01iuranipl26bln03"
+        iuran:
+          type: string
+          description: ID iuran terkait
+        warga:
+          type: string
+          description: ID warga terkait
+        jatuh_tempo:
+          type: string
+          format: date-time
+        nominal:
+          type: number
+          example: 170000
+        status_pembayaran:
+          type: string
+          enum: ["Belum Dibayar", "Menunggu Konfirmasi", "Lunas"]
+        lampiran:
+          type: string
+          nullable: true
+          description: ID lampiran terkait
+
+    TagihanCreateRequest:
+      type: object
+      required:
+        - iuran
+        - warga
+        - jatuh_tempo
+        - nominal
+        - status_pembayaran
+      properties:
+        iuran:
+          type: string
+        warga:
+          type: string
+        jatuh_tempo:
+          type: string
+          format: date-time
+        nominal:
+          type: number
+        status_pembayaran:
+          type: string
+          enum: ["Belum Dibayar", "Menunggu Konfirmasi", "Lunas"]
+        lampiran:
+          type: string
+
+    LampiranRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        iuran:
+          type: array
+          items:
+            type: string
+          description: Array ID iuran (multi-select)
+        warga:
+          type: string
+          description: ID warga
+        file_bukti:
+          type: string
+          description: Nama file yang diupload
+        approval:
+          type: boolean
+          nullable: true
+        approved_by:
+          type: string
+          nullable: true
+          description: ID user pengurus yang melakukan approval
+
+    LaporRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        warga:
+          type: string
+          description: ID warga pelapor
+        keterangan:
+          type: string
+          description: Isi laporan
+        foto:
+          type: string
+          description: Nama file foto
+        status:
+          type: string
+          enum: ["Menunggu Konfirmasi", "Diproses", "Selesai", "Ditolak"]
+        respons:
+          type: string
+          nullable: true
+          description: Tanggapan dari pengurus
+        created:
+          type: string
+          format: date-time
+        updated:
+          type: string
+          format: date-time
+
+    LaporCreateRequest:
+      type: object
+      required:
+        - warga
+        - keterangan
+        - foto
+        - status
+      properties:
+        warga:
+          type: string
+        keterangan:
+          type: string
+        foto:
+          type: string
+          format: binary
+        status:
+          type: string
+
+    LaporUpdateRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: ["Menunggu Konfirmasi", "Diproses", "Selesai", "Ditolak"]
+        respons:
+          type: string
+
+    AktivitasWargaRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        warga:
+          type: string
+          description: ID warga
+        aktivitas:
+          type: string
+          example: "Pembayaran IPL"
+        detail:
+          type: string
+          nullable: true
+          example: "Membayar IPL Januari 2026"
+
+    PaginatedResponse:
+      type: object
+      properties:
+        page:
+          type: integer
+        perPage:
+          type: integer
+        totalItems:
+          type: integer
+        totalPages:
+          type: integer
+        items:
+          type: array
+          items:
+            type: object
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        data:
+          type: object
+
 paths:
+  # -------------------------------------------------------------------
+  # AUTHENTICATION
+  # -------------------------------------------------------------------
   /collections/users/auth-with-password:
     post:
       tags:
         - Authentication
-      summary: Login User
-      description: Mendapatkan token otentikasi dengan email dan password.
+      summary: Login Warga
+      description: |
+        Login menggunakan email & password untuk mendapatkan JWT token.
+        Token digunakan untuk semua request berikutnya via `Authorization: Bearer <token>`.
+      security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - identity
-                - password
-              properties:
-                identity:
-                  type: string
-                  description: Email user
-                password:
-                  type: string
-                  description: Password user
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              identity: "c09@warga.local"
+              password: "c09@warga.local"
       responses:
         '200':
-          description: Berhasil login, mengembalikan token dan data user.
-          
+          description: Login berhasil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Kredensial tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /collections/users/auth-refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh Token
+      description: Memperpanjang session JWT yang sudah ada.
+      security:
+        - UserAuth: []
+      responses:
+        '200':
+          description: Token baru
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+
+  # -------------------------------------------------------------------
+  # WARGA
+  # -------------------------------------------------------------------
   /collections/warga/records:
     get:
       tags:
         - Warga
-      summary: Ambil Data Warga
+      summary: List Warga
+      description: |
+        Mendapatkan daftar warga (bisa difilter & di-sort).
+        Gunakan `?expand=user,status` untuk data relasi.
       security:
         - UserAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: perPage
+          in: query
+          schema:
+            type: integer
+            default: 30
+        - name: sort
+          in: query
+          schema:
+            type: string
+          description: "contoh: `no_rumah` atau `-no_rumah`"
+        - name: filter
+          in: query
+          schema:
+            type: string
+          description: "contoh: `no_rumah ~ 'C'` untuk blok C"
+        - name: expand
+          in: query
+          schema:
+            type: string
+          description: "contoh: `user,status`"
       responses:
         '200':
           description: List warga
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/WargaRecord'
+
     post:
       tags:
         - Warga
-      summary: Tambah Data Warga
+      summary: Tambah Warga
       security:
         - UserAuth: []
       requestBody:
@@ -60,39 +494,130 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - no_rumah
-                - user
-              properties:
-                no_rumah:
-                  type: string
-                no_wa:
-                  type: string
-                user:
-                  type: string
-                  description: ID dari collection users
-                status:
-                  type: string
-                  description: ID dari collection status
+              $ref: '#/components/schemas/WargaCreateRequest'
       responses:
         '200':
           description: Warga berhasil dibuat
-          
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WargaRecord'
+        '400':
+          description: Validasi gagal
+
+  /collections/warga/records/{id}:
+    get:
+      tags:
+        - Warga
+      summary: Detail Warga
+      security:
+        - UserAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID warga (15 karakter)
+        - name: expand
+          in: query
+          schema:
+            type: string
+          description: "contoh: `user,status`"
+      responses:
+        '200':
+          description: Detail warga
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WargaRecord'
+        '404':
+          description: Warga tidak ditemukan
+
+    patch:
+      tags:
+        - Warga
+      summary: Update Warga
+      description: Update data warga. Warga hanya bisa update data miliknya sendiri.
+      security:
+        - UserAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                no_wa:
+                  type: string
+                agama:
+                  type: string
+      responses:
+        '200':
+          description: Warga berhasil diupdate
+        '403':
+          description: Tidak diizinkan (bukan pemilik data)
+
+    delete:
+      tags:
+        - Warga
+      summary: Hapus Warga
+      security:
+        - UserAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Warga berhasil dihapus
+
+  # -------------------------------------------------------------------
+  # STATUS
+  # -------------------------------------------------------------------
   /collections/status/records:
     get:
       tags:
         - Status
-      summary: Ambil Data Status
+      summary: List Status
       security:
         - UserAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: perPage
+          in: query
+          schema:
+            type: integer
+            default: 30
       responses:
         '200':
           description: List status
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/StatusRecord'
+
     post:
       tags:
         - Status
-      summary: Tambah Data Status
+      summary: Tambah Status
       security:
         - UserAuth: []
       requestBody:
@@ -107,26 +632,64 @@ paths:
               properties:
                 nama:
                   type: string
+                  example: "Tetap"
                 jumlah_iuran:
                   type: number
+                  example: 170000
       responses:
         '200':
           description: Status berhasil dibuat
-          
+
+  # -------------------------------------------------------------------
+  # IURAN
+  # -------------------------------------------------------------------
   /collections/iuran/records:
     get:
       tags:
         - Iuran
-      summary: Ambil Data Iuran
+      summary: List Iuran
+      description: Mendapatkan daftar jenis iuran (IPL bulanan, dll.)
       security:
         - UserAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: perPage
+          in: query
+          schema:
+            type: integer
+            default: 30
+        - name: sort
+          in: query
+          schema:
+            type: string
+          description: "contoh: `kode`"
+        - name: filter
+          in: query
+          schema:
+            type: string
+          description: "contoh: `kode ~ 'IPL'`"
       responses:
         '200':
           description: List iuran
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/IuranRecord'
+
     post:
       tags:
         - Iuran
-      summary: Tambah Data Iuran
+      summary: Tambah Iuran
       security:
         - UserAuth: []
       requestBody:
@@ -134,35 +697,237 @@ paths:
         content:
           application/json:
             schema:
+              $ref: '#/components/schemas/IuranCreateRequest'
+      responses:
+        '200':
+          description: Iuran berhasil dibuat
+
+  /collections/iuran/records/{id}:
+    get:
+      tags:
+        - Iuran
+      summary: Detail Iuran
+      security:
+        - UserAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detail iuran
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IuranRecord'
+
+    patch:
+      tags:
+        - Iuran
+      summary: Update Iuran
+      security:
+        - UserAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
               type: object
-              required:
-                - kode
-                - nominal
               properties:
-                kode:
-                  type: string
                 nominal:
                   type: number
                 keterangan:
                   type: string
+                jatuh_tempo:
+                  type: string
+                  format: date-time
       responses:
         '200':
-          description: Iuran berhasil dibuat
-          
+          description: Iuran berhasil diupdate
+
+  # -------------------------------------------------------------------
+  # TAGIHAN
+  # -------------------------------------------------------------------
+  /collections/tagihan/records:
+    get:
+      tags:
+        - Tagihan
+      summary: List Tagihan
+      description: |
+        Mendapatkan daftar tagihan per warga.
+        Gunakan filter untuk melihat tagihan milik sendiri.
+      security:
+        - UserAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: perPage
+          in: query
+          schema:
+            type: integer
+            default: 30
+        - name: sort
+          in: query
+          schema:
+            type: string
+          description: "contoh: `-jatuh_tempo`"
+        - name: filter
+          in: query
+          schema:
+            type: string
+          description: |
+            Contoh filter:
+            - `warga = 'c09000000000000'` — tagihan milik warga C09
+            - `status_pembayaran = 'Belum Dibayar'` — yang belum lunas
+            - `jatuh_tempo < '2026-06-01'` — sebelum bulan Juni
+        - name: expand
+          in: query
+          schema:
+            type: string
+          description: "contoh: `iuran,warga,lampiran`"
+      responses:
+        '200':
+          description: List tagihan
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TagihanRecord'
+
+    post:
+      tags:
+        - Tagihan
+      summary: Buat Tagihan
+      description: Membuat tagihan baru untuk warga tertentu.
+      security:
+        - UserAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagihanCreateRequest'
+      responses:
+        '200':
+          description: Tagihan berhasil dibuat
+
+  /collections/tagihan/records/{id}:
+    get:
+      tags:
+        - Tagihan
+      summary: Detail Tagihan
+      security:
+        - UserAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "ID tagihan (format: `{no_rumah}{kode_iuran}`, e.g. `a01iuranipl26bln03`)"
+      responses:
+        '200':
+          description: Detail tagihan
+
+    patch:
+      tags:
+        - Tagihan
+      summary: Update Tagihan
+      description: |
+        Update status pembayaran atau lampiran.
+        Pengurus bisa mengubah status ke "Lunas" setelah verifikasi bukti.
+      security:
+        - UserAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status_pembayaran:
+                  type: string
+                  enum: ["Belum Dibayar", "Menunggu Konfirmasi", "Lunas"]
+                lampiran:
+                  type: string
+                  description: ID lampiran (bukti pembayaran yang sudah diupload)
+      responses:
+        '200':
+          description: Tagihan berhasil diupdate
+
+  # -------------------------------------------------------------------
+  # LAMPIRAN (Bukti Pembayaran)
+  # -------------------------------------------------------------------
   /collections/lampiran/records:
     get:
       tags:
         - Lampiran
-      summary: Ambil Data Lampiran
+      summary: List Lampiran
+      description: Mendapatkan daftar bukti pembayaran yang sudah diupload.
       security:
         - UserAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: perPage
+          in: query
+          schema:
+            type: integer
+            default: 30
+        - name: filter
+          in: query
+          schema:
+            type: string
+          description: "contoh: `warga = 'c09000000000000'`"
+        - name: expand
+          in: query
+          schema:
+            type: string
+          description: "contoh: `iuran,warga`"
       responses:
         '200':
           description: List lampiran
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/LampiranRecord'
+
     post:
       tags:
         - Lampiran
-      summary: Upload Lampiran (Multipart Form)
+      summary: Upload Bukti Pembayaran
+      description: |
+        Upload file bukti pembayaran (gambar/PDF).
+        **Harus menggunakan `multipart/form-data`**, bukan JSON.
       security:
         - UserAuth: []
       requestBody:
@@ -180,19 +945,340 @@ paths:
                   type: array
                   items:
                     type: string
-                  description: List ID dari collection iuran
+                  description: List ID iuran yang dibayar (multi-select)
                 warga:
                   type: string
-                  description: ID dari collection warga
+                  description: ID warga yang membayar
                 file_bukti:
                   type: string
                   format: binary
-                  description: File gambar atau PDF
+                  description: "File gambar/PDF, max 5MB (jpeg/png/webp/pdf)"
+                approval:
+                  type: boolean
+                  description: "Status approval (default: false)"
+                approved_by:
+                  type: string
+                  description: ID user pengurus yang approve (opsional)
+      responses:
+        '200':
+          description: Lampiran berhasil diupload
+        '400':
+          description: File tidak valid atau melebihi batas ukuran
+
+  /collections/lampiran/records/{id}:
+    patch:
+      tags:
+        - Lampiran
+      summary: Approve / Tolak Bukti Bayar
+      description: Pengurus melakukan approval atau penolakan bukti pembayaran.
+      security:
+        - UserAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
                 approval:
                   type: boolean
                 approved_by:
                   type: string
-                  description: ID user yang melakukan approval
       responses:
         '200':
-          description: Lampiran berhasil diunggah
+          description: Status approval berhasil diupdate
+
+  # -------------------------------------------------------------------
+  # LAPOR (Laporan/Keluhan Warga)
+  # -------------------------------------------------------------------
+  /collections/lapor/records:
+    get:
+      tags:
+        - Lapor
+      summary: List Laporan
+      description: |
+        Mendapatkan daftar laporan/keluhan dari warga.
+        Bisa difilter berdasarkan status.
+      security:
+        - UserAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: perPage
+          in: query
+          schema:
+            type: integer
+            default: 30
+        - name: sort
+          in: query
+          schema:
+            type: string
+          description: "contoh: `-created` (terbaru dulu)"
+        - name: filter
+          in: query
+          schema:
+            type: string
+          description: |
+            Contoh filter:
+            - `status = 'Menunggu Konfirmasi'`
+            - `warga = 'c09000000000000'`
+        - name: expand
+          in: query
+          schema:
+            type: string
+          description: "contoh: `warga` untuk detail pelapor"
+      responses:
+        '200':
+          description: List laporan
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/LaporRecord'
+
+    post:
+      tags:
+        - Lapor
+      summary: Buat Laporan
+      description: |
+        Warga membuat laporan/keluhan baru.
+        **Harus menggunakan `multipart/form-data`** karena ada upload foto.
+      security:
+        - UserAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - warga
+                - keterangan
+                - foto
+                - status
+              properties:
+                warga:
+                  type: string
+                  description: ID warga pelapor
+                keterangan:
+                  type: string
+                  description: Isi laporan/keluhan
+                foto:
+                  type: string
+                  format: binary
+                  description: "Gambar pendukung (jpeg/png/svg/gif/webp)"
+                status:
+                  type: string
+                  description: Default "Menunggu Konfirmasi"
+      responses:
+        '200':
+          description: Laporan berhasil dibuat
+
+  /collections/lapor/records/{id}:
+    get:
+      tags:
+        - Lapor
+      summary: Detail Laporan
+      security:
+        - UserAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: expand
+          in: query
+          schema:
+            type: string
+          description: "contoh: `warga`"
+      responses:
+        '200':
+          description: Detail laporan
+
+    patch:
+      tags:
+        - Lapor
+      summary: Update Status & Respons Laporan
+      description: |
+        Pengurus mengubah status laporan dan memberikan tanggapan.
+        Permission check dilakukan di frontend (hanya pengurus yang bisa).
+      security:
+        - UserAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LaporUpdateRequest'
+            example:
+              status: "Diproses"
+              respons: "Sedang kami tindaklanjuti, terima kasih."
+      responses:
+        '200':
+          description: Laporan berhasil diupdate
+
+  # -------------------------------------------------------------------
+  # AKTIVITAS WARGA
+  # -------------------------------------------------------------------
+  /collections/aktivitas_warga/records:
+    get:
+      tags:
+        - Aktivitas
+      summary: List Aktivitas Warga
+      description: Log aktivitas warga (public read).
+      security: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: perPage
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: sort
+          in: query
+          schema:
+            type: string
+          description: "contoh: `-created`"
+        - name: filter
+          in: query
+          schema:
+            type: string
+          description: "contoh: `warga = 'c09000000000000'`"
+        - name: expand
+          in: query
+          schema:
+            type: string
+          description: "contoh: `warga`"
+      responses:
+        '200':
+          description: List aktivitas
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AktivitasWargaRecord'
+
+    post:
+      tags:
+        - Aktivitas
+      summary: Catat Aktivitas
+      description: Mencatat aktivitas warga (hanya authenticated user).
+      security:
+        - UserAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - warga
+                - aktivitas
+              properties:
+                warga:
+                  type: string
+                aktivitas:
+                  type: string
+                  example: "Pembayaran IPL"
+                detail:
+                  type: string
+                  example: "Membayar IPL Januari 2026 sebesar Rp170.000"
+      responses:
+        '200':
+          description: Aktivitas berhasil dicatat
+
+  # -------------------------------------------------------------------
+  # FILES
+  # -------------------------------------------------------------------
+  /files/{collection}/{recordId}/{filename}:
+    get:
+      tags:
+        - Files
+      summary: Download File
+      description: Download file yang diupload (foto laporan, bukti bayar, dll.)
+      security:
+        - UserAuth: []
+      parameters:
+        - name: collection
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "Nama collection (lapor, lampiran, tagihan)"
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID record
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Nama file (dari field file_bukti / foto / lampiran)
+      responses:
+        '200':
+          description: File binary
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  # -------------------------------------------------------------------
+  # HEALTH CHECK
+  # -------------------------------------------------------------------
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health Check
+      description: Cek status server (public, tanpa auth).
+      security: []
+      responses:
+        '200':
+          description: Server OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "OK"

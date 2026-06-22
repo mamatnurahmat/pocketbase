@@ -177,7 +177,7 @@ export default function Dashboard() {
               </div>
               <div className="list-body">
                 <span className="list-title">No. Rumah: {warga.no_rumah}</span>
-                <span className="list-sub">HP: {user?.username?.replace('hp_', '')}</span>
+                <span className="list-sub">HP: {warga.no_wa || (user?.username?.startsWith('hp_') ? user.username.replace('hp_', '') : '-')}</span>
               </div>
             </div>
           </div>

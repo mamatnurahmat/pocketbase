@@ -1,5 +1,3 @@
-version: "3.7"
-
 services:
   pocketbase:
     image: ghcr.io/muchobien/pocketbase:latest
@@ -30,7 +28,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - /var/data/pocketbase/swagger/openapi.yaml:/openapi.yaml
+      - ./swagger/openapi.yaml:/openapi.yaml:ro
     environment:
       SWAGGER_JSON: /openapi.yaml
   caddy:
@@ -41,8 +39,9 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /var/data/pocketbase/Caddyfile:/etc/caddy/Caddyfile
+      - ./Caddyfile:/etc/caddy/Caddyfile
       - /var/data/pocketbase/caddy_data:/data
       - /var/data/pocketbase/caddy_config:/config
     depends_on:
       - pocketbase
+      - swagger-ui

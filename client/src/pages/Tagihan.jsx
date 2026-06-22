@@ -14,8 +14,8 @@ export default function Tagihan() {
     // Default ON untuk pengurus, kecuali pernah di-toggle manual
     return saved === null ? true : saved === 'true';
   });
-  const [previewImage, setPreviewImage] = useState(null);
   const [confirmApproveId, setConfirmApproveId] = useState(null);
+  const [previewFile, setPreviewFile] = useState(null); // { url, name, isImage, isPdf }
 
   useEffect(() => {
     localStorage.setItem('modePengurus', modePengurus);
@@ -193,19 +193,34 @@ export default function Tagihan() {
                       </button>
                     )}
                     {(() => {
-                      const lmp = Array.isArray(t.expand?.lampiran) ? t.expand.lampiran[0] : t.expand?.lampiran;
-                      if (!lmp?.file_bukti) return null;
-                      return (
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setPreviewImage(`/api/files/${lmp.collectionId}/${lmp.id}/${lmp.file_bukti}`);
-                          }}
-                          style={{ background: 'none', border: 'none', fontSize: 11, color: '#15935A', fontWeight: 600, textDecoration: 'underline', padding: 0, cursor: 'pointer', marginTop: 4 }}
-                        >
-                          Lihat Bukti
-                        </button>
-                      );
+                      const lampirans = Array.isArray(t.expand?.lampiran) ? t.expand.lampiran : (t.expand?.lampiran ? [t.expand.lampiran] : []);
+                      if (lampirans.length === 0) return null;
+                      const isImage = (name) => /(\.jpg|\.jpeg|\.png|\.webp)$/i.test(name || '');
+                      const isPdf = (name) => /\.pdf$/i.test(name || '');
+                      return lampirans.map((lmp, idx) => {
+                        if (!lmp?.file_bukti) return null;
+                        const url = `/api/files/${lmp.collectionId}/${lmp.id}/${lmp.file_bukti}`;
+                        const img = isImage(lmp.file_bukti);
+                        const pdf = isPdf(lmp.file_bukti);
+                        return (
+                          <button key={lmp.id || idx}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (img) {
+                                setPreviewFile({ url, name: lmp.file_bukti, isImage: true, isPdf: false });
+                              } else if (pdf) {
+                                setPreviewFile({ url, name: lmp.file_bukti, isImage: false, isPdf: true });
+                              } else {
+                                setPreviewFile({ url, name: lmp.file_bukti, isImage: false, isPdf: false });
+                              }
+                            }}
+                            style={{ background: 'none', border: 'none', fontSize: 11, color: '#15935A', fontWeight: 600, textDecoration: 'underline', padding: 0, cursor: 'pointer', marginTop: 4, marginLeft: idx > 0 ? 8 : 0 }}
+                          >
+                            {img ? '📷 Lihat Bukti' : (pdf ? '📄 Buka PDF' : '🔗 Buka File')}
+                            {lampirans.length > 1 ? ` ${idx + 1}` : ''}
+                          </button>
+                        );
+                      });
                     })()}
                   </div>
                 </div>
@@ -217,32 +232,73 @@ export default function Tagihan() {
 
       <BottomNav />
 
-      {/* Modal Preview Image */}
-      {previewImage && (
-        <div className="modal-overlay" onClick={() => setPreviewImage(null)} style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.85)', zIndex: 9999,
+      {/* Modal Preview File (Image / PDF) */}
+      {previewFile && (
+        <div onClick={() => setPreviewFile(null)} style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.93)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: 20
+          padding: 12
         }}>
-          <div style={{ position: 'relative', maxWidth: '100%', maxHeight: '100%' }}>
-            <button 
-              onClick={() => setPreviewImage(null)}
-              style={{
-                position: 'absolute', top: -40, right: 0,
-                background: 'none', border: 'none', color: '#fff',
-                fontSize: 28, cursor: 'pointer'
-              }}
-            >
-              &times;
-            </button>
-            <img 
-              src={previewImage} 
-              alt="Preview" 
-              style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: 8 }}
+          <button
+            onClick={() => setPreviewFile(null)}
+            style={{
+              position: 'absolute', top: 16, right: 16,
+              background: 'rgba(255,255,255,0.18)',
+              border: 'none', borderRadius: '50%',
+              width: 44, height: 44,
+              color: '#fff', fontSize: 22,
+              cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              fontFamily: 'inherit', zIndex: 10000
+            }}
+          >
+            ✕
+          </button>
+          {previewFile.isImage ? (
+            <img
+              src={previewFile.url}
+              alt="Preview Lampiran"
               onClick={(e) => e.stopPropagation()}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '90vh',
+                borderRadius: 12,
+                objectFit: 'contain',
+                boxShadow: '0 8px 40px rgba(0,0,0,0.5)'
+              }}
             />
-          </div>
+          ) : previewFile.isPdf ? (
+            <iframe
+              src={previewFile.url}
+              title="Preview PDF"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '100%',
+                maxWidth: 800,
+                height: '85vh',
+                borderRadius: 12,
+                border: 'none',
+                boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+                background: '#fff'
+              }}
+            />
+          ) : (
+            <iframe
+              src={previewFile.url}
+              title="Preview File"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '100%',
+                maxWidth: 800,
+                height: '85vh',
+                borderRadius: 12,
+                border: 'none',
+                boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+                background: '#fff'
+              }}
+            />
+          )}
         </div>
       )}
 
