@@ -270,11 +270,64 @@ export default function Tagihan() {
         </div>
 
         {/* List */}
-        <div className="mt-3" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <div className="mt-3" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="section-title" style={{ marginBottom: 0 }}>Daftar tagihan</div>
-          {filtered.length > 0 && (
-            <span style={{ fontSize: 11, color: '#8A9991', fontWeight: 600 }}>{filtered.length} item</span>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {filtered.length > 0 && (
+              <button
+                onClick={() => {
+                  // Generate CSV
+                  const rows = [
+                    ['No', ...(modePengurus ? ['Warga','No. Rumah'] : []), 'Bulan Iuran', 'Nominal', 'Status', 'Jatuh Tempo', 'Tgl Dibuat'],
+                    ...filtered.map((t, i) => [
+                      i + 1,
+                      ...(modePengurus ? [
+                        t.expand?.warga?.expand?.user?.name || 'Warga',
+                        t.expand?.warga?.no_rumah || '',
+                      ] : []),
+                      t.expand?.iuran?.kode || '-',
+                      (t.nominal || 0).toString(),
+                      t.status_pembayaran,
+                      t.jatuh_tempo ? new Date(t.jatuh_tempo).toLocaleDateString('id-ID') : '-',
+                      t.created ? new Date(t.created).toLocaleDateString('id-ID') : '-',
+                    ]),
+                  ];
+                  const csv = rows.map(r => r.join(',')).join('\n');
+                  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'tagihan.csv';
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                style={{
+                  border: '1.5px solid #15935A',
+                  background: '#E8F5EE',
+                  color: '#15935A',
+                  padding: '6px 12px',
+                  borderRadius: 10,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 3v13m0 0l-4-4m4 4l4-4" stroke="#15935A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M4 17v3h16v-3" stroke="#15935A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                CSV
+              </button>
+            )}
+            {filtered.length > 0 && (
+              <span style={{ fontSize: 11, color: '#8A9991', fontWeight: 600 }}>{filtered.length} item</span>
+            )}
+          </div>
         </div>
         {loading ? (
           <div className="card text-center" style={{ padding: 40, marginTop: 12 }}>
