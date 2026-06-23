@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import Iuran from './pages/Iuran'
 import Lapor from './pages/Lapor'
 import LaporanWarga from './pages/LaporanWarga'
+import LaporanScurity from './pages/LaporanScurity'
 import Tagihan from './pages/Tagihan'
 import Profil from './pages/Profil'
 import Lampiran from './pages/Lampiran'
@@ -29,6 +30,7 @@ function App() {
       <Route path="/iuran" element={<ProtectedRoute><Iuran /></ProtectedRoute>} />
       <Route path="/lapor" element={<ProtectedRoute><Lapor /></ProtectedRoute>} />
       <Route path="/laporan-warga" element={<ProtectedRoute><LaporanWarga /></ProtectedRoute>} />
+      <Route path="/laporan-scurity" element={<ProtectedRoute><LaporanScurity /></ProtectedRoute>} />
       <Route path="/tagihan" element={<ProtectedRoute><Tagihan /></ProtectedRoute>} />
       <Route path="/lampiran" element={<ProtectedRoute><Lampiran /></ProtectedRoute>} />
       <Route path="/profil" element={<ProtectedRoute><Profil /></ProtectedRoute>} />

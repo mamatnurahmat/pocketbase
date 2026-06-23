@@ -7,6 +7,7 @@ export default function Lapor() {
   const navigate = useNavigate();
   const [warga, setWarga] = useState(null);
   const [isScurity] = useState(() => localStorage.getItem('isScurity') === 'true');
+  const [jenis, setJenis] = useState('');
   const [keterangan, setKeterangan] = useState('');
   const [foto, setFoto] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -42,29 +43,39 @@ export default function Lapor() {
     setMessage(null);
 
     try {
-      const formData = new FormData();
-      if (warga) formData.append('warga', warga.id);
-      formData.append('keterangan', keterangan);
-      formData.append('foto', foto);
-      formData.append('status', 'Menunggu Konfirmasi');
+      if (isScurity) {
+        const formData = new FormData();
+        const keteranganFinal = jenis === 'lainnya' ? keterangan : jenis;
+        formData.append('jenis', jenis);
+        formData.append('keterangan', keteranganFinal);
+        formData.append('foto', foto);
+        formData.append('dibuat_oleh', pb.authStore.model.id);
+        await pb.collection('laporan_scurity').create(formData);
+      } else {
+        const formData = new FormData();
+        if (warga) formData.append('warga', warga.id);
+        formData.append('keterangan', keterangan);
+        formData.append('foto', foto);
+        formData.append('status', 'Menunggu Konfirmasi');
 
-      const laporRecord = await pb.collection('lapor').create(formData);
-      
-      // Tambahkan post ke logs
-      try {
-        const previewText = keterangan.length > 50 ? keterangan.substring(0, 47) + '...' : keterangan;
-        const logDetail = `Tujuan Koleksi: lapor\nID Record: ${laporRecord.id}\nOleh: ${warga ? 'Warga ' + warga.no_rumah : pb.authStore.model?.name}\nWaktu: ${new Date().toLocaleString('id-ID')}\nKeterangan: Laporan - ${previewText}`;
+        const laporRecord = await pb.collection('lapor').create(formData);
         
-        await pb.collection('aktivitas_warga').create({
-          warga: warga.id,
-          aktivitas: 'Membuat Laporan',
-          detail: logDetail
-        });
-      } catch (logErr) {
-        console.warn("Gagal mencatat log aktivitas:", logErr);
+        try {
+          const previewText = keterangan.length > 50 ? keterangan.substring(0, 47) + '...' : keterangan;
+          const logDetail = `Tujuan Koleksi: lapor\nID Record: ${laporRecord.id}\nOleh: ${warga ? 'Warga ' + warga.no_rumah : pb.authStore.model?.name}\nWaktu: ${new Date().toLocaleString('id-ID')}\nKeterangan: Laporan - ${previewText}`;
+          
+          await pb.collection('aktivitas_warga').create({
+            warga: warga.id,
+            aktivitas: 'Membuat Laporan',
+            detail: logDetail
+          });
+        } catch (logErr) {
+          console.warn('Gagal mencatat log aktivitas:', logErr);
+        }
       }
 
       setMessage({ type: 'success', text: 'Laporan berhasil dikirim!' });
+      setJenis('');
       setKeterangan('');
       setFoto(null);
       setPreview(null);
@@ -150,14 +161,40 @@ export default function Lapor() {
             </div>
 
             <div className="form-group">
-              <label>Keterangan Laporan</label>
-              <textarea
-                className="form-control" style={{ minHeight: 120, resize: 'vertical' }}
-                placeholder="Deskripsikan laporan Anda di sini..."
-                value={keterangan} onChange={(e) => setKeterangan(e.target.value)} required
-              />
+              {isScurity ? (
+                <>
+                  <label>Jenis Laporan</label>
+                  <select
+                    className="form-control"
+                    value={jenis}
+                    onChange={(e) => { setJenis(e.target.value); setKeterangan(''); }}
+                    required
+                  >
+                    <option value="">-- Pilih --</option>
+                    <option value="absen">Absen</option>
+                    <option value="patroli">Patroli</option>
+                    <option value="lainnya">Lainnya</option>
+                  </select>
+                  {jenis === 'lainnya' && (
+                    <textarea
+                      className="form-control" style={{ minHeight: 100, resize: 'vertical', marginTop: 10 }}
+                      placeholder="Deskripsikan laporan Anda di sini..."
+                      value={keterangan} onChange={(e) => setKeterangan(e.target.value)} required
+                    />
+                  )}
+                </>
+              ) : (
+                <>
+                  <label>Keterangan Laporan</label>
+                  <textarea
+                    className="form-control" style={{ minHeight: 120, resize: 'vertical' }}
+                    placeholder="Deskripsikan laporan Anda di sini..."
+                    value={keterangan} onChange={(e) => setKeterangan(e.target.value)} required
+                  />
+                </>
+              )}
             </div>
-            <button type="submit" className="btn btn-primary" disabled={loading || !warga || !foto}>
+            <button type="submit" className="btn btn-primary" disabled={loading || (isScurity ? !jenis : !keterangan) || !foto}>
               {loading ? 'Mengirim...' : 'Kirim Laporan'}
             </button>
           </form>

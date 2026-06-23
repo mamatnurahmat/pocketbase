@@ -159,6 +159,14 @@ export default function Dashboard() {
                   </span>
                   <span>Warga</span>
                 </button>
+                <button className="quick-action" onClick={() => navigate('/laporan-scurity')}>
+                  <span className="quick-action-icon" style={{ background: '#F3E5F5' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#7B1FA2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </span>
+                  <span>Lap. Scurity</span>
+                </button>
               </>
             ) : (
               <>
@@ -191,6 +199,14 @@ export default function Dashboard() {
                     </svg>
                   </span>
                   <span>Warga</span>
+                </button>
+                <button className="quick-action" onClick={() => navigate('/laporan-scurity')}>
+                  <span className="quick-action-icon" style={{ background: '#F3E5F5' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#7B1FA2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </span>
+                  <span>Lap. Scurity</span>
                 </button>
                 <button className="quick-action" onClick={() => navigate('/lampiran')}>
                   <span className="quick-action-icon" style={{ background: '#FEF3E2' }}>
