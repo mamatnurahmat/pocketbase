@@ -71,6 +71,7 @@ export default function Dashboard() {
   const unpaidThisMonth = tagihan.filter(t => t.status_pembayaran !== 'Lunas' && isCurrentMonth(t.jatuh_tempo)).length;
   const lunasThisMonth = tagihan.filter(t => t.status_pembayaran === 'Lunas' && isCurrentMonth(t.jatuh_tempo)).length;
   
+  const isScurity = localStorage.getItem('isScurity') === 'true';
   const displayName = user?.name || user?.username?.replace('hp_', '') || 'Warga';
 
   return (
@@ -95,86 +96,117 @@ export default function Dashboard() {
       </div>
 
       <div className="page-content" style={{ marginTop: -44 }}>
-        {/* Tagihan Card */}
-        <div className="card" style={{ boxShadow: '0 10px 30px -12px rgba(15,26,20,.18)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 13, color: '#6B7B72', fontWeight: 600 }}>
-              Total tagihan {warga?.pengurus && (localStorage.getItem('modePengurus') === null || localStorage.getItem('modePengurus') === 'true') && localStorage.getItem('isPengurus') === 'true' ? 'semua warga ' : ''}belum dibayar
-            </span>
-            {unpaid.length > 0 && (
-              <span className="badge badge-warning">{unpaid.length} tagihan</span>
-            )}
-          </div>
-          <div className="rupiah" style={{ marginTop: 10, fontSize: 30, fontWeight: 800 }}>
-            {rupiah(totalUnpaid)}
-          </div>
-          <button
-            className="btn btn-primary"
-            style={{ marginTop: 16 }}
-            onClick={() => navigate('/tagihan')}
-          >
-            Lihat tagihan
-          </button>
-        </div>
+        {!isScurity && (
+          <>
+            {/* Tagihan Card */}
+            <div className="card" style={{ boxShadow: '0 10px 30px -12px rgba(15,26,20,.18)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 13, color: '#6B7B72', fontWeight: 600 }}>
+                  Total tagihan {warga?.pengurus && (localStorage.getItem('modePengurus') === null || localStorage.getItem('modePengurus') === 'true') && localStorage.getItem('isPengurus') === 'true' ? 'semua warga ' : ''}belum dibayar
+                </span>
+                {unpaid.length > 0 && (
+                  <span className="badge badge-warning">{unpaid.length} tagihan</span>
+                )}
+              </div>
+              <div className="rupiah" style={{ marginTop: 10, fontSize: 30, fontWeight: 800 }}>
+                {rupiah(totalUnpaid)}
+              </div>
+              <button
+                className="btn btn-primary"
+                style={{ marginTop: 16 }}
+                onClick={() => navigate('/tagihan')}
+              >
+                Lihat tagihan
+              </button>
+            </div>
 
-        {/* Summary Laporan */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
-          <div className="card text-center" style={{ padding: '16px 12px' }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#E53935' }}>{unpaidThisMonth}</div>
-            <div style={{ fontSize: 12, color: '#6B7B72', marginTop: 4 }}>Belum Bayar (Bulan Ini)</div>
-          </div>
-          <div className="card text-center" style={{ padding: '16px 12px' }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#15935A' }}>{lunasThisMonth}</div>
-            <div style={{ fontSize: 12, color: '#6B7B72', marginTop: 4 }}>Lunas (Bulan Ini)</div>
-          </div>
-        </div>
+            {/* Summary Laporan */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
+              <div className="card text-center" style={{ padding: '16px 12px' }}>
+                <div style={{ fontSize: 24, fontWeight: 800, color: '#E53935' }}>{unpaidThisMonth}</div>
+                <div style={{ fontSize: 12, color: '#6B7B72', marginTop: 4 }}>Belum Bayar (Bulan Ini)</div>
+              </div>
+              <div className="card text-center" style={{ padding: '16px 12px' }}>
+                <div style={{ fontSize: 24, fontWeight: 800, color: '#15935A' }}>{lunasThisMonth}</div>
+                <div style={{ fontSize: 12, color: '#6B7B72', marginTop: 4 }}>Lunas (Bulan Ini)</div>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Quick Actions */}
         <div className="card mt-3" style={{ padding: '18px 8px' }}>
           <div className="quick-actions">
-            <button className="quick-action" onClick={() => navigate('/iuran')}>
-              <span className="quick-action-icon" style={{ background: '#E8F5EE' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="6" width="18" height="13" rx="3" stroke="#15935A" strokeWidth="1.8"/>
-                  <path d="M3 10h18" stroke="#15935A" strokeWidth="1.8"/>
-                  <path d="M7 15h4" stroke="#15935A" strokeWidth="1.8" strokeLinecap="round"/>
-                </svg>
-              </span>
-              <span>Upload Bukti</span>
-            </button>
-            <button className="quick-action" onClick={() => navigate('/laporan-warga')}>
-              <span className="quick-action-icon" style={{ background: '#FCE4EC' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <path d="M8 12h8m-8-4h8m-8 8h4" stroke="#D81B60" strokeWidth="1.8" strokeLinecap="round"/>
-                  <rect x="4" y="4" width="16" height="16" rx="3" stroke="#D81B60" strokeWidth="1.8"/>
-                </svg>
-              </span>
-              <span>Lap. Warga</span>
-            </button>
-            <button className="quick-action" onClick={() => navigate('/warga')}>
-              <span className="quick-action-icon" style={{ background: '#E3F2FD' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="#1976D2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="9" cy="7" r="4" stroke="#1976D2" strokeWidth="1.8"/>
-                  <path d="M23 21v-2a4 4 0 00-3-3.87" stroke="#1976D2" strokeWidth="1.8" strokeLinecap="round"/>
-                  <path d="M16 3.13a4 4 0 010 7.75" stroke="#1976D2" strokeWidth="1.8" strokeLinecap="round"/>
-                </svg>
-              </span>
-              <span>Warga</span>
-            </button>
-            <button className="quick-action" onClick={() => navigate('/lampiran')}>
-              <span className="quick-action-icon" style={{ background: '#FEF3E2' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke="#C8821A" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </span>
-              <span>Lampiran</span>
-            </button>
+            {localStorage.getItem('isScurity') === 'true' ? (
+              <>
+                <button className="quick-action" onClick={() => navigate('/laporan-warga')}>
+                  <span className="quick-action-icon" style={{ background: '#FCE4EC' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <path d="M8 12h8m-8-4h8m-8 8h4" stroke="#D81B60" strokeWidth="1.8" strokeLinecap="round"/>
+                      <rect x="4" y="4" width="16" height="16" rx="3" stroke="#D81B60" strokeWidth="1.8"/>
+                    </svg>
+                  </span>
+                  <span>Lap. Warga</span>
+                </button>
+                <button className="quick-action" onClick={() => navigate('/warga')}>
+                  <span className="quick-action-icon" style={{ background: '#E3F2FD' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="#1976D2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="9" cy="7" r="4" stroke="#1976D2" strokeWidth="1.8"/>
+                      <path d="M23 21v-2a4 4 0 00-3-3.87" stroke="#1976D2" strokeWidth="1.8" strokeLinecap="round"/>
+                      <path d="M16 3.13a4 4 0 010 7.75" stroke="#1976D2" strokeWidth="1.8" strokeLinecap="round"/>
+                    </svg>
+                  </span>
+                  <span>Warga</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button className="quick-action" onClick={() => navigate('/iuran')}>
+                  <span className="quick-action-icon" style={{ background: '#E8F5EE' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="6" width="18" height="13" rx="3" stroke="#15935A" strokeWidth="1.8"/>
+                      <path d="M3 10h18" stroke="#15935A" strokeWidth="1.8"/>
+                      <path d="M7 15h4" stroke="#15935A" strokeWidth="1.8" strokeLinecap="round"/>
+                    </svg>
+                  </span>
+                  <span>Upload Bukti</span>
+                </button>
+                <button className="quick-action" onClick={() => navigate('/laporan-warga')}>
+                  <span className="quick-action-icon" style={{ background: '#FCE4EC' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <path d="M8 12h8m-8-4h8m-8 8h4" stroke="#D81B60" strokeWidth="1.8" strokeLinecap="round"/>
+                      <rect x="4" y="4" width="16" height="16" rx="3" stroke="#D81B60" strokeWidth="1.8"/>
+                    </svg>
+                  </span>
+                  <span>Lap. Warga</span>
+                </button>
+                <button className="quick-action" onClick={() => navigate('/warga')}>
+                  <span className="quick-action-icon" style={{ background: '#E3F2FD' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="#1976D2" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="9" cy="7" r="4" stroke="#1976D2" strokeWidth="1.8"/>
+                      <path d="M23 21v-2a4 4 0 00-3-3.87" stroke="#1976D2" strokeWidth="1.8" strokeLinecap="round"/>
+                      <path d="M16 3.13a4 4 0 010 7.75" stroke="#1976D2" strokeWidth="1.8" strokeLinecap="round"/>
+                    </svg>
+                  </span>
+                  <span>Warga</span>
+                </button>
+                <button className="quick-action" onClick={() => navigate('/lampiran')}>
+                  <span className="quick-action-icon" style={{ background: '#FEF3E2' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke="#C8821A" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </span>
+                  <span>Lampiran</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
         {/* Info Warga */}
-        {warga && (
+        {!isScurity && warga && (
           <div className="mt-3">
             <div className="section-title">Info warga</div>
             <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -193,7 +225,7 @@ export default function Dashboard() {
         )}
 
         {/* Recent Tagihan */}
-        {unpaid.length > 0 && (
+        {!isScurity && unpaid.length > 0 && (
           <div className="mt-3">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <span className="section-title" style={{ margin: 0 }}>Tagihan aktif</span>

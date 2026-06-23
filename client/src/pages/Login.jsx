@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
+import { checkScurity } from '../lib/auth';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -26,6 +27,8 @@ export default function Login() {
       } catch (e) {
         localStorage.setItem('isPengurus', 'false');
       }
+      const isSc = await checkScurity();
+      localStorage.setItem('isScurity', isSc ? 'true' : 'false');
       navigate('/dashboard');
     } catch (err) {
       setError('Nomor HP / Email atau Password salah.');

@@ -6,6 +6,7 @@ import BottomNav from '../components/BottomNav';
 export default function Lapor() {
   const navigate = useNavigate();
   const [warga, setWarga] = useState(null);
+  const [isScurity] = useState(() => localStorage.getItem('isScurity') === 'true');
   const [keterangan, setKeterangan] = useState('');
   const [foto, setFoto] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -35,7 +36,6 @@ export default function Lapor() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!warga) return setMessage({ type: 'error', text: 'Data warga tidak ditemukan.' });
     if (!foto) return setMessage({ type: 'error', text: 'Mohon sertakan foto laporan.' });
 
     setLoading(true);
@@ -43,7 +43,7 @@ export default function Lapor() {
 
     try {
       const formData = new FormData();
-      formData.append('warga', warga.id);
+      if (warga) formData.append('warga', warga.id);
       formData.append('keterangan', keterangan);
       formData.append('foto', foto);
       formData.append('status', 'Menunggu Konfirmasi');
@@ -53,7 +53,7 @@ export default function Lapor() {
       // Tambahkan post ke logs
       try {
         const previewText = keterangan.length > 50 ? keterangan.substring(0, 47) + '...' : keterangan;
-        const logDetail = `Tujuan Koleksi: lapor\nID Record: ${laporRecord.id}\nOleh: Warga ${warga.no_rumah}\nWaktu: ${new Date().toLocaleString('id-ID')}\nKeterangan: Laporan - ${previewText}`;
+        const logDetail = `Tujuan Koleksi: lapor\nID Record: ${laporRecord.id}\nOleh: ${warga ? 'Warga ' + warga.no_rumah : pb.authStore.model?.name}\nWaktu: ${new Date().toLocaleString('id-ID')}\nKeterangan: Laporan - ${previewText}`;
         
         await pb.collection('aktivitas_warga').create({
           warga: warga.id,

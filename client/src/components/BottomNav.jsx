@@ -44,13 +44,48 @@ const tabs = [
   },
 ];
 
+const scurityTabs = [
+  {
+    path: '/dashboard',
+    label: 'Beranda',
+    icon: (c) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M3 11l9-7 9 7" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M5 10v9h14v-9" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+  },
+  {
+    path: '/lapor',
+    label: 'Lapor',
+    icon: (c) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M4 14V6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V14C20 15.1046 19.1046 16 18 16H8L4 20V14Z" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx="12" cy="10" r="1" fill={c}/>
+      </svg>
+    ),
+  },
+  {
+    path: '/profil',
+    label: 'Profil',
+    icon: (c) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="8" r="3.5" stroke={c} strokeWidth="1.9"/>
+        <path d="M5 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5" stroke={c} strokeWidth="1.9" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+];
+
 export default function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
+  const isScurity = localStorage.getItem('isScurity') === 'true';
+  const activeTabs = isScurity ? scurityTabs : tabs;
 
   return (
     <div className="bottom-nav">
-      {tabs.map((tab) => {
+      {activeTabs.map((tab) => {
         const isActive = location.pathname === tab.path;
         const color = isActive ? '#15935A' : '#A6B0AA';
         return (
