@@ -112,6 +112,134 @@ export default function Tagihan() {
     return 'badge-danger';
   };
 
+  // PDF Export
+  const handleExportPDF = async () => {
+    // dynamic load jsPDF + autoTable from CDN
+    if (!window.jspdf) {
+      try {
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+      } catch(e) {
+        alert('Gagal memuat library PDF. Periksa koneksi internet.');
+        console.error(e);
+        return;
+      }
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+
+    const margin=14, pageW=210, contentW=pageW-margin*2;
+
+    // header
+    doc.setFillColor(15,26,20);
+    doc.rect(0,0,pageW,28,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(14);
+    doc.setFont('helvetica','bold');
+    doc.text('WARGA P2S — RW 04',margin,18);
+
+    // title
+    const title = 'Laporan Tagihan' + (modePengurus ? ' (Semua Warga)' : '');
+    doc.setTextColor(15,26,20);
+    doc.setFontSize(18);
+    doc.setFont('helvetica','bold');
+    doc.text(title,margin,44);
+
+    // date & filter info
+    const now=new Date();
+    const dateStr=now.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+    doc.setFontSize(9);
+    doc.setTextColor(110,123,114);
+    doc.setFont('helvetica','normal');
+    let subtitle = 'Dicetak: '+dateStr;
+    if (filter !== 'all') subtitle += ' | Status: '+filter;
+    if (selectedKode !== 'all') subtitle += ' | Bulan: '+selectedKode;
+    doc.text(subtitle,margin,52);
+
+    // build table rows
+    const cols = modePengurus 
+      ? ['No', 'Warga', 'No. Rumah', 'Bulan Iuran', 'Nominal', 'Status', 'Jatuh Tempo']
+      : ['No', 'Bulan Iuran', 'Nominal', 'Status', 'Jatuh Tempo'];
+    const rows = filtered.map((t, i) => {
+      const base = [
+        String(i + 1),
+        t.expand?.iuran?.kode || '-',
+        rupiah(t.nominal || 0),
+        t.status_pembayaran || '-',
+        t.jatuh_tempo ? new Date(t.jatuh_tempo).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }) : '-',
+      ];
+      if (modePengurus) {
+        base.splice(1, 0, t.expand?.warga?.expand?.user?.name || 'Warga', t.expand?.warga?.no_rumah || '');
+      }
+      return base;
+    });
+
+    doc.autoTable({
+      startY:60,
+      head: [cols],
+      body: rows,
+      theme:'grid',
+      headStyles:{
+        fillColor:[21,147,90],
+        textColor:[255,255,255],
+        fontStyle:'bold',
+        fontSize:10,
+        halign:'center',
+        cellPadding:{top:5,bottom:5,left:6,right:6}
+      },
+      bodyStyles:{
+        fontSize:9,
+        textColor:[15,26,20],
+        cellPadding:{top:4,bottom:4,left:6,right:6}
+      },
+      alternateRowStyles:{
+        fillColor:[244,246,244]
+      },
+      margin:{ left:margin, right:margin },
+      tableWidth:contentW,
+      styles:{
+        cellPadding:{top:4,bottom:4,left:6,right:6},
+        lineColor:[200,204,198],
+        lineWidth:0.3
+      },
+      didDrawPage:function(data){
+        doc.setFontSize(8);
+        doc.setTextColor(160,160,160);
+        doc.setFont('helvetica','normal');
+        doc.text('Warga P2S — RW 04 | Halaman '+data.pageNumber+' dari '+data.pageCount,margin,290);
+      }
+    });
+
+    const finalY = doc.lastAutoTable.finalY || 200;
+
+    // summary footer
+    const totalFiltered = filtered.reduce((s, t) => s + (t.nominal || 0), 0);
+    doc.setDrawColor(15,26,20);
+    doc.setLineWidth(0.5);
+    doc.line(margin, finalY + 8, pageW - margin, finalY + 8);
+    doc.setFontSize(11);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(15,26,20);
+    doc.text('Total: '+rupiah(totalFiltered)+' | '+filtered.length+' tagihan', margin, finalY + 18);
+
+    doc.setFontSize(7);
+    doc.setTextColor(180,180,180);
+    doc.setFont('helvetica','normal');
+    doc.text('Laporan ini digenerate otomatis dari sistem Warga P2S.', margin, 280);
+
+    doc.save('tagihan-'+now.toISOString().slice(0,10)+'.pdf');
+  };
+
+  function loadScript(src) {
+    return new Promise((res,rej)=>{
+      if(document.querySelector('script[src="'+src+'"]')) return res();
+      const s=document.createElement('script');
+      s.src=src; s.async=false;
+      s.onload=res; s.onerror=rej;
+      document.head.appendChild(s);
+    });
+  }
+
   const filters = [
     { key: 'all', label: 'Semua' },
     { key: 'Belum Dibayar', label: 'Belum Bayar' },
@@ -273,54 +401,56 @@ export default function Tagihan() {
         <div className="mt-3" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="section-title" style={{ marginBottom: 0 }}>Daftar tagihan</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {filtered.length > 0 && (
+            {filtered.length > 0 && (<>
+              <button
+                onClick={handleExportPDF}
+                style={{
+                  border: '1.5px solid #0F1A14',
+                  background: '#0F1A14',
+                  color: '#fff',
+                  padding: '6px 12px',
+                  borderRadius: 10,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 9V3h12v6"/>
+                  <rect x="4" y="9" width="16" height="12" rx="2"/>
+                  <path d="M9 13h6M9 16h4"/>
+                </svg>
+                PDF
+              </button>
               <button
                 onClick={() => {
-                  // Generate XLS (Excel XML Spreadsheet 2003 — kompatibel Excel, LibreOffice, Google Sheets)
-                  const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                  const headers = ['No', ...(modePengurus ? ['Warga','No. Rumah'] : []), 'Bulan Iuran', 'Nominal', 'Status', 'Jatuh Tempo', 'Tgl Dibuat'];
-                  const bodyRows = filtered.map((t, i) => [
-                    i + 1,
-                    ...(modePengurus ? [
-                      t.expand?.warga?.expand?.user?.name || 'Warga',
-                      t.expand?.warga?.no_rumah || '',
-                    ] : []),
-                    t.expand?.iuran?.kode || '-',
-                    'Rp ' + (t.nominal || 0).toLocaleString('id-ID'),
-                    t.status_pembayaran,
-                    t.jatuh_tempo ? new Date(t.jatuh_tempo).toLocaleDateString('id-ID') : '-',
-                    t.created ? new Date(t.created).toLocaleDateString('id-ID') : '-',
-                  ]);
-
-                  const rowToXml = (cells, isHeader) => {
-                    const tag = isHeader ? 'th' : 'td';
-                    return '<Row>' + cells.map(c => `<Cell><Data ss:Type="String">${esc(c)}</Data></Cell>`).join('') + '</Row>';
-                  };
-
-                  const xml = [
-                    '<?xml version="1.0" encoding="UTF-8"?>',
-                    '<?mso-application progid="Excel.Sheet"?>',
-                    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"',
-                    ' xmlns:o="urn:schemas-microsoft-com:office:office"',
-                    ' xmlns:x="urn:schemas-microsoft-com:office:excel"',
-                    ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">',
-                    '<Styles>',
-                    ' <Style ss:ID="header"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#15935A" ss:Pattern="Solid"/></Style>',
-                    '</Styles>',
-                    '<Worksheet ss:Name="Tagihan">',
-                    '<Table>',
-                    '<Row>' + headers.map(h => `<Cell ss:StyleID="header"><Data ss:Type="String">${esc(h)}</Data></Cell>`).join('') + '</Row>',
-                    ...bodyRows.map(row => rowToXml(row)),
-                    '</Table>',
-                    '</Worksheet>',
-                    '</Workbook>',
-                  ].join('\n');
-
-                  const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+                  // Generate CSV
+                  const rows = [
+                    ['No', ...(modePengurus ? ['Warga','No. Rumah'] : []), 'Bulan Iuran', 'Nominal', 'Status', 'Jatuh Tempo', 'Tgl Dibuat'],
+                    ...filtered.map((t, i) => [
+                      i + 1,
+                      ...(modePengurus ? [
+                        t.expand?.warga?.expand?.user?.name || 'Warga',
+                        t.expand?.warga?.no_rumah || '',
+                      ] : []),
+                      t.expand?.iuran?.kode || '-',
+                      (t.nominal || 0).toString(),
+                      t.status_pembayaran,
+                      t.jatuh_tempo ? new Date(t.jatuh_tempo).toLocaleDateString('id-ID') : '-',
+                      t.created ? new Date(t.created).toLocaleDateString('id-ID') : '-',
+                    ]),
+                  ];
+                  const csv = rows.map(r => r.join(',')).join('\n');
+                  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
                   a.href = url;
-                  a.download = 'tagihan.xls';
+                  a.download = 'tagihan.csv';
                   a.click();
                   URL.revokeObjectURL(url);
                 }}
@@ -344,9 +474,9 @@ export default function Tagihan() {
                   <path d="M12 3v13m0 0l-4-4m4 4l4-4" stroke="#15935A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M4 17v3h16v-3" stroke="#15935A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                XLS
+                CSV
               </button>
-            )}
+            </>)}
             {filtered.length > 0 && (
               <span style={{ fontSize: 11, color: '#8A9991', fontWeight: 600 }}>{filtered.length} item</span>
             )}

@@ -167,7 +167,13 @@
           <div style="padding:8px 20px 28px;">
             <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0 16px;">
               <span style="font-size:22px; font-weight:800; color:#0F1A14; letter-spacing:-0.02em;">Iuran</span>
+              <div style="display:flex; gap:8px;">
+              <button onClick="{{ cetakPDFRiwayat }}" style="border:none; background:#0F1A14; color:#fff; font-size:12px; font-weight:700; padding:8px 12px; border-radius:20px; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 9V3h12v6" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><rect x="4" y="9" width="16" height="12" rx="2" stroke="#fff" stroke-width="2"/><path d="M9 13h6M9 16h4" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+                PDF
+              </button>
               <button onClick="{{ goRiwayat }}" style="border:none; background:#EAF0EC; color:#15935A; font-size:13px; font-weight:700; padding:8px 14px; border-radius:20px; cursor:pointer; font-family:inherit;">Riwayat</button>
+              </div>
             </div>
 
             <div style="background:linear-gradient(160deg,#147a4a,#0C6B40); border-radius:20px; padding:20px; color:#fff;">
@@ -441,6 +447,10 @@
                   <div style="flex:1; background:rgba(255,255,255,.12); border-radius:14px; padding:12px 14px;"><div style="font-size:11px; opacity:.8;">Pengeluaran (Jun)</div><div style="margin-top:3px; font-size:15px; font-weight:800; font-variant-numeric:tabular-nums;">{{ kasOut }}</div></div>
                 </div>
               </div>
+              <button onClick="{{ cetakPDF }}" style="margin-top:16px; width:100%; height:48px; border:none; background:#0F1A14; color:#fff; border-radius:14px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 9V3h12v6" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><rect x="4" y="9" width="16" height="12" rx="2" stroke="#fff" stroke-width="1.8"/><path d="M9 13h6M9 16h4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+                Cetak Laporan PDF
+              </button>
               <div style="margin-top:20px; font-size:13px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#8A9991;">Mutasi terbaru</div>
               <div style="margin-top:12px; display:flex; flex-direction:column; gap:10px;">
                 <sc-for list="{{ kasTx }}" as="t" hint-placeholder-count="5">
@@ -558,6 +568,114 @@ class Component extends DCLogic {
 
   rupiah(n){ return 'Rp ' + (n||0).toLocaleString('id-ID'); }
 
+  loadScript(src) {
+    return new Promise((res,rej)=>{
+      if(document.querySelector('script[src="'+src+'"]')) return res();
+      const s=document.createElement('script');
+      s.src=src; s.async=false;
+      s.onload=res; s.onerror=rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  async cetakLaporanPDF(title, rows, columns, footerText) {
+    // dynamic load jsPDF + autoTable from CDN
+    if(!window.jspdf){
+      try {
+        await this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+        await this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+      } catch(e){
+        alert('Gagal memuat library PDF. Periksa koneksi internet.');
+        console.error(e);
+        return;
+      }
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+
+    const margin=14, pageW=210, contentW=pageW-margin*2;
+
+    // header
+    doc.setFillColor(15,26,20);
+    doc.rect(0,0,pageW,28,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(14);
+    doc.setFont('helvetica','bold');
+    doc.text('WARGA P2S — RW 04',margin,18);
+
+    // title
+    doc.setTextColor(15,26,20);
+    doc.setFontSize(18);
+    doc.setFont('helvetica','bold');
+    doc.text(title,margin,44);
+
+    // date
+    const now=new Date();
+    const dateStr=now.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+    doc.setFontSize(9);
+    doc.setTextColor(110,123,114);
+    doc.setFont('helvetica','normal');
+    doc.text('Dicetak: '+dateStr,margin,52);
+
+    // autoTable with neat margins
+    doc.autoTable({
+      startY:60,
+      head: [columns],
+      body: rows,
+      theme:'grid',
+      headStyles:{
+        fillColor:[21,147,90],
+        textColor:[255,255,255],
+        fontStyle:'bold',
+        fontSize:10,
+        halign:'center',
+        cellPadding:{top:5,bottom:5,left:6,right:6}
+      },
+      bodyStyles:{
+        fontSize:9,
+        textColor:[15,26,20],
+        cellPadding:{top:4,bottom:4,left:6,right:6}
+      },
+      alternateRowStyles:{
+        fillColor:[244,246,244]
+      },
+      margin:{ left:margin, right:margin },
+      tableWidth:contentW,
+      styles:{
+        cellPadding:{top:4,bottom:4,left:6,right:6},
+        lineColor:[200,204,198],
+        lineWidth:0.3
+      },
+      didDrawPage:function(data){
+        doc.setFontSize(8);
+        doc.setTextColor(160,160,160);
+        doc.setFont('helvetica','normal');
+        doc.text('Warga P2S — RW 04 | Halaman '+data.pageNumber+' dari '+data.pageCount,margin,290);
+      }
+    });
+
+    const finalY=doc.lastAutoTable.finalY||200;
+
+    // footer summary
+    if(footerText){
+      doc.setDrawColor(15,26,20);
+      doc.setLineWidth(0.5);
+      doc.line(margin,finalY+8,pageW-margin,finalY+8);
+      doc.setFontSize(11);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(15,26,20);
+      doc.text(footerText,margin,finalY+18);
+    }
+
+    // bottom branding
+    doc.setFontSize(7);
+    doc.setTextColor(180,180,180);
+    doc.setFont('helvetica','normal');
+    doc.text('Laporan ini digenerate otomatis dari sistem Warga P2S.',margin,280);
+
+    doc.save(title.replace(/[^a-zA-Z0-9 ]/g,'').trim()+'-'+now.toISOString().slice(0,10)+'.pdf');
+  }
+
   go(screen){ this.setState({ screen }); requestAnimationFrame(()=>{ const v=this.base&&this.base.querySelector?this.base.querySelector('[data-appscroll]'):document.querySelector('[data-appscroll]'); if(v) v.scrollTop=0; }); }
 
   qr(){
@@ -667,6 +785,33 @@ class Component extends DCLogic {
       goHome:go('home'), goIuran:go('iuran'), goLapor:go('lapor'), goInfo:go('info'), goProfil:go('profil'),
       goRiwayat:go('riwayat'), goKas:go('kas'), goLaporNew:go('laporNew'), goVerifikasi:go('verifikasi'),
       goPayQris:()=>{ self.setState({ payMethod:'qris' }); }, goPayVa:()=>{ self.setState({ payMethod:'va' }); },
+      cetakPDF:()=>{
+        const cols=['Tanggal','Deskripsi','Jenis','Nominal'];
+        const rows=kasTxRaw.map(t=>[
+          t.date,
+          t.title,
+          t.dir==='in'?'Pemasukan':'Pengeluaran',
+          (t.dir==='in'?'+ ':'− ')+rupiah(t.amount)
+        ]);
+        rows.push(['','','Saldo Akhir',kasBalance]);
+        self.cetakLaporanPDF(
+          'Laporan Kas RT — '+new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'}),
+          rows,
+          cols,
+          'Saldo akhir: '+kasBalance+' | Pemasukan: '+kasIn+' | Pengeluaran: '+kasOut
+        );
+      },
+      cetakPDFRiwayat:()=>{
+        const cols=['Tanggal','Item','Periode','Metode','Nominal'];
+        const rows=riwayatRaw.map(r=>[
+          r.date,
+          r.title,
+          r.period,
+          r.method,
+          '-'+rupiah(r.amount)
+        ]);
+        self.cetakLaporanPDF('Riwayat Pembayaran Iuran',rows,cols);
+      },
       payNow:()=>{ if(s.payMethod==='qris'){ self.go('qris'); } else { self.go('success'); } },
       confirmQris:go('success'),
       doneToHome:go('home'),
