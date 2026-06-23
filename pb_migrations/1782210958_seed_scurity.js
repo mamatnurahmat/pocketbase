@@ -23,7 +23,7 @@ migrate((app) => {
       userRecord.set("username", `${item.nama.toLowerCase()}.scurity`);
       userRecord.set("email", email);
       userRecord.set("emailVisibility", true);
-      userRecord.setPassword("sama");
+      userRecord.setPassword("samasama");
       userRecord.set("name", item.nama);
       app.save(userRecord);
     }
