@@ -13,6 +13,7 @@ import Profil from './pages/Profil'
 import Lampiran from './pages/Lampiran'
 import Warga from './pages/Warga'
 import ProtectedRoute from './components/ProtectedRoute'
+import PinScreen from './components/PinScreen'
 import Sidebar from './components/Sidebar'
 import BottomNav from './components/BottomNav'
 import { pb } from './lib/pocketbase'
@@ -58,6 +59,7 @@ function App() {
       />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/pin" element={<ProtectedRoute><PinScreen /></ProtectedRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
       <Route path="/iuran" element={<ProtectedRoute><AppLayout><Iuran /></AppLayout></ProtectedRoute>} />
       <Route path="/lapor" element={<ProtectedRoute><AppLayout><Lapor /></AppLayout></ProtectedRoute>} />

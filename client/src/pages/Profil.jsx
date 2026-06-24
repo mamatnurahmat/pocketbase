@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
+import { useIdleTimer } from '../components/IdleTimer';
 export default function Profil() {
+  const { loadPin } = useIdleTimer();
   const navigate = useNavigate();
   const [user, setUser] = useState(pb.authStore.model);
   const [warga, setWarga] = useState(null);
@@ -15,6 +17,13 @@ export default function Profil() {
   const [phoneInput, setPhoneInput] = useState(phone);
   const [agama, setAgama] = useState('islam');
   const [pengurus, setPengurus] = useState(false);
+
+  // PIN fields
+  const [pin, setPin] = useState('');
+  const [pinConfirm, setPinConfirm] = useState('');
+  const [showPinForm, setShowPinForm] = useState(false);
+  const [pinLoading, setPinLoading] = useState(false);
+  const [pinMsg, setPinMsg] = useState({ text: '', type: '' });
 
   // Password fields
   const [oldPassword, setOldPassword] = useState('');
@@ -89,6 +98,28 @@ export default function Profil() {
         setUser(updatedUser);
       }
 
+      // ── 1b. Update PIN jika ada perubahan ──
+      if (showPinForm && warga && pin) {
+        if (pin.length !== 6) throw new Error('PIN harus 6 digit.');
+        if (pin !== pinConfirm) throw new Error('Konfirmasi PIN tidak cocok.');
+        const wargaUpdateData = {};
+        let needWargaUpdate = false;
+
+        if (pin !== (warga.pin || '666666')) {
+          wargaUpdateData.pin = pin;
+          needWargaUpdate = true;
+        }
+
+        if (needWargaUpdate) {
+          await pb.collection('warga').update(warga.id, wargaUpdateData);
+          setWarga(prev => ({ ...prev, ...wargaUpdateData }));
+          await loadPin();
+          setPin('');
+          setPinConfirm('');
+          setShowPinForm(false);
+        }
+      }
+
       // ── 2. Update warga collection (if exists) ──
       if (warga) {
         const wargaUpdateData = {};
@@ -116,6 +147,7 @@ export default function Profil() {
       }
 
       setMsg({ text: 'Profil berhasil diperbarui!', type: 'success' });
+      setPinMsg({ text: '', type: '' });
 
       if (passwordChanged) {
         setOldPassword('');
@@ -277,6 +309,91 @@ export default function Profil() {
               {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
             </button>
           </form>
+        </div>
+
+        {/* PIN Settings */}
+        <div className="mt-3 section-title">PIN Aplikasi</div>
+        <div className="card">
+          {pinMsg.text && (
+            <div className={`alert ${pinMsg.type === 'error' ? 'alert-error' : 'alert-success'}`} style={{ marginBottom: 16 }}>
+              {pinMsg.text}
+            </div>
+          )}
+          <div style={{ fontSize: 13, color: '#8A9991', marginBottom: 16, lineHeight: 1.5 }}>
+            PIN digunakan untuk membuka kunci aplikasi setelah 1 menit tidak ada aktivitas. PIN default: <strong>666666</strong>
+          </div>
+          {showPinForm ? (
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              setPinMsg({ text: '', type: '' });
+              setPinLoading(true);
+              try {
+                if (pin.length !== 6) throw new Error('PIN harus 6 digit.');
+                if (pin !== pinConfirm) throw new Error('Konfirmasi PIN tidak cocok.');
+                if (warga) {
+                  await pb.collection('warga').update(warga.id, { pin });
+                  setWarga(prev => ({ ...prev, pin }));
+                  await loadPin();
+                  setPinMsg({ text: 'PIN berhasil diubah!', type: 'success' });
+                  setTimeout(() => {
+                    setShowPinForm(false);
+                    setPin('');
+                    setPinConfirm('');
+                    setPinMsg({ text: '', type: '' });
+                  }, 1500);
+                }
+              } catch (err) {
+                setPinMsg({ text: err.message || 'Gagal mengubah PIN.', type: 'error' });
+              } finally {
+                setPinLoading(false);
+              }
+            }}>
+              <div className="form-group">
+                <label>PIN Baru (6 digit)</label>
+                <input
+                  type="password"
+                  className="form-control"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                  placeholder="******"
+                  maxLength={6}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Konfirmasi PIN</label>
+                <input
+                  type="password"
+                  className="form-control"
+                  value={pinConfirm}
+                  onChange={(e) => setPinConfirm(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                  placeholder="******"
+                  maxLength={6}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  required
+                />
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button type="submit" className="btn btn-primary" disabled={pinLoading} style={{ flex: 1, height: 48, fontSize: 15 }}>
+                  {pinLoading ? 'Menyimpan...' : 'Simpan PIN'}
+                </button>
+                <button type="button" className="btn btn-outline" onClick={() => { setShowPinForm(false); setPin(''); setPinConfirm(''); setPinMsg({ text: '', type: '' }); }} style={{ width: 'auto', padding: '0 20px', height: 48, fontSize: 14, flex: 'none' }}>
+                  Batal
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button className="btn btn-outline btn-sm" onClick={() => setShowPinForm(true)} style={{ marginTop: 0, height: 48, fontSize: 14 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ marginRight: 8 }}>
+                <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.8"/>
+                <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+              </svg>
+              Ubah PIN Aplikasi
+            </button>
+          )}
         </div>
 
         {/* Info */}
