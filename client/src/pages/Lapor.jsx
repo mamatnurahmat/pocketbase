@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
-import BottomNav from '../components/BottomNav';
-
 export default function Lapor() {
   const navigate = useNavigate();
   const [warga, setWarga] = useState(null);
@@ -201,7 +199,6 @@ export default function Lapor() {
         </div>
       </div>
 
-      <BottomNav />
     </div>
   );
 }

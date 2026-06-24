@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { pb } from '../lib/pocketbase';
-import BottomNav from '../components/BottomNav';
-
 export default function Iuran() {
   const [warga, setWarga] = useState(null);
   const [iuranList, setIuranList] = useState([]);
@@ -310,7 +308,6 @@ export default function Iuran() {
         </div>
       )}
 
-      <BottomNav />
     </div>
   );
 }

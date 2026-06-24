@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
-import BottomNav from '../components/BottomNav';
-
 export default function Dashboard() {
   const navigate = useNavigate();
   const user = pb.authStore.model;
@@ -99,6 +97,7 @@ export default function Dashboard() {
         {!isScurity && (
           <>
             {/* Tagihan Card */}
+            <div className="dashboard-cards">
             <div className="card" style={{ boxShadow: '0 10px 30px -12px rgba(15,26,20,.18)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 13, color: '#6B7B72', fontWeight: 600 }}>
@@ -121,7 +120,7 @@ export default function Dashboard() {
             </div>
 
             {/* Summary Laporan */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
+            <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 16 }}>
               <div className="card text-center" style={{ padding: '16px 12px' }}>
                 <div style={{ fontSize: 24, fontWeight: 800, color: '#E53935' }}>{unpaidThisMonth}</div>
                 <div style={{ fontSize: 12, color: '#6B7B72', marginTop: 4 }}>Belum Bayar (Bulan Ini)</div>
@@ -131,6 +130,7 @@ export default function Dashboard() {
                 <div style={{ fontSize: 12, color: '#6B7B72', marginTop: 4 }}>Lunas (Bulan Ini)</div>
               </div>
             </div>
+          </div>
           </>
         )}
 
@@ -273,7 +273,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      <BottomNav />
     </div>
   );
 }

@@ -37,14 +37,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-#root {
-  max-width: 480px;
-  margin: 0 auto;
-  min-height: 100vh;
-  min-height: 100dvh;
-  position: relative;
-}
-
 /* ===== TYPOGRAPHY ===== */
 h1, h2, h3 { font-weight: 800; letter-spacing: -0.02em; color: var(--text); }
 h1 { font-size: 26px; }
@@ -442,6 +434,231 @@ a { color: var(--primary); text-decoration: none; font-weight: 600; }
   cursor: pointer;
   line-height: 1;
   padding: 4px;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--card);
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  box-shadow: 4px 0 20px rgba(15,26,20,.12);
+}
+
+.sidebar--open {
+  transform: translateX(0);
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,26,20,.35);
+  z-index: 299;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-close:hover {
+  background: #F0F2F0;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 12px;
+  text-align: left;
+  width: 100%;
+  transition: background 0.15s;
+}
+
+.sidebar-item:hover {
+  background: #F4F6F4;
+}
+
+.sidebar-item--active {
+  background: var(--primary-light);
+}
+
+.sidebar-item-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.sidebar-footer {
+  padding: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* Sidebar toggle button */
+.sidebar-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: none;
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  flex: none;
+}
+
+/* Sidebar page layout */
+#app-root {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  position: relative;
+  transition: max-width 0.2s;
+}
+
+/* ===== DESKTOP MODE — NATIVE ADMIN LAYOUT ===== */
+#app-root.desktop-mode {
+  max-width: none;
+  display: flex;
+  min-height: 100vh;
+}
+
+#app-root.desktop-mode .sidebar-page {
+  max-width: none;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 280px; /* sidebar width */
+  min-height: 100vh;
+}
+
+#app-root.desktop-mode .sidebar-page > :last-child {
+  flex: 1;
+}
+
+#app-root.desktop-mode .sidebar-topbar {
+  display: none; /* hamburger hidden on desktop */
+}
+
+#app-root.desktop-mode .bottom-nav {
+  display: none;
+}
+
+#app-root.desktop-mode .modal-content {
+  max-width: 600px;
+}
+
+#app-root.desktop-mode .page-content {
+  padding: 0 32px 28px;
+  max-width: 960px;
+}
+
+#app-root.desktop-mode .page-padded {
+  padding-bottom: 28px;
+}
+
+#app-root.desktop-mode .quick-actions {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+#app-root.desktop-mode .header-green {
+  padding: 8px 32px 60px;
+  border-radius: 0 0 28px 28px;
+  max-width: 960px;
+}
+
+#app-root.desktop-mode .page-header {
+  padding: 8px 32px 14px;
+  max-width: 960px;
+}
+
+#app-root.desktop-mode .stats-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+#app-root.desktop-mode .dashboard-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  max-width: 960px;
+}
+
+#app-root.desktop-mode .dashboard-cards > .card:first-child {
+  grid-column: 1 / -1;
+}
+
+#app-root.desktop-mode .auth-page {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+/* ===== SIDEBAR PERSISTENT (DESKTOP) ===== */
+.sidebar--persistent {
+  transform: translateX(0) !important;
+  position: fixed;
+  left: 0;
+  top: 0;
+  box-shadow: 1px 0 0 var(--border);
+}
+
+.sidebar-backdrop--desktop {
+  display: none !important;
+}
+
+.sidebar-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  padding: 8px 20px;
+  background: var(--bg);
 }
 
 /* ===== SETTINGS LIST ===== */

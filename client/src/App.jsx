@@ -1,4 +1,6 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { useState } from 'react'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useDesktop } from './lib/useDesktop'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
@@ -11,7 +13,37 @@ import Profil from './pages/Profil'
 import Lampiran from './pages/Lampiran'
 import Warga from './pages/Warga'
 import ProtectedRoute from './components/ProtectedRoute'
+import Sidebar from './components/Sidebar'
+import BottomNav from './components/BottomNav'
 import { pb } from './lib/pocketbase'
+
+function AppLayout({ children }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const isDesktop = useDesktop()
+  const location = useLocation()
+  const hideSidebar = ['/login', '/register'].includes(location.pathname)
+
+  if (hideSidebar) return children
+
+  return (
+    <>
+      {isDesktop && <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} persistent={isDesktop} />}
+      <div className="sidebar-page">
+        {isDesktop && (
+          <div className="sidebar-topbar">
+            <button className="sidebar-toggle" onClick={() => setSidebarOpen(true)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M3 6h18M3 12h18M3 18h18" stroke="#0F1A14" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+        )}
+        {children}
+      </div>
+      {!isDesktop && <BottomNav />}
+    </>
+  )
+}
 
 function App() {
   return (
@@ -26,15 +58,15 @@ function App() {
       />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/iuran" element={<ProtectedRoute><Iuran /></ProtectedRoute>} />
-      <Route path="/lapor" element={<ProtectedRoute><Lapor /></ProtectedRoute>} />
-      <Route path="/laporan-warga" element={<ProtectedRoute><LaporanWarga /></ProtectedRoute>} />
-      <Route path="/laporan-scurity" element={<ProtectedRoute><LaporanScurity /></ProtectedRoute>} />
-      <Route path="/tagihan" element={<ProtectedRoute><Tagihan /></ProtectedRoute>} />
-      <Route path="/lampiran" element={<ProtectedRoute><Lampiran /></ProtectedRoute>} />
-      <Route path="/profil" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
-      <Route path="/warga" element={<ProtectedRoute><Warga /></ProtectedRoute>} />
+      <Route path="/dashboard" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
+      <Route path="/iuran" element={<ProtectedRoute><AppLayout><Iuran /></AppLayout></ProtectedRoute>} />
+      <Route path="/lapor" element={<ProtectedRoute><AppLayout><Lapor /></AppLayout></ProtectedRoute>} />
+      <Route path="/laporan-warga" element={<ProtectedRoute><AppLayout><LaporanWarga /></AppLayout></ProtectedRoute>} />
+      <Route path="/laporan-scurity" element={<ProtectedRoute><AppLayout><LaporanScurity /></AppLayout></ProtectedRoute>} />
+      <Route path="/tagihan" element={<ProtectedRoute><AppLayout><Tagihan /></AppLayout></ProtectedRoute>} />
+      <Route path="/lampiran" element={<ProtectedRoute><AppLayout><Lampiran /></AppLayout></ProtectedRoute>} />
+      <Route path="/profil" element={<ProtectedRoute><AppLayout><Profil /></AppLayout></ProtectedRoute>} />
+      <Route path="/warga" element={<ProtectedRoute><AppLayout><Warga /></AppLayout></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

@@ -1,4 +1,14 @@
 services:
+  client:
+    image: node:22-alpine
+    container_name: pocketbase-client
+    working_dir: /app
+    volumes:
+      - ./client:/app
+      - ./pb_public:/app/pb_public
+    command: sh -c "npm install && npm run build"
+    restart: "no"
+
   pocketbase:
     image: ghcr.io/muchobien/pocketbase:latest
     container_name: pocketbase
@@ -17,6 +27,9 @@ services:
       - ./pb_migrations:/pb_migrations
       - ./pb_hooks:/pb_hooks
       # - /var/data/pocketbase/pb_migrations:/pb_migrations
+    depends_on:
+      client:
+        condition: service_completed_successfully
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:8090/api/health || exit 1
       interval: 5s

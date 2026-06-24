@@ -1,7 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { pb } from '../lib/pocketbase';
-import BottomNav from '../components/BottomNav';
-
 // ── Toast ──
 function Toast({ message, type, onClose }) {
   useEffect(() => {
@@ -603,7 +601,6 @@ export default function Warga() {
         .wa-link:hover svg { fill: #128C7E !important; }
       `}</style>
 
-      <BottomNav />
     </div>
   );
 }

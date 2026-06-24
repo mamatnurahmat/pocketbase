@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { pb } from '../lib/pocketbase';
-import BottomNav from '../components/BottomNav';
-
 export default function LaporanScurity() {
   const [laporanList, setLaporanList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -121,7 +119,6 @@ export default function LaporanScurity() {
       </div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <BottomNav />
     </div>
   );
 }

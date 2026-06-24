@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
-import BottomNav from '../components/BottomNav';
-
 export default function Profil() {
   const navigate = useNavigate();
   const [user, setUser] = useState(pb.authStore.model);
@@ -313,7 +311,6 @@ export default function Profil() {
         </div>
       </div>
 
-      <BottomNav />
     </div>
   );
 }

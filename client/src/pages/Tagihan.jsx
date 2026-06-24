@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { pb } from '../lib/pocketbase';
-import BottomNav from '../components/BottomNav';
 
 export default function Tagihan() {
   const [tagihan, setTagihan] = useState([]);
@@ -566,8 +565,6 @@ export default function Tagihan() {
           </div>
         )}
       </div>
-
-      <BottomNav />
 
       {/* Modal Preview File (Image / PDF) */}
       {previewFile && (

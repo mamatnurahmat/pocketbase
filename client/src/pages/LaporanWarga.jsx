@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
-import BottomNav from '../components/BottomNav';
-
 // ── Toast untuk notifikasi mobile-native ──
 function Toast({ message, type, onClose }) {
   useEffect(() => {
@@ -558,7 +556,6 @@ export default function LaporanWarga() {
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
       `}</style>
 
-      <BottomNav />
     </div>
   );
 }

@@ -21,7 +21,6 @@ const tabs = [
       </svg>
     ),
   },
-
   {
     path: '/lapor',
     label: 'Lapor',
@@ -56,12 +55,31 @@ const scurityTabs = [
     ),
   },
   {
-    path: '/lapor',
-    label: 'Lapor',
+    path: '/laporan-warga',
+    label: 'Lap. Warga',
     icon: (c) => (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M4 14V6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V14C20 15.1046 19.1046 16 18 16H8L4 20V14Z" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
-        <circle cx="12" cy="10" r="1" fill={c}/>
+        <path d="M8 12h8m-8-4h8m-8 8h4" stroke={c} strokeWidth="1.8" strokeLinecap="round"/>
+        <rect x="4" y="4" width="16" height="16" rx="3" stroke={c} strokeWidth="1.8"/>
+      </svg>
+    ),
+  },
+  {
+    path: '/laporan-scurity',
+    label: 'Lap. Scurity',
+    icon: (c) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+  },
+  {
+    path: '/warga',
+    label: 'Warga',
+    icon: (c) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx="9" cy="7" r="4" stroke={c} strokeWidth="1.8"/>
       </svg>
     ),
   },
@@ -84,7 +102,7 @@ export default function BottomNav() {
   const activeTabs = isScurity ? scurityTabs : tabs;
 
   return (
-    <div className="bottom-nav">
+    <nav className="bottom-nav">
       {activeTabs.map((tab) => {
         const isActive = location.pathname === tab.path;
         const color = isActive ? '#15935A' : '#A6B0AA';
@@ -99,6 +117,6 @@ export default function BottomNav() {
           </button>
         );
       })}
-    </div>
+    </nav>
   );
 }
