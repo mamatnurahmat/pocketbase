@@ -7,6 +7,7 @@ export default function Profil() {
   const navigate = useNavigate();
   const [user, setUser] = useState(pb.authStore.model);
   const [warga, setWarga] = useState(null);
+  const [scurity, setScurity] = useState(null);
 
   const phone = user?.username?.replace('hp_', '') || '';
   const displayName = user?.name || phone || 'Warga';
@@ -45,7 +46,13 @@ export default function Profil() {
         setWarga(w);
         setAgama(w.agama || 'islam');
         setPengurus(w.pengurus || false);
-      } catch (e) { /* no warga linked */ }
+      } catch (e) {
+        // Coba scurity
+        try {
+          const s = await pb.collection('scurity').getFirstListItem(`user="${user.id}"`);
+          setScurity(s);
+        } catch (e2) { /* bukan scurity juga */ }
+      }
     };
     if (pb.authStore.isValid) fetchWarga();
   }, [user]);
@@ -99,25 +106,26 @@ export default function Profil() {
       }
 
       // ── 1b. Update PIN jika ada perubahan ──
-      if (showPinForm && warga && pin) {
+      if (showPinForm && pin) {
         if (pin.length !== 6) throw new Error('PIN harus 6 digit.');
         if (pin !== pinConfirm) throw new Error('Konfirmasi PIN tidak cocok.');
-        const wargaUpdateData = {};
-        let needWargaUpdate = false;
 
-        if (pin !== (warga.pin || '666666')) {
-          wargaUpdateData.pin = pin;
-          needWargaUpdate = true;
+        if (warga) {
+          if (pin !== (warga.pin || '666666')) {
+            await pb.collection('warga').update(warga.id, { pin });
+            setWarga(prev => ({ ...prev, pin }));
+          }
+        } else if (scurity) {
+          if (pin !== (scurity.pin || '666666')) {
+            await pb.collection('scurity').update(scurity.id, { pin });
+            setScurity(prev => ({ ...prev, pin }));
+          }
         }
 
-        if (needWargaUpdate) {
-          await pb.collection('warga').update(warga.id, wargaUpdateData);
-          setWarga(prev => ({ ...prev, ...wargaUpdateData }));
-          await loadPin();
-          setPin('');
-          setPinConfirm('');
-          setShowPinForm(false);
-        }
+        await loadPin();
+        setPin('');
+        setPinConfirm('');
+        setShowPinForm(false);
       }
 
       // ── 2. Update warga collection (if exists) ──
@@ -333,15 +341,18 @@ export default function Profil() {
                 if (warga) {
                   await pb.collection('warga').update(warga.id, { pin });
                   setWarga(prev => ({ ...prev, pin }));
-                  await loadPin();
-                  setPinMsg({ text: 'PIN berhasil diubah!', type: 'success' });
-                  setTimeout(() => {
-                    setShowPinForm(false);
-                    setPin('');
-                    setPinConfirm('');
-                    setPinMsg({ text: '', type: '' });
-                  }, 1500);
+                } else if (scurity) {
+                  await pb.collection('scurity').update(scurity.id, { pin });
+                  setScurity(prev => ({ ...prev, pin }));
                 }
+                await loadPin();
+                setPinMsg({ text: 'PIN berhasil diubah!', type: 'success' });
+                setTimeout(() => {
+                  setShowPinForm(false);
+                  setPin('');
+                  setPinConfirm('');
+                  setPinMsg({ text: '', type: '' });
+                }, 1500);
               } catch (err) {
                 setPinMsg({ text: err.message || 'Gagal mengubah PIN.', type: 'error' });
               } finally {

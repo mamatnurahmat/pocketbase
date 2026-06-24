@@ -19,16 +19,24 @@ export function IdleTimerProvider({ children }) {
   const timerRef = useRef(null);
   const lastPathRef = useRef(location.pathname);
 
-  // Ambil PIN warga dari database
+  // Ambil PIN dari database (warga atau scurity)
   const loadPin = useCallback(async () => {
     if (!pb.authStore.isValid) return;
+    const user = pb.authStore.model;
+    // Coba ambil dari warga dulu
     try {
-      const user = pb.authStore.model;
       const w = await pb.collection('warga').getFirstListItem(`user="${user.id}"`);
       setWargaPin(w.pin || '666666');
-    } catch {
-      setWargaPin(null);
-    }
+      return;
+    } catch { /* bukan warga */ }
+    // Coba dari scurity
+    try {
+      const s = await pb.collection('scurity').getFirstListItem(`user="${user.id}"`);
+      setWargaPin(s.pin || '666666');
+      return;
+    } catch { /* bukan scurity */ }
+    // Fallback
+    setWargaPin('666666');
   }, []);
 
   useEffect(() => {
