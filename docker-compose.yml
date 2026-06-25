@@ -1,4 +1,17 @@
 services:
+
+  api:
+    build: ./api
+    container_name: pocketbase-api
+    ports:
+      - "8888:8888"
+    restart: unless-stopped
+    environment:
+      PB_URL: http://pocketbase:8090
+    depends_on:
+      pocketbase:
+        condition: service_healthy
+
   client:
     image: node:22-alpine
     container_name: pocketbase-client

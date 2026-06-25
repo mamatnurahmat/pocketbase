@@ -3,3 +3,15 @@ prestige2.sawangan.web.id {
     # Reverse proxy ke PocketBase untuk semua request lainnya
     reverse_proxy pocketbase:8090
 }
+
+admin.sawangan.web.id {
+
+    # Reverse proxy ke Admin service
+    reverse_proxy localhost:43249
+}
+
+api.sawangan.web.id {
+
+    # Reverse proxy ke API service (Flask)
+    reverse_proxy api:8888
+}

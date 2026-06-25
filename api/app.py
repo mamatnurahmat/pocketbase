@@ -105,7 +105,7 @@ def pb_patch(path: str, token: str, body: dict) -> dict:
 
 
 def error_response(msg: str, status: int):
-    return api.abort(status, msg)
+    return {"message": msg, "status": status}, status
 
 
 # ── Endpoints ───────────────────────────────────────────────────────
@@ -287,6 +287,145 @@ class TagihanApprove(Resource):
                 "balance_before": real_before,
                 "balance_after": real_after,
                 "message": f"Tagihan disetujui, topup ke wallet {wallet_type} berhasil",
+            }, 200
+
+        except requests.HTTPError as e:
+            status = e.response.status_code
+            msg = e.response.text[:200]
+            return error_response(f"PocketBase error ({status}): {msg}", 502 if status >= 500 else 400)
+        except Exception as e:
+            return error_response(str(e), 500)
+
+
+# ── Tagihan Generate ────────────────────────────────
+
+@tagihan_ns.route("/generate")
+@tagihan_ns.route("/generate/<path:iuran_id>")
+@tagihan_ns.route("/generate/<path:iuran_id>/<path:warga_id>")
+class TagihanGenerate(Resource):
+    @tagihan_ns.response(200, "Berhasil")
+    @tagihan_ns.response(400, "Request tidak valid")
+    @tagihan_ns.response(401, "Token tidak valid")
+    @tagihan_ns.response(502, "PocketBase error")
+    def post(self, iuran_id=None, warga_id=None):
+        """Generate tagihan untuk warga aktif.
+
+        Parameter path (opsional):
+        - iuran_id: ID record iuran. Kosongkan → cari iuran jatuh_tempo bulan ini.
+        - warga_id: ID record warga. Kosongkan → untuk semua warga aktif.
+
+        Header: Authorization = token superuser/pengurus
+        """
+        token = request.headers.get("Authorization", "")
+        if not token:
+            return error_response("Header Authorization diperlukan", 401)
+
+        try:
+            now = datetime.now(timezone.utc)
+            month_prefix = now.strftime("%Y-%m")  # "2026-06"
+
+            # ── 1. Tentukan iuran ──
+            iuran_list = []
+            if iuran_id:
+                # single iuran by ID
+                iuran = pb_get(f"collections/iuran/records/{iuran_id}", token)
+                iuran_list = [iuran]
+            else:
+                # cari iuran where jatuh_tempo starts with YYYY-MM
+                # filter: jatuh_tempo~'2026-06'
+                result = pb_get(
+                    "collections/iuran/records",
+                    token,
+                    filter=f'jatuh_tempo~"{month_prefix}"',
+                )
+                iuran_list = result.get("items", [])
+
+            if not iuran_list:
+                return error_response(
+                    f"Iuran tidak ditemukan" +
+                    (f" (id: {iuran_id})" if iuran_id else f" untuk bulan {month_prefix}"),
+                    400,
+                )
+
+            # ── 2. Tentukan warga ──
+            warga_list = []
+            if warga_id:
+                warga = pb_get(f"collections/warga/records/{warga_id}", token)
+                warga_list = [warga]
+            else:
+                result = pb_get(
+                    "collections/warga/records",
+                    token,
+                    sort="no_rumah",
+                    perPage=200,
+                )
+                # Semua warga dianggap aktif (tidak ada kolom is_active)
+                warga_list = result.get("items", [])
+
+            if not warga_list:
+                return error_response(
+                    f"Warga tidak ditemukan" +
+                    (f" (id: {warga_id})" if warga_id else ""),
+                    400,
+                )
+
+            # ── 3. Generate tagihan ──
+            created = []
+            skipped = []
+            errors = []
+
+            for iuran in iuran_list:
+                iuran_id_val = iuran["id"]
+                nominal = iuran.get("nominal", 0)
+                jatuh_tempo = iuran.get("jatuh_tempo", "")
+
+                for warga in warga_list:
+                    warga_id_val = warga["id"]
+
+                    # Cek duplikat: sudah ada tagihan dengan warga+iuran yg sama
+                    existing = pb_get(
+                        "collections/tagihan/records",
+                        token,
+                        filter=f'warga="{warga_id_val}" && iuran="{iuran_id_val}"',
+                        perPage=1,
+                    )
+                    if existing.get("totalItems", 0) > 0:
+                        skipped.append({
+                            "warga": warga_id_val,
+                            "iuran": iuran_id_val,
+                            "reason": "duplicate",
+                        })
+                        continue
+
+                    # Buat tagihan baru — biarkan PB auto-generate ID
+                    try:
+                        pb_post("collections/tagihan/records", token, {
+                            "warga": warga_id_val,
+                            "iuran": iuran_id_val,
+                            "nominal": nominal,
+                            "jatuh_tempo": jatuh_tempo,
+                            "status_pembayaran": "Belum Dibayar",
+                        })
+                        created.append({
+                            "warga": warga_id_val,
+                            "iuran": iuran_id_val,
+                            "nominal": nominal,
+                        })
+                    except requests.HTTPError as e:
+                        errors.append({
+                            "warga": warga_id_val,
+                            "iuran": iuran_id_val,
+                            "error": e.response.text[:150],
+                        })
+
+            return {
+                "success": True,
+                "total_created": len(created),
+                "total_skipped": len(skipped),
+                "total_errors": len(errors),
+                "created": created,
+                "skipped": skipped,
+                "errors": errors,
             }, 200
 
         except requests.HTTPError as e:

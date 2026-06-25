@@ -20,46 +20,50 @@ migrate((app) => {
         "type": "text"
       },
       {
-        "cascadeDelete": true,
-        "collectionId": "_pb_users_auth_",
+        "autogeneratePattern": "",
         "help": "",
         "hidden": false,
-        "id": "relation2375276105",
-        "maxSelect": 1,
-        "minSelect": 0,
-        "name": "user",
+        "id": "text1579384326",
+        "max": 100,
+        "min": 2,
+        "name": "name",
+        "pattern": "",
         "presentable": false,
+        "primaryKey": false,
         "required": true,
         "system": false,
-        "type": "relation"
+        "type": "text"
       },
       {
         "help": "",
         "hidden": false,
-        "id": "select3779895852",
+        "id": "select2363381545",
         "maxSelect": 1,
-        "name": "wallet_type",
+        "name": "type",
         "presentable": false,
         "required": true,
         "system": false,
         "type": "select",
         "values": [
-          "PERSONAL",
-          "KAS"
+          "INCOME",
+          "EXPENSE",
+          "TRANSFER"
         ]
       },
       {
+        "autogeneratePattern": "",
         "help": "",
         "hidden": false,
-        "id": "number2901680126",
-        "max": null,
+        "id": "text1704208859",
+        "max": 50,
         "min": 0,
-        "name": "balance",
-        "onlyInt": false,
+        "name": "icon",
+        "pattern": "",
         "presentable": false,
-        "required": true,
+        "primaryKey": false,
+        "required": false,
         "system": false,
-        "type": "number"
+        "type": "text"
       },
       {
         "help": "",
@@ -70,29 +74,14 @@ migrate((app) => {
         "required": false,
         "system": false,
         "type": "bool"
-      },
-      {
-        "autogeneratePattern": "",
-        "help": "",
-        "hidden": false,
-        "id": "text3485334036",
-        "max": 255,
-        "min": 0,
-        "name": "note",
-        "pattern": "",
-        "presentable": false,
-        "primaryKey": false,
-        "required": false,
-        "system": false,
-        "type": "text"
       }
     ],
-    "id": "pbc_120182150",
+    "id": "pbc_3292755704",
     "indexes": [
-      "CREATE UNIQUE INDEX idx_wallet_user ON wallets (user)"
+      "CREATE UNIQUE INDEX idx_cat_name ON categories (name)"
     ],
     "listRule": "@request.auth.id != ''",
-    "name": "wallets",
+    "name": "categories",
     "system": false,
     "type": "base",
     "updateRule": "@request.auth.collectionName = '_superusers'",
@@ -101,7 +90,7 @@ migrate((app) => {
 
   return app.save(collection);
 }, (app) => {
-  const collection = app.findCollectionByNameOrId("pbc_120182150");
+  const collection = app.findCollectionByNameOrId("pbc_3292755704");
 
   return app.delete(collection);
 })

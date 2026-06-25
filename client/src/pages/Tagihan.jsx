@@ -73,8 +73,8 @@ export default function Tagihan() {
     if (pb.authStore.isValid) fetchTagihan();
   }, [modePengurus]);
 
-  // ponytail: API approve terpisah di port 8888, ganti proxy kalau production
-  const API_URL = 'http://localhost:8888';
+  // API approve via subdomain api.sawangan.web.id
+  const API_URL = 'https://api.sawangan.web.id';
 
   const handleApprove = async () => {
     if (!confirmApproveId) return;

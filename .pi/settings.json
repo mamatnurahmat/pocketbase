@@ -1,5 +1,8 @@
 {
   "packages": [
     "npm:pi-caveman"
+  ],
+  "extensions": [
+    "extensions/voice-input/index.ts"
   ]
 }
