@@ -6,6 +6,8 @@ export default function Dashboard() {
   const user = pb.authStore.model;
   const [warga, setWarga] = useState(null);
   const [tagihan, setTagihan] = useState([]);
+  const [lastAbsenScurity, setLastAbsenScurity] = useState(null);
+  const [showCallPopup, setShowCallPopup] = useState(false);
 
   const getInitials = (name) => {
     if (!name) return '?';
@@ -54,6 +56,27 @@ export default function Dashboard() {
       } catch (e) { console.error(e); }
     };
     if (pb.authStore.isValid) fetchData();
+
+    // ponytail: fetch last scurity absen, single query, no pagination
+    const fetchLastAbsen = async () => {
+      try {
+        const records = await pb.collection('laporan_scurity').getList(1, 1, {
+          filter: 'jenis="absen"',
+          sort: '-created',
+          expand: 'dibuat_oleh',
+        });
+        if (records.items.length === 0) return;
+        const l = records.items[0];
+        const userId = l.expand?.dibuat_oleh?.id;
+        if (!userId) return;
+        // ponytail: single scurity lookup by user id
+        const sc = await pb.collection('scurity').getFirstListItem(`user="${userId}"`);
+        setLastAbsenScurity({ nama: sc.nama, no_hp: sc.no_hp });
+      } catch (e) {
+        console.warn('No scurity absen found:', e);
+      }
+    };
+    if (localStorage.getItem('isScurity') === 'true') fetchLastAbsen();
   }, []);
 
   const unpaid = tagihan.filter(t => t.status_pembayaran !== 'Lunas');
@@ -157,6 +180,14 @@ export default function Dashboard() {
                     </svg>
                   </span>
                   <span>Lap. Scurity</span>
+                </button>
+                <button className="quick-action" onClick={() => setShowCallPopup(true)}>
+                  <span className="quick-action-icon" style={{ background: '#E8F5EE' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                      <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" stroke="#15935A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </span>
+                  <span>Call WA</span>
                 </button>
               </>
             ) : (
@@ -263,6 +294,67 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* ── Call WA Popup ── */}
+      {showCallPopup && (
+        <div className="modal-backdrop" onClick={() => setShowCallPopup(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxHeight: 'auto' }}>
+            <div className="modal-header">
+              <h3>📞 Call WA Scurity</h3>
+              <button className="close-btn" onClick={() => setShowCallPopup(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              {lastAbsenScurity ? (
+                <div style={{ textAlign: 'center', padding: '16px 0' }}>
+                  <div style={{
+                    width: 72, height: 72, borderRadius: '50%',
+                    background: '#E8F5EE', color: '#15935A',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 28, fontWeight: 800, margin: '0 auto 16px',
+                  }}>
+                    {lastAbsenScurity.nama.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}
+                  </div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#0F1A14' }}>{lastAbsenScurity.nama}</div>
+                  <div style={{ fontSize: 15, color: '#6B7B72', marginTop: 4, fontWeight: 600 }}>{lastAbsenScurity.no_hp}</div>
+                  <div style={{ fontSize: 12, color: '#8A9991', marginTop: 20 }}>
+                    Scurity terakhir yang absen
+                  </div>
+                  <a
+                    href={`https://wa.me/${lastAbsenScurity.no_hp.replace(/^0/, '62')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-primary"
+                    style={{
+                      marginTop: 20, display: 'flex',
+                      textDecoration: 'none', fontSize: 16, gap: 8,
+                    }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Call via WhatsApp
+                  </a>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '32px 0', color: '#8A9991' }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>🛡️</div>
+                  <div style={{ fontSize: 15, fontWeight: 700 }}>Belum ada scurity absen</div>
+                  <div style={{ fontSize: 13, marginTop: 4 }}>Tunggu scurity melakukan absen</div>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer" style={{ justifyContent: 'center' }}>
+              <button
+                className="btn btn-outline"
+                onClick={() => setShowCallPopup(false)}
+                style={{ maxWidth: 200 }}
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
