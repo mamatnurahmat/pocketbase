@@ -60,9 +60,10 @@ export default function Dashboard() {
     // ponytail: fetch last scurity absen, single query, no pagination
     const fetchLastAbsen = async () => {
       try {
+        // ponytail: muchobien/pocketbase doesn't have created/updated sys fields
         const records = await pb.collection('laporan_scurity').getList(1, 1, {
           filter: 'jenis="absen"',
-          sort: '-created',
+          sort: '-id',
           expand: 'dibuat_oleh',
         });
         if (records.items.length === 0) return;
