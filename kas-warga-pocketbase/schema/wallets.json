@@ -1,0 +1,70 @@
+{
+  "name": "wallets",
+  "type": "base",
+  "system": false,
+  "schema": [
+    {
+      "name": "user",
+      "type": "relation",
+      "required": true,
+      "unique": true,
+      "options": {
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": true,
+        "minSelect": null,
+        "maxSelect": 1,
+        "displayFields": [
+          "name",
+          "email"
+        ]
+      }
+    },
+    {
+      "name": "wallet_type",
+      "type": "select",
+      "required": true,
+      "options": {
+        "maxSelect": 1,
+        "values": [
+          "PERSONAL",
+          "KAS"
+        ]
+      }
+    },
+    {
+      "name": "balance",
+      "type": "number",
+      "required": true,
+      "options": {
+        "min": 0,
+        "max": null,
+        "noDecimal": false
+      }
+    },
+    {
+      "name": "is_active",
+      "type": "bool",
+      "required": false,
+      "options": {}
+    },
+    {
+      "name": "note",
+      "type": "text",
+      "required": false,
+      "options": {
+        "min": null,
+        "max": 255,
+        "pattern": ""
+      }
+    }
+  ],
+  "indexes": [
+    "CREATE UNIQUE INDEX idx_wallet_user ON wallets (user)",
+    "CREATE INDEX idx_wallet_type ON wallets (wallet_type)"
+  ],
+  "listRule": "@request.auth.id != '' && (@request.auth.id = user.id || @request.auth.collectionName = 'users')",
+  "viewRule": "@request.auth.id != '' && (@request.auth.id = user.id || @request.auth.collectionName = 'users')",
+  "createRule": "@request.auth.collectionName = 'users'",
+  "updateRule": "@request.auth.id != ''",
+  "deleteRule": "@request.auth.collectionName = 'users'"
+}

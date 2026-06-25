@@ -1,0 +1,147 @@
+{
+  "name": "transactions",
+  "type": "base",
+  "system": false,
+  "schema": [
+    {
+      "name": "reference_no",
+      "type": "text",
+      "required": true,
+      "unique": true,
+      "options": {
+        "min": 5,
+        "max": 100,
+        "pattern": ""
+      }
+    },
+    {
+      "name": "type",
+      "type": "select",
+      "required": true,
+      "options": {
+        "maxSelect": 1,
+        "values": ["TOPUP", "TRANSFER", "IURAN", "PENGELUARAN", "WITHDRAWAL", "REVERSAL"]
+      }
+    },
+    {
+      "name": "status",
+      "type": "select",
+      "required": true,
+      "options": {
+        "maxSelect": 1,
+        "values": ["PENDING", "SUCCESS", "FAILED", "REVERSED"]
+      }
+    },
+    {
+      "name": "from_wallet",
+      "type": "relation",
+      "required": false,
+      "options": {
+        "collectionId": "wallets",
+        "cascadeDelete": false,
+        "minSelect": null,
+        "maxSelect": 1,
+        "displayFields": ["user"]
+      }
+    },
+    {
+      "name": "to_wallet",
+      "type": "relation",
+      "required": false,
+      "options": {
+        "collectionId": "wallets",
+        "cascadeDelete": false,
+        "minSelect": null,
+        "maxSelect": 1,
+        "displayFields": ["user"]
+      }
+    },
+    {
+      "name": "amount",
+      "type": "number",
+      "required": true,
+      "options": {
+        "min": 0,
+        "max": null,
+        "noDecimal": false
+      }
+    },
+    {
+      "name": "fee",
+      "type": "number",
+      "required": false,
+      "options": {
+        "min": 0,
+        "max": null,
+        "noDecimal": false
+      }
+    },
+    {
+      "name": "net_amount",
+      "type": "number",
+      "required": true,
+      "options": {
+        "min": 0,
+        "max": null,
+        "noDecimal": false
+      }
+    },
+    {
+      "name": "category",
+      "type": "relation",
+      "required": false,
+      "options": {
+        "collectionId": "categories",
+        "cascadeDelete": false,
+        "minSelect": null,
+        "maxSelect": 1,
+        "displayFields": ["name"]
+      }
+    },
+    {
+      "name": "note",
+      "type": "text",
+      "required": false,
+      "options": {
+        "min": null,
+        "max": 500,
+        "pattern": ""
+      }
+    },
+    {
+      "name": "created_by",
+      "type": "relation",
+      "required": true,
+      "options": {
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": false,
+        "minSelect": null,
+        "maxSelect": 1,
+        "displayFields": ["name"]
+      }
+    },
+    {
+      "name": "parent_transaction",
+      "type": "relation",
+      "required": false,
+      "options": {
+        "collectionId": "transactions",
+        "cascadeDelete": false,
+        "minSelect": null,
+        "maxSelect": 1,
+        "displayFields": ["reference_no"]
+      }
+    }
+  ],
+  "indexes": [
+    "CREATE UNIQUE INDEX idx_trx_reference ON transactions (reference_no)",
+    "CREATE INDEX idx_trx_status ON transactions (status)",
+    "CREATE INDEX idx_trx_type ON transactions (type)",
+    "CREATE INDEX idx_trx_created ON transactions (created)"
+  ],
+  "listRule": "@request.auth.id != ''",
+  "viewRule": "@request.auth.id != ''",
+  "createRule": "@request.auth.id != ''",
+  "updateRule": "@request.auth.collectionName = 'users'",
+  "deleteRule": null
+}

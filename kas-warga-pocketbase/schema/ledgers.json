@@ -1,0 +1,88 @@
+{
+  "name": "ledgers",
+  "type": "base",
+  "system": false,
+  "schema": [
+    {
+      "name": "wallet",
+      "type": "relation",
+      "required": true,
+      "options": {
+        "collectionId": "wallets",
+        "cascadeDelete": false,
+        "minSelect": null,
+        "maxSelect": 1,
+        "displayFields": [
+          "user"
+        ]
+      }
+    },
+    {
+      "name": "transaction",
+      "type": "relation",
+      "required": true,
+      "options": {
+        "collectionId": "transactions",
+        "cascadeDelete": false,
+        "minSelect": null,
+        "maxSelect": 1,
+        "displayFields": [
+          "reference_no",
+          "type"
+        ]
+      }
+    },
+    {
+      "name": "entry_type",
+      "type": "select",
+      "required": true,
+      "options": {
+        "maxSelect": 1,
+        "values": [
+          "DEBIT",
+          "CREDIT"
+        ]
+      }
+    },
+    {
+      "name": "amount",
+      "type": "number",
+      "required": true,
+      "options": {
+        "min": 0,
+        "max": null,
+        "noDecimal": false
+      }
+    },
+    {
+      "name": "balance_before",
+      "type": "number",
+      "required": true,
+      "options": {
+        "min": 0,
+        "max": null,
+        "noDecimal": false
+      }
+    },
+    {
+      "name": "balance_after",
+      "type": "number",
+      "required": true,
+      "options": {
+        "min": 0,
+        "max": null,
+        "noDecimal": false
+      }
+    }
+  ],
+  "indexes": [
+    "CREATE INDEX idx_ledger_wallet ON ledgers (wallet)",
+    "CREATE INDEX idx_ledger_transaction ON ledgers (transaction)",
+    "CREATE INDEX idx_ledger_created ON ledgers (created)"
+  ],
+  "listRule": "@request.auth.id != '' && (wallet.user.id = @request.auth.id || @request.auth.collectionName = 'users')",
+  "viewRule": "@request.auth.id != '' && (wallet.user.id = @request.auth.id || @request.auth.collectionName = 'users')",
+  "createRule": "@request.auth.id != ''",
+  "updateRule": null,
+  "deleteRule": null
+}

@@ -1,0 +1,48 @@
+{
+  "name": "categories",
+  "type": "base",
+  "system": false,
+  "schema": [
+    {
+      "name": "name",
+      "type": "text",
+      "required": true,
+      "unique": true,
+      "options": {
+        "min": 2,
+        "max": 100,
+        "pattern": ""
+      }
+    },
+    {
+      "name": "type",
+      "type": "select",
+      "required": true,
+      "options": {
+        "maxSelect": 1,
+        "values": ["INCOME", "EXPENSE", "TRANSFER"]
+      }
+    },
+    {
+      "name": "icon",
+      "type": "text",
+      "required": false,
+      "options": {
+        "min": null,
+        "max": 50,
+        "pattern": ""
+      }
+    },
+    {
+      "name": "is_active",
+      "type": "bool",
+      "required": false,
+      "options": {}
+    }
+  ],
+  "listRule": "@request.auth.id != ''",
+  "viewRule": "@request.auth.id != ''",
+  "createRule": "@request.auth.collectionName = 'users'",
+  "updateRule": "@request.auth.collectionName = 'users'",
+  "deleteRule": "@request.auth.collectionName = 'users'"
+}

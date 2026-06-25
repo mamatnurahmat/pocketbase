@@ -1,0 +1,59 @@
+{
+  "_instructions": "Import via PocketBase Admin UI > Settings > Import collections, atau gunakan API. Ganti <USER_ID_*> dengan ID user asli dari collection users setelah user dibuat.",
+  "categories": [
+    { "name": "Iuran Bulanan",       "type": "INCOME",   "icon": "🏠", "is_active": true },
+    { "name": "Iuran Kebersihan",    "type": "INCOME",   "icon": "🧹", "is_active": true },
+    { "name": "Iuran Keamanan",      "type": "INCOME",   "icon": "🛡️", "is_active": true },
+    { "name": "Sumbangan",           "type": "INCOME",   "icon": "🎁", "is_active": true },
+    { "name": "Pengeluaran Operasional", "type": "EXPENSE", "icon": "⚙️", "is_active": true },
+    { "name": "Bantuan Sosial",      "type": "EXPENSE",  "icon": "🤝", "is_active": true },
+    { "name": "Perbaikan Fasilitas", "type": "EXPENSE",  "icon": "🔧", "is_active": true },
+    { "name": "Acara/Kegiatan",      "type": "EXPENSE",  "icon": "🎉", "is_active": true },
+    { "name": "Transfer Internal",   "type": "TRANSFER", "icon": "↔️", "is_active": true }
+  ],
+
+  "wallets": [
+    {
+      "user": "<USER_ID_PAK_RT>",
+      "wallet_type": "KAS",
+      "balance": 0,
+      "is_active": true,
+      "note": "Kas pusat RT 05 — dikelola bendahara"
+    },
+    {
+      "user": "<USER_ID_BUDI>",
+      "wallet_type": "PERSONAL",
+      "balance": 0,
+      "is_active": true,
+      "note": "Budi Santoso — No. 12"
+    },
+    {
+      "user": "<USER_ID_SITI>",
+      "wallet_type": "PERSONAL",
+      "balance": 0,
+      "is_active": true,
+      "note": "Siti Aminah — No. 5"
+    },
+    {
+      "user": "<USER_ID_AGUS>",
+      "wallet_type": "PERSONAL",
+      "balance": 0,
+      "is_active": true,
+      "note": "Agus Widodo — No. 8"
+    },
+    {
+      "user": "<USER_ID_RINA>",
+      "wallet_type": "PERSONAL",
+      "balance": 0,
+      "is_active": true,
+      "note": "Rina Marlina — No. 3"
+    },
+    {
+      "user": "<USER_ID_DEDI>",
+      "wallet_type": "PERSONAL",
+      "balance": 0,
+      "is_active": true,
+      "note": "Dedi Kurniawan — No. 17"
+    }
+  ]
+}
