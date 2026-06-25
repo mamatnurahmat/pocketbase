@@ -1,0 +1,86 @@
+{
+  "collection": "_authOrigins",
+  "totalItems": 8,
+  "items": [
+    {
+      "collectionId": "pbc_4275539003",
+      "collectionName": "_authOrigins",
+      "collectionRef": "_pb_users_auth_",
+      "created": "2026-06-21 07:07:25.236Z",
+      "fingerprint": "11e3503a6f8d3f2b81d647ab0a8cfeae",
+      "id": "zc547tkpccfyoaq",
+      "recordRef": "usrc01000000000",
+      "updated": "2026-06-21 07:07:25.236Z"
+    },
+    {
+      "collectionId": "pbc_4275539003",
+      "collectionName": "_authOrigins",
+      "collectionRef": "_pb_users_auth_",
+      "created": "2026-06-21 07:08:16.863Z",
+      "fingerprint": "11e3503a6f8d3f2b81d647ab0a8cfeae",
+      "id": "s788r8zrkgjghhs",
+      "recordRef": "usrc05000000000",
+      "updated": "2026-06-21 07:08:16.863Z"
+    },
+    {
+      "collectionId": "pbc_4275539003",
+      "collectionName": "_authOrigins",
+      "collectionRef": "_pb_users_auth_",
+      "created": "2026-06-24 23:27:30.377Z",
+      "fingerprint": "7fb4f8c8ef6e372a0aad49b6c40737c7",
+      "id": "9i7wxbaia7i6fc8",
+      "recordRef": "usrtatab0000000",
+      "updated": "2026-06-24 23:27:30.377Z"
+    },
+    {
+      "collectionId": "pbc_4275539003",
+      "collectionName": "_authOrigins",
+      "collectionRef": "_pb_users_auth_",
+      "created": "2026-06-25 01:51:17.834Z",
+      "fingerprint": "32161e3ec1e8134774de9113ad120096",
+      "id": "rtdqc6udhrx65j1",
+      "recordRef": "usrc09000000000",
+      "updated": "2026-06-25 01:51:17.834Z"
+    },
+    {
+      "collectionId": "pbc_4275539003",
+      "collectionName": "_authOrigins",
+      "collectionRef": "_pb_users_auth_",
+      "created": "2026-06-25 02:22:05.952Z",
+      "fingerprint": "32161e3ec1e8134774de9113ad120096",
+      "id": "452lgidjkjq3fo8",
+      "recordRef": "usriwan00000000",
+      "updated": "2026-06-25 03:43:28.872Z"
+    },
+    {
+      "collectionId": "pbc_4275539003",
+      "collectionName": "_authOrigins",
+      "collectionRef": "_pb_users_auth_",
+      "created": "2026-06-25 03:09:52.344Z",
+      "fingerprint": "4bc6562c71c5c714d8c614651be4a82a",
+      "id": "20ic80hzf5bxz7l",
+      "recordRef": "p5c5m01fmofyrtx",
+      "updated": "2026-06-25 03:38:57.165Z"
+    },
+    {
+      "collectionId": "pbc_4275539003",
+      "collectionName": "_authOrigins",
+      "collectionRef": "pbc_3142635823",
+      "created": "2026-06-25 04:42:46.709Z",
+      "fingerprint": "b7bf234cd0a0e950365b36beb448c1f3",
+      "id": "0m9cr2w8k6qifmh",
+      "recordRef": "zef85gaj2xoks8s",
+      "updated": "2026-06-25 05:38:11.894Z"
+    },
+    {
+      "collectionId": "pbc_4275539003",
+      "collectionName": "_authOrigins",
+      "collectionRef": "_pb_users_auth_",
+      "created": "2026-06-25 05:35:09.463Z",
+      "fingerprint": "7fb4f8c8ef6e372a0aad49b6c40737c7",
+      "id": "jlenman4glvhdcg",
+      "recordRef": "usrg01000000000",
+      "updated": "2026-06-25 05:35:09.463Z"
+    }
+  ]
+}

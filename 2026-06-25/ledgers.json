@@ -1,0 +1,72 @@
+{
+  "collection": "ledgers",
+  "totalItems": 6,
+  "items": [
+    {
+      "amount": 170000,
+      "balance_after": 170000.01,
+      "balance_before": 0.01,
+      "collectionId": "pbc_1212822754",
+      "collectionName": "ledgers",
+      "entry_type": "CREDIT",
+      "id": "zu2g7zljwjo06js",
+      "transaction": "yg7dhjit95kjicy",
+      "wallet": "ouo6u0xulm1edft"
+    },
+    {
+      "amount": 170000,
+      "balance_after": 170000.01,
+      "balance_before": 0.01,
+      "collectionId": "pbc_1212822754",
+      "collectionName": "ledgers",
+      "entry_type": "CREDIT",
+      "id": "zk64q2wp1p07nxu",
+      "transaction": "h917dtrgeietm87",
+      "wallet": "ey0znrfrpvv4pew"
+    },
+    {
+      "amount": 170000,
+      "balance_after": 340000,
+      "balance_before": 170000,
+      "collectionId": "pbc_1212822754",
+      "collectionName": "ledgers",
+      "entry_type": "CREDIT",
+      "id": "lizku7z0a261gsp",
+      "transaction": "uq33vo81jd42xur",
+      "wallet": "ouo6u0xulm1edft"
+    },
+    {
+      "amount": 170000,
+      "balance_after": 510000,
+      "balance_before": 340000,
+      "collectionId": "pbc_1212822754",
+      "collectionName": "ledgers",
+      "entry_type": "CREDIT",
+      "id": "dh6wyof4ftehr15",
+      "transaction": "01smi2znrw8rhmh",
+      "wallet": "ouo6u0xulm1edft"
+    },
+    {
+      "amount": 170000,
+      "balance_after": 340000,
+      "balance_before": 170000,
+      "collectionId": "pbc_1212822754",
+      "collectionName": "ledgers",
+      "entry_type": "CREDIT",
+      "id": "0slvsjs5hyzufwx",
+      "transaction": "epxe6hdes6hhnij",
+      "wallet": "ey0znrfrpvv4pew"
+    },
+    {
+      "amount": 170000,
+      "balance_after": 510000,
+      "balance_before": 340000,
+      "collectionId": "pbc_1212822754",
+      "collectionName": "ledgers",
+      "entry_type": "CREDIT",
+      "id": "rn6t43akhxq9mnm",
+      "transaction": "f2tfoq511qgyqbx",
+      "wallet": "ey0znrfrpvv4pew"
+    }
+  ]
+}

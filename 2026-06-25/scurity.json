@@ -1,0 +1,42 @@
+{
+  "collection": "scurity",
+  "totalItems": 4,
+  "items": [
+    {
+      "collectionId": "pbc_2320995771",
+      "collectionName": "scurity",
+      "id": "scrtatab0000000",
+      "nama": "Tatab",
+      "no_hp": "081234567890",
+      "pin": "666666",
+      "user": "usrtatab0000000"
+    },
+    {
+      "collectionId": "pbc_2320995771",
+      "collectionName": "scurity",
+      "id": "scriwan00000000",
+      "nama": "Iwan",
+      "no_hp": "081234567891",
+      "pin": "666666",
+      "user": "usriwan00000000"
+    },
+    {
+      "collectionId": "pbc_2320995771",
+      "collectionName": "scurity",
+      "id": "scrudin00000000",
+      "nama": "Udin",
+      "no_hp": "081234567892",
+      "pin": "666666",
+      "user": "usrudin00000000"
+    },
+    {
+      "collectionId": "pbc_2320995771",
+      "collectionName": "scurity",
+      "id": "scrusman0000000",
+      "nama": "Usman",
+      "no_hp": "081234567893",
+      "pin": "666666",
+      "user": "usrusman0000000"
+    }
+  ]
+}

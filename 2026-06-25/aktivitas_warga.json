@@ -1,0 +1,30 @@
+{
+  "collection": "aktivitas_warga",
+  "totalItems": 3,
+  "items": [
+    {
+      "aktivitas": "Upload Bukti Pembayaran",
+      "collectionId": "aktivitas_warga_id_1",
+      "collectionName": "aktivitas_warga",
+      "detail": "Tujuan Koleksi: lampiran\nID Record: jn607khozusmisg\nOleh: Warga C09\nWaktu: 25/6/2026, 14.58.22\nKeterangan: Iuran IPL-01-26, IPL-02-26, IPL-03-26",
+      "id": "xiuekppbqtu5q02",
+      "warga": "c09000000000000"
+    },
+    {
+      "aktivitas": "Upload Bukti Pembayaran",
+      "collectionId": "aktivitas_warga_id_1",
+      "collectionName": "aktivitas_warga",
+      "detail": "Tujuan Koleksi: lampiran\nID Record: mlkzunnzxxoxmf6\nOleh: Warga C09\nWaktu: 25/6/2026, 15.34.26\nKeterangan: Iuran IPL-04-26, IPL-05-26, IPL-06-26, IPL-07-26, IPL-08-26, IPL-09-26",
+      "id": "ur0z6jql8ix15ub",
+      "warga": "c09000000000000"
+    },
+    {
+      "aktivitas": "Upload Bukti Pembayaran",
+      "collectionId": "aktivitas_warga_id_1",
+      "collectionName": "aktivitas_warga",
+      "detail": "Tujuan Koleksi: lampiran\nID Record: malqu92tfpd7uih\nOleh: Warga C09\nWaktu: 25/6/2026, 15.43.26\nKeterangan: Iuran IPL-04-26, IPL-05-26, IPL-06-26, IPL-07-26, IPL-08-26, IPL-09-26",
+      "id": "znqiionmk0r00pz",
+      "warga": "c09000000000000"
+    }
+  ]
+}

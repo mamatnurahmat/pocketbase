@@ -1,0 +1,16 @@
+{
+  "collection": "_superusers",
+  "totalItems": 1,
+  "items": [
+    {
+      "collectionId": "pbc_3142635823",
+      "collectionName": "_superusers",
+      "created": "2026-06-21 06:34:15.521Z",
+      "email": "admin@example.com",
+      "emailVisibility": false,
+      "id": "zef85gaj2xoks8s",
+      "updated": "2026-06-25 04:42:12.315Z",
+      "verified": true
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "collection": "lampiran",
+  "totalItems": 1,
+  "items": [
+    {
+      "approval": false,
+      "approved_by": "",
+      "collectionId": "lampiran_collection_id",
+      "collectionName": "lampiran",
+      "file_bukti": "screenshot_2026_05_26_at_12_25_83qhoy6fkq.30.png",
+      "id": "malqu92tfpd7uih",
+      "iuran": [
+        "iuranipl26bln04",
+        "iuranipl26bln05",
+        "iuranipl26bln06",
+        "iuranipl26bln07",
+        "iuranipl26bln08",
+        "iuranipl26bln09"
+      ],
+      "warga": "c09000000000000"
+    }
+  ]
+}

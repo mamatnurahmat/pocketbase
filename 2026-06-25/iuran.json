@@ -1,0 +1,114 @@
+{
+  "collection": "iuran",
+  "totalItems": 12,
+  "items": [
+    {
+      "collectionId": "iuran_collection_id",
+      "collectionName": "iuran",
+      "id": "iuranipl26bln01",
+      "jatuh_tempo": "2026-01-20 00:00:00.000Z",
+      "keterangan": "Iuran Pengelolaan Lingkungan Bulan 1 2026",
+      "kode": "IPL-01-26",
+      "nominal": 170000
+    },
+    {
+      "collectionId": "iuran_collection_id",
+      "collectionName": "iuran",
+      "id": "iuranipl26bln02",
+      "jatuh_tempo": "2026-02-20 00:00:00.000Z",
+      "keterangan": "Iuran Pengelolaan Lingkungan Bulan 2 2026",
+      "kode": "IPL-02-26",
+      "nominal": 170000
+    },
+    {
+      "collectionId": "iuran_collection_id",
+      "collectionName": "iuran",
+      "id": "iuranipl26bln03",
+      "jatuh_tempo": "2026-03-20 00:00:00.000Z",
+      "keterangan": "Iuran Pengelolaan Lingkungan Bulan 3 2026",
+      "kode": "IPL-03-26",
+      "nominal": 170000
+    },
+    {
+      "collectionId": "iuran_collection_id",
+      "collectionName": "iuran",
+      "id": "iuranipl26bln04",
+      "jatuh_tempo": "2026-04-20 00:00:00.000Z",
+      "keterangan": "Iuran Pengelolaan Lingkungan Bulan 4 2026",
+      "kode": "IPL-04-26",
+      "nominal": 170000
+    },
+    {
+      "collectionId": "iuran_collection_id",
+      "collectionName": "iuran",
+      "id": "iuranipl26bln05",
+      "jatuh_tempo": "2026-05-20 00:00:00.000Z",
+      "keterangan": "Iuran Pengelolaan Lingkungan Bulan 5 2026",
+      "kode": "IPL-05-26",
+      "nominal": 170000
+    },
+    {
+      "collectionId": "iuran_collection_id",
+      "collectionName": "iuran",
+      "id": "iuranipl26bln06",
+      "jatuh_tempo": "2026-06-20 00:00:00.000Z",
+      "keterangan": "Iuran Pengelolaan Lingkungan Bulan 6 2026",
+      "kode": "IPL-06-26",
+      "nominal": 170000
+    },
+    {
+      "collectionId": "iuran_collection_id",
+      "collectionName": "iuran",
+      "id": "iuranipl26bln07",
+      "jatuh_tempo": "2026-07-20 00:00:00.000Z",
+      "keterangan": "Iuran Pengelolaan Lingkungan Bulan 7 2026",
+      "kode": "IPL-07-26",
+      "nominal": 170000
+    },
+    {
+      "collectionId": "iuran_collection_id",
+      "collectionName": "iuran",
+      "id": "iuranipl26bln08",
+      "jatuh_tempo": "2026-08-20 00:00:00.000Z",
+      "keterangan": "Iuran Pengelolaan Lingkungan Bulan 8 2026",
+      "kode": "IPL-08-26",
+      "nominal": 170000
+    },
+    {
+      "collectionId": "iuran_collection_id",
+      "collectionName": "iuran",
+      "id": "iuranipl26bln09",
+      "jatuh_tempo": "2026-09-20 00:00:00.000Z",
+      "keterangan": "Iuran Pengelolaan Lingkungan Bulan 9 2026",
+      "kode": "IPL-09-26",
+      "nominal": 170000
+    },
+    {
+      "collectionId": "iuran_collection_id",
+      "collectionName": "iuran",
+      "id": "iuranipl26bln10",
+      "jatuh_tempo": "2026-10-20 00:00:00.000Z",
+      "keterangan": "Iuran Pengelolaan Lingkungan Bulan 10 2026",
+      "kode": "IPL-10-26",
+      "nominal": 170000
+    },
+    {
+      "collectionId": "iuran_collection_id",
+      "collectionName": "iuran",
+      "id": "iuranipl26bln11",
+      "jatuh_tempo": "2026-11-20 00:00:00.000Z",
+      "keterangan": "Iuran Pengelolaan Lingkungan Bulan 11 2026",
+      "kode": "IPL-11-26",
+      "nominal": 170000
+    },
+    {
+      "collectionId": "iuran_collection_id",
+      "collectionName": "iuran",
+      "id": "iuranipl26bln12",
+      "jatuh_tempo": "2026-12-20 00:00:00.000Z",
+      "keterangan": "Iuran Pengelolaan Lingkungan Bulan 12 2026",
+      "kode": "IPL-12-26",
+      "nominal": 170000
+    }
+  ]
+}

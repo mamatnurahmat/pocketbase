@@ -1,0 +1,676 @@
+{
+  "collection": "wallets",
+  "totalItems": 67,
+  "items": [
+    {
+      "balance": 510000,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "ouo6u0xulm1edft",
+      "is_active": true,
+      "note": "Kas pusat RT 05",
+      "user": "usra01000000000",
+      "wallet_type": "KAS"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "k7alqjhyolsjn1r",
+      "is_active": true,
+      "note": "",
+      "user": "usra02000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "1x0n1m5mrcxj4ry",
+      "is_active": true,
+      "note": "",
+      "user": "usra03000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "8n74d7t0bcar2hn",
+      "is_active": true,
+      "note": "",
+      "user": "usra04000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "dlqcnmcmr3244bf",
+      "is_active": true,
+      "note": "",
+      "user": "usra05000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "a7dt89l11ez3ayu",
+      "is_active": true,
+      "note": "",
+      "user": "usra06000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "irfedj130bpi7o8",
+      "is_active": true,
+      "note": "",
+      "user": "usrb01000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "y513nj1qo3km542",
+      "is_active": true,
+      "note": "",
+      "user": "usrb02000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "mbz1uqo5bdizbgw",
+      "is_active": true,
+      "note": "",
+      "user": "usrb03000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "ggbpv9w6wu5pmyt",
+      "is_active": true,
+      "note": "",
+      "user": "usrb04000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "n4twlqr0d4g2pgn",
+      "is_active": true,
+      "note": "",
+      "user": "usrb05000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "17slt9ibi2tza5n",
+      "is_active": true,
+      "note": "",
+      "user": "usrb06000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "df5mbltj8kbt0iy",
+      "is_active": true,
+      "note": "",
+      "user": "usrc01000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "ut28gr38tyvrj5z",
+      "is_active": true,
+      "note": "",
+      "user": "usrc02000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "425mv977hyzggz1",
+      "is_active": true,
+      "note": "",
+      "user": "usrc03000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "md5jy3v3h6uoy55",
+      "is_active": true,
+      "note": "",
+      "user": "usrc04000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "599r8dbpoyvu9b2",
+      "is_active": true,
+      "note": "",
+      "user": "usrc05000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "hpw2zcdkocv60fy",
+      "is_active": true,
+      "note": "",
+      "user": "usrc06000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "2t7kgio5vv247ef",
+      "is_active": true,
+      "note": "",
+      "user": "usrc07000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "uva4dyk6zvg1f41",
+      "is_active": true,
+      "note": "",
+      "user": "usrc08000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 510000,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "ey0znrfrpvv4pew",
+      "is_active": true,
+      "note": "",
+      "user": "usrc09000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "oiqsbl8lfnzkhvo",
+      "is_active": true,
+      "note": "",
+      "user": "usrc10000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "a9f2ogpu5w9ac1v",
+      "is_active": true,
+      "note": "",
+      "user": "usrc11000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "zstn2mmhv0x8k9o",
+      "is_active": true,
+      "note": "",
+      "user": "usrc12000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "xjdmjmy5ly5xhqg",
+      "is_active": true,
+      "note": "",
+      "user": "usrc13000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "0nvurqwdxvxc9ys",
+      "is_active": true,
+      "note": "",
+      "user": "usrc14000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "uaotqnk0br5mo6e",
+      "is_active": true,
+      "note": "",
+      "user": "usrd01000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "0ivzj8apvsvll8i",
+      "is_active": true,
+      "note": "",
+      "user": "usrd02000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "imw85t7zyewul7o",
+      "is_active": true,
+      "note": "",
+      "user": "usrd03000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "tysyu7sxwdq7t4c",
+      "is_active": true,
+      "note": "",
+      "user": "usrd04000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "9q4rdt1gpdoy0li",
+      "is_active": true,
+      "note": "",
+      "user": "usrd05000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "7gxzfx1i8xlv96h",
+      "is_active": true,
+      "note": "",
+      "user": "usrd06000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "yadsl9ocwsmd0p1",
+      "is_active": true,
+      "note": "",
+      "user": "usrd07000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "iprhzp2w1cv5ofv",
+      "is_active": true,
+      "note": "",
+      "user": "usre01000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "w123e8ozz4b6534",
+      "is_active": true,
+      "note": "",
+      "user": "usre02000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "vhbey5ef89mfcrw",
+      "is_active": true,
+      "note": "",
+      "user": "usre03000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "tgq78nf66k3n8c0",
+      "is_active": true,
+      "note": "",
+      "user": "usre04000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "9cor0dxe5wv7lo2",
+      "is_active": true,
+      "note": "",
+      "user": "usre05000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "dcfvapkrt2tjdo5",
+      "is_active": true,
+      "note": "",
+      "user": "usre06000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "ogf2dnwzflq2quq",
+      "is_active": true,
+      "note": "",
+      "user": "usre07000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "fkrsnzcruk9tfx8",
+      "is_active": true,
+      "note": "",
+      "user": "usre08000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "x0oxq5ht4wblzw8",
+      "is_active": true,
+      "note": "",
+      "user": "usre09000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "cn0g2iu2gnvyfxk",
+      "is_active": true,
+      "note": "",
+      "user": "usre10000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "0jsm7o8lrqd8ho8",
+      "is_active": true,
+      "note": "",
+      "user": "usre11000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "vppjf3y03q0pw2b",
+      "is_active": true,
+      "note": "",
+      "user": "usre12000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "nrvj4ttnrsvflqb",
+      "is_active": true,
+      "note": "",
+      "user": "usrf01000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "347tlgyf8n1kyvu",
+      "is_active": true,
+      "note": "",
+      "user": "usrf02000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "wfxhcf0qbkqr9mt",
+      "is_active": true,
+      "note": "",
+      "user": "usrf03000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "4r5x4fflv01mxdb",
+      "is_active": true,
+      "note": "",
+      "user": "usrf04000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "788qjdmqnpx12i3",
+      "is_active": true,
+      "note": "",
+      "user": "usrf05000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "awh5gewzsgl4df2",
+      "is_active": true,
+      "note": "",
+      "user": "usrf06000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "crqaillrgzm6xuk",
+      "is_active": true,
+      "note": "",
+      "user": "usrf07000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "97eopcqwyerrmaq",
+      "is_active": true,
+      "note": "",
+      "user": "usrf08000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "rcbvpqg9k31cb1j",
+      "is_active": true,
+      "note": "",
+      "user": "usrf09000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "szlz3wbgwg0sk2p",
+      "is_active": true,
+      "note": "",
+      "user": "usrf10000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "384zakktzfsn6u1",
+      "is_active": true,
+      "note": "",
+      "user": "usrf11000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "1y95ght9ez2kpm7",
+      "is_active": true,
+      "note": "",
+      "user": "usrf12000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "qq6s1516hx8fra4",
+      "is_active": true,
+      "note": "",
+      "user": "usrg01000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "i14eqyxqtgfmfrb",
+      "is_active": true,
+      "note": "",
+      "user": "usrg02000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "4sbtgti76lyuclf",
+      "is_active": true,
+      "note": "",
+      "user": "usrg03000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "hs4ui6whap9gker",
+      "is_active": true,
+      "note": "",
+      "user": "usrg04000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "50pxlnow33154mb",
+      "is_active": true,
+      "note": "",
+      "user": "usrg05000000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "9750fjefl8ib6ng",
+      "is_active": true,
+      "note": "",
+      "user": "usrtatab0000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "vvf4t5m94mlsolt",
+      "is_active": true,
+      "note": "",
+      "user": "usriwan00000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "jn9cjfhw29ugjw5",
+      "is_active": true,
+      "note": "",
+      "user": "usrudin00000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "1mgnqpraj3y5378",
+      "is_active": true,
+      "note": "",
+      "user": "usrusman0000000",
+      "wallet_type": "PERSONAL"
+    },
+    {
+      "balance": 0.01,
+      "collectionId": "pbc_120182150",
+      "collectionName": "wallets",
+      "id": "63gv9w1ewv3t2o0",
+      "is_active": true,
+      "note": "",
+      "user": "p5c5m01fmofyrtx",
+      "wallet_type": "PERSONAL"
+    }
+  ]
+}

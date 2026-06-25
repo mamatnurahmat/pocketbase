@@ -1,0 +1,72 @@
+{
+  "collection": "tagihan",
+  "totalItems": 6,
+  "items": [
+    {
+      "collectionId": "tagihan_collection_id",
+      "collectionName": "tagihan",
+      "id": "c09iuranipl26bln04",
+      "iuran": "iuranipl26bln04",
+      "jatuh_tempo": "2026-06-25 08:43:25.866Z",
+      "lampiran": "malqu92tfpd7uih",
+      "nominal": 170000,
+      "status_pembayaran": "Lunas",
+      "warga": "c09000000000000"
+    },
+    {
+      "collectionId": "tagihan_collection_id",
+      "collectionName": "tagihan",
+      "id": "c09iuranipl26bln05",
+      "iuran": "iuranipl26bln05",
+      "jatuh_tempo": "2026-06-25 08:43:25.881Z",
+      "lampiran": "malqu92tfpd7uih",
+      "nominal": 170000,
+      "status_pembayaran": "Lunas",
+      "warga": "c09000000000000"
+    },
+    {
+      "collectionId": "tagihan_collection_id",
+      "collectionName": "tagihan",
+      "id": "c09iuranipl26bln06",
+      "iuran": "iuranipl26bln06",
+      "jatuh_tempo": "2026-06-25 08:43:25.893Z",
+      "lampiran": "malqu92tfpd7uih",
+      "nominal": 170000,
+      "status_pembayaran": "Lunas",
+      "warga": "c09000000000000"
+    },
+    {
+      "collectionId": "tagihan_collection_id",
+      "collectionName": "tagihan",
+      "id": "c09iuranipl26bln07",
+      "iuran": "iuranipl26bln07",
+      "jatuh_tempo": "2026-06-25 08:43:26.068Z",
+      "lampiran": "malqu92tfpd7uih",
+      "nominal": 170000,
+      "status_pembayaran": "Lunas",
+      "warga": "c09000000000000"
+    },
+    {
+      "collectionId": "tagihan_collection_id",
+      "collectionName": "tagihan",
+      "id": "c09iuranipl26bln08",
+      "iuran": "iuranipl26bln08",
+      "jatuh_tempo": "2026-06-25 08:43:26.555Z",
+      "lampiran": "malqu92tfpd7uih",
+      "nominal": 170000,
+      "status_pembayaran": "Lunas",
+      "warga": "c09000000000000"
+    },
+    {
+      "collectionId": "tagihan_collection_id",
+      "collectionName": "tagihan",
+      "id": "c09iuranipl26bln09",
+      "iuran": "iuranipl26bln09",
+      "jatuh_tempo": "2026-06-25 08:43:26.781Z",
+      "lampiran": "malqu92tfpd7uih",
+      "nominal": 170000,
+      "status_pembayaran": "Lunas",
+      "warga": "c09000000000000"
+    }
+  ]
+}

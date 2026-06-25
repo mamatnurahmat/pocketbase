@@ -1,0 +1,36 @@
+{
+  "collection": "laporan_scurity",
+  "totalItems": 3,
+  "items": [
+    {
+      "collectionId": "pbc_1225845215",
+      "collectionName": "laporan_scurity",
+      "dibuat_oleh": "usrtatab0000000",
+      "foto": "images_c03wi8zecx.png",
+      "id": "yz9uqnox06pnsku",
+      "jenis": "absen",
+      "keterangan": "absen",
+      "tanggal": "2026-06-25 03:36:19.064Z"
+    },
+    {
+      "collectionId": "pbc_1225845215",
+      "collectionName": "laporan_scurity",
+      "dibuat_oleh": "usriwan00000000",
+      "foto": "images_je3afpwoin.png",
+      "id": "r49ond9ocg2rta0",
+      "jenis": "patroli",
+      "keterangan": "patroli",
+      "tanggal": "2026-06-25 03:43:45.153Z"
+    },
+    {
+      "collectionId": "pbc_1225845215",
+      "collectionName": "laporan_scurity",
+      "dibuat_oleh": "usriwan00000000",
+      "foto": "images_z411i4ly1y.png",
+      "id": "dhyk3lv9ahrrud1",
+      "jenis": "absen",
+      "keterangan": "absen",
+      "tanggal": "2026-06-25 03:44:17.019Z"
+    }
+  ]
+}

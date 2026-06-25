@@ -1,0 +1,87 @@
+{
+  "collection": "categories",
+  "totalItems": 9,
+  "items": [
+    {
+      "collectionId": "pbc_3292755704",
+      "collectionName": "categories",
+      "icon": "🏠",
+      "id": "7trucb6kbinyueg",
+      "is_active": true,
+      "name": "Iuran Bulanan",
+      "type": "INCOME"
+    },
+    {
+      "collectionId": "pbc_3292755704",
+      "collectionName": "categories",
+      "icon": "🧹",
+      "id": "ya9e8pbdn6vzafu",
+      "is_active": true,
+      "name": "Iuran Kebersihan",
+      "type": "INCOME"
+    },
+    {
+      "collectionId": "pbc_3292755704",
+      "collectionName": "categories",
+      "icon": "🛡️",
+      "id": "141183v3i1rxdd4",
+      "is_active": true,
+      "name": "Iuran Keamanan",
+      "type": "INCOME"
+    },
+    {
+      "collectionId": "pbc_3292755704",
+      "collectionName": "categories",
+      "icon": "🎁",
+      "id": "ltnresbvwv28en2",
+      "is_active": true,
+      "name": "Sumbangan",
+      "type": "INCOME"
+    },
+    {
+      "collectionId": "pbc_3292755704",
+      "collectionName": "categories",
+      "icon": "⚙️",
+      "id": "h55nesntdz1e0u0",
+      "is_active": true,
+      "name": "Pengeluaran Operasional",
+      "type": "EXPENSE"
+    },
+    {
+      "collectionId": "pbc_3292755704",
+      "collectionName": "categories",
+      "icon": "🤝",
+      "id": "nc14fyerfos2dnr",
+      "is_active": true,
+      "name": "Bantuan Sosial",
+      "type": "EXPENSE"
+    },
+    {
+      "collectionId": "pbc_3292755704",
+      "collectionName": "categories",
+      "icon": "🔧",
+      "id": "h0ll69oqjjdu7py",
+      "is_active": true,
+      "name": "Perbaikan Fasilitas",
+      "type": "EXPENSE"
+    },
+    {
+      "collectionId": "pbc_3292755704",
+      "collectionName": "categories",
+      "icon": "🎉",
+      "id": "h1zwndhx25xmuxz",
+      "is_active": true,
+      "name": "Acara/Kegiatan",
+      "type": "EXPENSE"
+    },
+    {
+      "collectionId": "pbc_3292755704",
+      "collectionName": "categories",
+      "icon": "↔️",
+      "id": "cq7swpt411b1q1l",
+      "is_active": true,
+      "name": "Transfer Internal",
+      "type": "TRANSFER"
+    }
+  ]
+}
