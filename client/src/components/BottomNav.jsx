@@ -55,12 +55,12 @@ const scurityTabs = [
     ),
   },
   {
-    path: '/laporan-warga',
-    label: 'Lap. Warga',
+    path: '/lapor',
+    label: 'Lapor',
     icon: (c) => (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M8 12h8m-8-4h8m-8 8h4" stroke={c} strokeWidth="1.8" strokeLinecap="round"/>
-        <rect x="4" y="4" width="16" height="16" rx="3" stroke={c} strokeWidth="1.8"/>
+        <path d="M4 14V6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V14C20 15.1046 19.1046 16 18 16H8L4 20V14Z" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx="12" cy="10" r="1" fill={c}/>
       </svg>
     ),
   },

@@ -41,8 +41,9 @@ const allItems = [
   },
 ];
 
+// ponytail: scurity tidak perlu lihat Lap. Warga
 const scurityItems = allItems.filter(i =>
-  ['/dashboard', '/lapor', '/laporan-warga', '/warga', '/laporan-scurity', '/profil'].includes(i.path)
+  ['/dashboard', '/lapor', '/warga', '/laporan-scurity', '/profil'].includes(i.path)
 );
 
 export default function Sidebar({ open, onClose, persistent }) {

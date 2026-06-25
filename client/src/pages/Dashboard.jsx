@@ -139,15 +139,6 @@ export default function Dashboard() {
           <div className="quick-actions">
             {localStorage.getItem('isScurity') === 'true' ? (
               <>
-                <button className="quick-action" onClick={() => navigate('/laporan-warga')}>
-                  <span className="quick-action-icon" style={{ background: '#FCE4EC' }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                      <path d="M8 12h8m-8-4h8m-8 8h4" stroke="#D81B60" strokeWidth="1.8" strokeLinecap="round"/>
-                      <rect x="4" y="4" width="16" height="16" rx="3" stroke="#D81B60" strokeWidth="1.8"/>
-                    </svg>
-                  </span>
-                  <span>Lap. Warga</span>
-                </button>
                 <button className="quick-action" onClick={() => navigate('/warga')}>
                   <span className="quick-action-icon" style={{ background: '#E3F2FD' }}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">

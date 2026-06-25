@@ -22,10 +22,11 @@ services:
     ports:
       - "8090:8090"
     volumes:
-      - ./pb_data:/pb_data
+      - /var/data/pocketbase/pb_data:/pb_data
       - ./pb_public:/pb_public
       - ./pb_migrations:/pb_migrations
       - ./pb_hooks:/pb_hooks
+      # - /var/data/pocketbase/pb_migrations:/pb_migrations
     depends_on:
       client:
         condition: service_completed_successfully
@@ -34,17 +35,16 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
-  swagger-ui:
-    image: swaggerapi/swagger-ui
-    container_name: pocketbase-swagger
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./swagger/openapi.yaml:/openapi.yaml:ro
-    environment:
-      SWAGGER_JSON: /openapi.yaml
+  # swagger-ui:
+  #   image: swaggerapi/swagger-ui
+  #   container_name: pocketbase-swagger
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - ./swagger/openapi.yaml:/openapi.yaml:ro
+  #   environment:
+  #     SWAGGER_JSON: /openapi.yaml
   # caddy:
   #   image: caddy:latest
   #   container_name: caddy
@@ -58,3 +58,4 @@ services:
   #     - /var/data/pocketbase/caddy_config:/config
   #   depends_on:
   #     - pocketbase
+  #     - swagger-ui

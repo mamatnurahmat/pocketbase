@@ -64,6 +64,12 @@ export default function LaporanWarga() {
   const [isPengurus, setIsPengurus] = useState(() => localStorage.getItem('isPengurus') === 'true');
   const [currentWarga, setCurrentWarga] = useState(null);
 
+  // Scurity tidak boleh mengakses halaman ini
+  const isScurity = localStorage.getItem('isScurity') === 'true';
+  useEffect(() => {
+    if (isScurity) navigate('/dashboard', { replace: true });
+  }, [isScurity, navigate]);
+
   // Edit modal state
   const [editModal, setEditModal] = useState(null); // item object or null
   const [editStatus, setEditStatus] = useState('');
