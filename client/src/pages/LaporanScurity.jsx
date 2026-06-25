@@ -96,8 +96,7 @@ export default function LaporanScurity() {
     try {
       const formData = new FormData();
       formData.append('jenis', jenis);
-      const keteranganFinal = jenis === 'lainnya' ? keterangan : labelJenis[jenis] || jenis;
-      formData.append('keterangan', keteranganFinal);
+      formData.append('keterangan', keterangan);
       formData.append('foto', foto);
       formData.append('dibuat_oleh', pb.authStore.model.id);
 
@@ -204,8 +203,8 @@ export default function LaporanScurity() {
                 </select>
               </div>
 
-              {/* Keterangan (hanya jika lainnya) */}
-              {jenis === 'lainnya' && (
+              {/* Keterangan */}
+              {jenis && (
                 <div className="form-group" style={{ margin: 0 }}>
                   <label>Keterangan</label>
                   <textarea
@@ -214,7 +213,6 @@ export default function LaporanScurity() {
                     placeholder="Deskripsikan laporan Anda..."
                     value={keterangan}
                     onChange={(e) => setKeterangan(e.target.value)}
-                    required
                   />
                 </div>
               )}
@@ -276,7 +274,7 @@ export default function LaporanScurity() {
               <button
                 type="submit"
                 className="btn btn-primary"
-                disabled={submitting || !jenis || !foto || (jenis === 'lainnya' && !keterangan)}
+                disabled={submitting || !jenis || !foto}
                 style={{ minHeight: 50, fontSize: 15, fontWeight: 700 }}
               >
                 {submitting ? (
