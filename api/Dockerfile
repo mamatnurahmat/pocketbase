@@ -4,4 +4,4 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY app.py .
 EXPOSE 8888
-CMD ["gunicorn", "-b", "0.0.0.0:8888", "app:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:8888", "--capture-output", "--access-logfile", "-", "--error-logfile", "-", "app:app"]

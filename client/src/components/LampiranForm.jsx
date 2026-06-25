@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { pb } from '../lib/pocketbase';
+import { pb, API_URL } from '../lib/pocketbase';
 
 export default function LampiranForm({ onSuccess }) {
   const [warga, setWarga] = useState(null);
@@ -64,62 +64,24 @@ export default function LampiranForm({ onSuccess }) {
 
     try {
       const formData = new FormData();
-      
-      // PocketBase requires a 15-character alphanumeric ID when it is explicitly defined in schema
-      const generateId = () => {
-        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-        let id = '';
-        for (let i = 0; i < 15; i++) {
-          id += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return id;
-      };
-      const lampiranId = generateId();
-      formData.append('id', lampiranId);
-
-      formData.append('warga', warga.id);
-      
-      // Append each iuran ID separately so PocketBase parses it as a relation array
-      selectedIurans.forEach(id => formData.append('iuran', id));
-      
+      formData.append('warga_id', warga.id);
+      selectedIurans.forEach(id => formData.append('iuran_ids[]', id));
       formData.append('file_bukti', file);
-      formData.append('approval', false);
 
-      await pb.collection('lampiran').create(formData);
-      
-      // Relasikan lampiran dengan tagihan milik warga tersebut menggunakan ID yang disimpan di memory
-      for (const iuranId of selectedIurans) {
-        let tagihanRecord = null;
-        try {
-          tagihanRecord = await pb.collection('tagihan').getFirstListItem(`warga="${warga.id}" && iuran="${iuranId}"`);
-        } catch (e) {
-          // Tagihan tidak ditemukan, akan dibuat baru di bawah
-        }
+      const res = await fetch(`${API_URL}/v1/iuran/upload-bukti`, {
+        method: 'POST',
+        headers: { 'Authorization': pb.authStore.token },
+        body: formData,
+      });
 
-        if (tagihanRecord) {
-          // Update tagihan yang sudah ada
-          await pb.collection('tagihan').update(tagihanRecord.id, {
-            lampiran: lampiranId,
-            status_pembayaran: 'Menunggu Konfirmasi'
-          });
-        } else {
-          // Buat tagihan baru dengan format ID: no_rumah + kode_iuran (semua lowercase)
-          // contoh: a01iuranipl26bln03
-          const iuranData = iuranList.find(i => i.id === iuranId);
-          const tagihanId = `${warga.no_rumah.toLowerCase()}${iuranId}`;
-          await pb.collection('tagihan').create({
-            id: tagihanId,
-            warga: warga.id,
-            iuran: iuranId,
-            nominal: iuranData ? iuranData.nominal : 0,
-            jatuh_tempo: new Date().toISOString(),
-            status_pembayaran: 'Menunggu Konfirmasi',
-            lampiran: lampiranId
-          });
-        }
+      if (!res.ok) {
+        const errBody = await res.json();
+        throw new Error(errBody.message || `HTTP ${res.status}`);
       }
+
+      const result = await res.json();
       
-      setMessage({ text: 'Lampiran berhasil diupload!', type: 'success' });
+      setMessage({ text: result.message || 'Lampiran berhasil diupload!', type: 'success' });
       
       setSelectedIurans([]);
       if (fileInputRef.current) {
@@ -132,13 +94,8 @@ export default function LampiranForm({ onSuccess }) {
       }
 
     } catch (err) {
-      console.error("Upload error:", err.response);
-      let errorDetail = '';
-      if (err.response?.data) {
-        const details = Object.entries(err.response.data).map(([key, val]) => `${key}: ${val.message}`);
-        errorDetail = details.join(' | ');
-      }
-      setMessage({ text: `Gagal mengupload lampiran. ${errorDetail}`, type: 'error' });
+      console.error("Upload error:", err);
+      setMessage({ text: `Gagal mengupload: ${err.message}`, type: 'error' });
     } finally {
       setLoading(false);
     }

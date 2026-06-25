@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { pb } from '../lib/pocketbase';
+import { pb, API_URL } from '../lib/pocketbase';
 export default function Iuran() {
   const [warga, setWarga] = useState(null);
   const [iuranList, setIuranList] = useState([]);
@@ -63,80 +63,28 @@ export default function Iuran() {
 
     try {
       const formData = new FormData();
-      const generateId = () => {
-        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-        let id = '';
-        for (let i = 0; i < 15; i++) id += chars.charAt(Math.floor(Math.random() * chars.length));
-        return id;
-      };
-      formData.append('id', generateId());
-      formData.append('warga', warga.id);
-      selectedIurans.forEach(id => formData.append('iuran', id));
+      formData.append('warga_id', warga.id);
+      selectedIurans.forEach(id => formData.append('iuran_ids[]', id));
       formData.append('file_bukti', file);
-      formData.append('approval', false);
 
-      const lampiranRecord = await pb.collection('lampiran').create(formData);
-      const lampiranId = lampiranRecord.id;
+      const res = await fetch(`${API_URL}/v1/iuran/upload-bukti`, {
+        method: 'POST',
+        headers: { 'Authorization': pb.authStore.token },
+        body: formData,
+      });
 
-      // Cari atau buat tagihan untuk setiap iuran (sama pola seperti LampiranForm)
-      for (const iuranId of selectedIurans) {
-        let tagihanRecord = null;
-        try {
-          tagihanRecord = await pb.collection('tagihan').getFirstListItem(`warga="${warga.id}" && iuran="${iuranId}"`);
-        } catch (e) {
-          // Tagihan tidak ditemukan, akan dibuat baru
-        }
-
-        const iuranData = iuranList.find(x => x.id === iuranId);
-
-        if (tagihanRecord) {
-          // Update tagihan yang sudah ada — simpan lampiranId + ubah status
-          await pb.collection('tagihan').update(tagihanRecord.id, {
-            lampiran: lampiranId,
-            status_pembayaran: 'Menunggu Konfirmasi'
-          });
-        } else {
-          // Buat tagihan baru dengan explicit ID: no_rumah + kode_iuran
-          const tagihanId = `${warga.no_rumah.toLowerCase()}${iuranId}`;
-          await pb.collection('tagihan').create({
-            id: tagihanId,
-            warga: warga.id,
-            iuran: iuranId,
-            jatuh_tempo: new Date().toISOString(),
-            nominal: iuranData?.nominal || 0,
-            status_pembayaran: 'Menunggu Konfirmasi',
-            lampiran: lampiranId
-          });
-        }
+      if (!res.ok) {
+        const errBody = await res.json();
+        throw new Error(errBody.message || `HTTP ${res.status}`);
       }
 
-      // Tambahkan post ke logs
-      try {
-        const iuranCodes = selectedIurans.map(id => {
-          const iData = iuranList.find(x => x.id === id);
-          return iData ? iData.kode : id;
-        }).join(', ');
-        
-        const logDetail = `Tujuan Koleksi: lampiran\nID Record: ${lampiranRecord.id}\nOleh: Warga ${warga.no_rumah}\nWaktu: ${new Date().toLocaleString('id-ID')}\nKeterangan: Iuran ${iuranCodes}`;
-        
-        await pb.collection('aktivitas_warga').create({
-          warga: warga.id,
-          aktivitas: 'Upload Bukti Pembayaran',
-          detail: logDetail
-        });
-      } catch (logErr) {
-        console.warn("Gagal mencatat log aktivitas:", logErr);
-      }
+      const result = await res.json();
 
-      setMessage({ text: 'Bukti pembayaran berhasil diupload!', type: 'success' });
+      setMessage({ text: result.message || 'Bukti pembayaran berhasil diupload!', type: 'success' });
       setSelectedIurans([]);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
-      let detail = '';
-      if (err.response?.data) {
-        detail = Object.entries(err.response.data).map(([k, v]) => `${k}: ${v.message}`).join(' | ');
-      }
-      setMessage({ text: `Gagal upload. ${detail}`, type: 'error' });
+      setMessage({ text: `Gagal upload. ${err.message}`, type: 'error' });
     } finally {
       setLoading(false);
     }
