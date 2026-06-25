@@ -56,7 +56,7 @@ export default function LaporanScurity() {
     setLoading(true);
     try {
       const records = await pb.collection('laporan_scurity').getFullList({
-        sort: '-created',
+        sort: '-tanggal',
         expand: 'dibuat_oleh'
       });
       setLaporanList(records);
@@ -339,7 +339,7 @@ export default function LaporanScurity() {
                       )}
                       <div style={{ fontSize: 11, color: '#8A9991', marginTop: 2 }}>
                         {l.expand?.dibuat_oleh?.name || l.expand?.dibuat_oleh?.email || 'Scurity'}
-                        &nbsp;·&nbsp;{formatDate(l.created)}
+                        &nbsp;·&nbsp;{formatDate(l.tanggal)}
                       </div>
                     </div>
                   </div>

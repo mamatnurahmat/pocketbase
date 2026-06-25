@@ -60,19 +60,24 @@ export default function Dashboard() {
     // ponytail: fetch last scurity absen, single query, no pagination
     const fetchLastAbsen = async () => {
       try {
-        // ponytail: muchobien/pocketbase doesn't have created/updated sys fields
-        const records = await pb.collection('laporan_scurity').getList(1, 1, {
-          filter: 'jenis="absen"',
-          sort: '-id',
-          expand: 'dibuat_oleh',
+        var records = await pb.collection('laporan_scurity').getList(1, 1, {
+          filter: 'jenis = "absen"',
+          sort: '-tanggal',
         });
         if (records.items.length === 0) return;
-        const l = records.items[0];
-        const userId = l.expand?.dibuat_oleh?.id;
+        var l = records.items[0];
+        var userId = l.dibuat_oleh;
         if (!userId) return;
-        // ponytail: single scurity lookup by user id
-        const sc = await pb.collection('scurity').getFirstListItem(`user="${userId}"`);
-        setLastAbsenScurity({ nama: sc.nama, no_hp: sc.no_hp });
+        // ponytail: lookup user name langsung dari users collection
+        try {
+          var u = await pb.collection('users').getOne(userId);
+          setLastAbsenScurity({ nama: u.name || u.username || 'Scurity', no_hp: '-' });
+          // cek juga scurity collection untuk no_hp
+          try {
+            var sc = await pb.collection('scurity').getFirstListItem('user = "' + userId + '"');
+            setLastAbsenScurity({ nama: sc.nama, no_hp: sc.no_hp });
+          } catch (_) {}
+        } catch (_) {}
       } catch (e) {
         console.warn('No scurity absen found:', e);
       }

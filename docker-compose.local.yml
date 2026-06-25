@@ -5,7 +5,7 @@ services:
     working_dir: /app
     volumes:
       - ./client:/app
-      - ./pb_public:/app/pb_public
+      - ./pb_public:/pb_public
     command: sh -c "npm install && npm run build"
     restart: "no"
 
