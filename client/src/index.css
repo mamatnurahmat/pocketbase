@@ -755,3 +755,41 @@ input:checked + .slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+
+/* ===== SLIDE CAROUSEL ===== */
+.slide-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.slide-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: #D4D8D5;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.25s;
+}
+.slide-dot.active {
+  width: 24px;
+  border-radius: 4px;
+  background: var(--primary);
+}
+.slide-track-wrapper {
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+}
+.slide-track {
+  display: flex;
+  transition: transform 0.35s cubic-bezier(0.25, 0, 0.25, 1);
+}
+.slide-item {
+  min-width: 100%;
+  padding: 0 2px;
+}
+.slide-card {
+  min-height: 150px;
+}

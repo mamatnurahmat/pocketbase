@@ -517,7 +517,7 @@ export default function Warga() {
                   >
                     <option value="">-- Pilih Status --</option>
                     {statusList.map(s => (
-                      <option key={s.id} value={s.id}>{s.nama}{s.jumlah_iuran ? ` (Rp ${s.jumlah_iuran.toLocaleString('id-ID')})` : ''}</option>
+                      <option key={s.id} value={s.id}>{s.nama}{s.jumlah_iuran ? ` (Rp ${(s.jumlah_iuran || 0).toLocaleString('id-ID')})` : ''}</option>
                     ))}
                   </select>
                 </div>

@@ -9,7 +9,8 @@ export default function Iuran() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const fileInputRef = useRef(null);
 
-  const rupiah = (n) => 'Rp ' + (n || 0).toLocaleString('id-ID');
+  // ponytail: PocketBase v0.39 rejects balance=0, use 0.01 as sentinel; mask to 0
+  const rupiah = (n) => { var v = n || 0; if (v < 1) v = 0; return 'Rp ' + v.toLocaleString('id-ID'); };
 
   useEffect(() => {
     const fetchData = async () => {

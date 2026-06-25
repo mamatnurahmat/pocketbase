@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
 export default function Dashboard() {
@@ -6,8 +6,13 @@ export default function Dashboard() {
   const user = pb.authStore.model;
   const [warga, setWarga] = useState(null);
   const [tagihan, setTagihan] = useState([]);
+  const [walletKas, setWalletKas] = useState(null);
+  const [walletPribadi, setWalletPribadi] = useState(null);
+  const [slideIndex, setSlideIndex] = useState(0);
   const [lastAbsenScurity, setLastAbsenScurity] = useState(null);
   const [showCallPopup, setShowCallPopup] = useState(false);
+  const slideRef = useRef(null);
+  const touchStartX = useRef(0);
 
   const getInitials = (name) => {
     if (!name) return '?';
@@ -22,7 +27,12 @@ export default function Dashboard() {
     return 'Selamat malam';
   };
 
-  const rupiah = (n) => 'Rp ' + (n || 0).toLocaleString('id-ID');
+  const rupiah = (n) => {
+    // ponytail: PocketBase v0.39 rejects balance=0, use 0.01 as sentinel; mask to 0
+    var v = n || 0;
+    if (v < 1) v = 0;
+    return 'Rp ' + v.toLocaleString('id-ID');
+  };
 
   const statusBadge = (status) => {
     if (status === 'Lunas') return 'badge-success';
@@ -53,6 +63,19 @@ export default function Dashboard() {
             setTagihan(t);
           } catch (e) { console.warn("Tagihan fetch:", e); }
         } catch (e) { console.warn("Warga not found:", e); }
+
+        // Fetch wallets
+        try {
+          const wallets = await pb.collection('wallets').getFullList({ filter: `user="${userId}"` });
+          const pribadi = wallets.find(w => w.wallet_type === 'PERSONAL');
+          if (pribadi) setWalletPribadi(pribadi);
+        } catch (e) { console.warn("Wallet pribadi:", e); }
+
+        // Fetch KAS wallet (public info)
+        try {
+          const kasList = await pb.collection('wallets').getFullList({ filter: 'wallet_type="KAS"', expand: 'user' });
+          if (kasList.length > 0) setWalletKas(kasList[0]);
+        } catch (e) { console.warn("Wallet kas:", e); }
       } catch (e) { console.error(e); }
     };
     if (pb.authStore.isValid) fetchData();
@@ -101,6 +124,108 @@ export default function Dashboard() {
   const isScurity = localStorage.getItem('isScurity') === 'true';
   const displayName = user?.name || user?.username?.replace('hp_', '') || 'Warga';
 
+  // ponytail: swipe handlers for slide carousel
+  const slides = [
+    { type: 'kas', label: 'Saldo Kas' },
+    { type: 'pribadi', label: 'Saldo Saya' },
+    { type: 'tagihan', label: 'Tagihan' },
+  ];
+
+  const goToSlide = (i) => setSlideIndex(i);
+
+  // ponytail: auto-slide every 5 detik
+  useEffect(() => {
+    var timer = setInterval(() => {
+      setSlideIndex(prev => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
+  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e) => {
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0 && slideIndex < slides.length - 1) setSlideIndex(slideIndex + 1);
+      else if (diff < 0 && slideIndex > 0) setSlideIndex(slideIndex - 1);
+    }
+  };
+
+  const renderSlide = (type) => {
+    if (type === 'tagihan') {
+      return (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 13, color: '#6B7B72', fontWeight: 600 }}>
+              Total tagihan {warga?.pengurus && (localStorage.getItem('modePengurus') === null || localStorage.getItem('modePengurus') === 'true') && localStorage.getItem('isPengurus') === 'true' ? 'semua warga ' : ''}belum dibayar
+            </span>
+            {unpaid.length > 0 && (
+              <span className="badge badge-warning">{unpaid.length} tagihan</span>
+            )}
+          </div>
+          <div className="rupiah" style={{ marginTop: 10, fontSize: 30, fontWeight: 800 }}>
+            {rupiah(totalUnpaid)}
+          </div>
+          <button
+            className="btn btn-primary"
+            style={{ marginTop: 16 }}
+            onClick={() => navigate('/tagihan')}
+          >
+            Lihat tagihan
+          </button>
+        </>
+      );
+    }
+    if (type === 'kas') {
+      const kasBalance = walletKas ? walletKas.balance : null;
+      const kasOwner = walletKas?.expand?.user?.name || 'Bendahara';
+      return (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 13, color: '#6B7B72', fontWeight: 600 }}>Saldo kas warga</span>
+            <span style={{ fontSize: 12, color: '#8A9991', fontWeight: 500 }}>🏦 {kasOwner}</span>
+          </div>
+          <div className="rupiah" style={{ marginTop: 10, fontSize: 30, fontWeight: 800, color: (kasBalance != null && kasBalance >= 1) ? '#15935A' : '#3A453F' }}>
+            {kasBalance != null ? rupiah(kasBalance) : 'Memuat...'}
+          </div>
+          <div style={{ marginTop: 6, fontSize: 12, color: '#8A9991' }}>
+            Dana bersama untuk operasional & kegiatan warga
+          </div>
+          <button
+            className="btn btn-outline"
+            style={{ marginTop: 16 }}
+            onClick={() => navigate('/tagihan')}
+          >
+            Riwayat kas
+          </button>
+        </>
+      );
+    }
+    if (type === 'pribadi') {
+      const myBalance = walletPribadi ? walletPribadi.balance : null;
+      return (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 13, color: '#6B7B72', fontWeight: 600 }}>Saldo dompet saya</span>
+            <span style={{ fontSize: 12, color: '#8A9991', fontWeight: 500 }}>💳 Pribadi</span>
+          </div>
+          <div className="rupiah" style={{ marginTop: 10, fontSize: 30, fontWeight: 800, color: (myBalance != null && myBalance >= 1) ? '#15935A' : '#3A453F' }}>
+            {myBalance != null ? rupiah(myBalance) : 'Memuat...'}
+          </div>
+          <div style={{ marginTop: 6, fontSize: 12, color: '#8A9991' }}>
+            Top up untuk bayar iuran & transfer antar warga
+          </div>
+          <button
+            className="btn btn-outline"
+            style={{ marginTop: 16 }}
+            onClick={() => navigate('/iuran')}
+          >
+            Bayar iuran
+          </button>
+        </>
+      );
+    }
+  };
+
   return (
     <div className="page-padded">
       {/* Green Header */}
@@ -125,27 +250,40 @@ export default function Dashboard() {
       <div className="page-content" style={{ marginTop: -44 }}>
         {!isScurity && (
           <>
-            {/* Tagihan Card */}
-            <div className="dashboard-cards">
-            <div className="card" style={{ boxShadow: '0 10px 30px -12px rgba(15,26,20,.18)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 13, color: '#6B7B72', fontWeight: 600 }}>
-                  Total tagihan {warga?.pengurus && (localStorage.getItem('modePengurus') === null || localStorage.getItem('modePengurus') === 'true') && localStorage.getItem('isPengurus') === 'true' ? 'semua warga ' : ''}belum dibayar
-                </span>
-                {unpaid.length > 0 && (
-                  <span className="badge badge-warning">{unpaid.length} tagihan</span>
-                )}
+            {/* Slide Card: Tagihan / Kas / Pribadi */}
+            <div className="dashboard-cards" style={{ marginTop: -8 }}>
+              {/* Dot indicators */}
+              <div className="slide-dots">
+                {slides.map((s, i) => (
+                  <button
+                    key={s.type}
+                    className={`slide-dot ${i === slideIndex ? 'active' : ''}`}
+                    onClick={() => goToSlide(i)}
+                    aria-label={s.label}
+                  />
+                ))}
               </div>
-              <div className="rupiah" style={{ marginTop: 10, fontSize: 30, fontWeight: 800 }}>
-                {rupiah(totalUnpaid)}
-              </div>
-              <button
-                className="btn btn-primary"
-                style={{ marginTop: 16 }}
-                onClick={() => navigate('/tagihan')}
+
+              {/* Carousel */}
+              <div
+                ref={slideRef}
+                className="slide-track-wrapper"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
               >
-                Lihat tagihan
-              </button>
+                <div
+                  className="slide-track"
+                  style={{ transform: `translateX(-${slideIndex * 100}%)` }}
+                >
+                  {slides.map((s) => (
+                    <div key={s.type} className="slide-item">
+                      <div className="card slide-card" style={{ boxShadow: '0 10px 30px -12px rgba(15,26,20,.18)' }}>
+                        {renderSlide(s.type)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Summary Laporan */}
@@ -159,7 +297,6 @@ export default function Dashboard() {
                 <div style={{ fontSize: 12, color: '#6B7B72', marginTop: 4 }}>Lunas (Bulan Ini)</div>
               </div>
             </div>
-          </div>
           </>
         )}
 

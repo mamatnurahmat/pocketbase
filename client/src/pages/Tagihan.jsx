@@ -23,7 +23,8 @@ export default function Tagihan() {
     localStorage.setItem('modePengurus', modePengurus);
   }, [modePengurus]);
 
-  const rupiah = (n) => 'Rp ' + (n || 0).toLocaleString('id-ID');
+  // ponytail: PocketBase v0.39 rejects balance=0, use 0.01 as sentinel
+  const rupiah = (n) => { var v = n || 0; if (v < 1) v = 0; return 'Rp ' + v.toLocaleString('id-ID'); };
 
   // Fetch available kode from iuran collection + rumah codes (mode pengurus only)
   useEffect(() => {
@@ -72,12 +73,29 @@ export default function Tagihan() {
     if (pb.authStore.isValid) fetchTagihan();
   }, [modePengurus]);
 
+  // ponytail: API approve terpisah di port 8888, ganti proxy kalau production
+  const API_URL = 'http://localhost:8888';
+
   const handleApprove = async () => {
     if (!confirmApproveId) return;
     try {
-      await pb.collection('tagihan').update(confirmApproveId, {
-        status_pembayaran: 'Lunas'
+      const res = await fetch(`${API_URL}/v1/tagihan/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': pb.authStore.token,
+        },
+        body: JSON.stringify({ tagihan_id: confirmApproveId }),
       });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || `HTTP ${res.status}`);
+      }
+
+      const result = await res.json();
+      console.log('Approve berhasil:', result.reference_no, 'balance:', result.balance_before, '->', result.balance_after);
+
       setTagihan(prev => prev.map(t => t.id === confirmApproveId ? { ...t, status_pembayaran: 'Lunas' } : t));
       setConfirmApproveId(null);
     } catch (e) {
