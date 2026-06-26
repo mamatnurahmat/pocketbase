@@ -23,9 +23,27 @@ export default function LampiranForm({ onSuccess }) {
           setMessage({ text: 'Data warga belum terdaftar untuk user ini.', type: 'error' });
         }
 
-        // 2. Fetch available Iuran (no sort by created since field doesn't exist)
+        // 2. Fetch available Iuran — filter yg sudah punya tagihan
         const iurans = await pb.collection('iuran').getFullList();
-        setIuranList(iurans);
+        
+        let availableIurans = iurans;
+        if (wargaRecord?.id) {
+          try {
+            const existingTagihan = await pb.collection('tagihan').getFullList({
+              filter: `warga="${wargaRecord.id}"`,
+            });
+            const existingIuranIds = new Set(
+              existingTagihan
+                .filter(t => t.iuran)
+                .map(t => t.iuran)
+            );
+            availableIurans = iurans.filter(i => !existingIuranIds.has(i.id));
+          } catch (e) {
+            console.warn('Gagal cek tagihan existing:', e);
+          }
+        }
+        
+        setIuranList(availableIurans);
       } catch (err) {
         console.error("Failed to fetch data", err);
       }

@@ -7,6 +7,7 @@ export default function Iuran() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loadedIuranIds, setLoadedIuranIds] = useState([]);
   const fileInputRef = useRef(null);
 
   // ponytail: PocketBase v0.39 rejects balance=0, use 0.01 as sentinel; mask to 0
@@ -22,8 +23,29 @@ export default function Iuran() {
         } catch (err) {
           setMessage({ text: 'Akun belum terhubung dengan data warga.', type: 'error' });
         }
+        // Ambil semua iuran
         const iurans = await pb.collection('iuran').getFullList();
-        setIuranList(iurans);
+
+        // Ambil tagihan existing warga ini, filter iuran yg sudah ada tagihan
+        let availableIurans = iurans;
+        if (w?.id) {
+          try {
+            const existingTagihan = await pb.collection('tagihan').getFullList({
+              filter: `warga="${w.id}"`,
+            });
+            const paidIuranIds = new Set(
+              existingTagihan
+                .filter(t => t.iuran)
+                .map(t => t.iuran)
+            );
+            availableIurans = iurans.filter(i => !paidIuranIds.has(i.id));
+          } catch (e) {
+            console.warn('Gagal cek tagihan existing:', e);
+          }
+        }
+
+        setIuranList(availableIurans);
+        setLoadedIuranIds(availableIurans.map(i => i.id));
       } catch (err) {
         console.error("Failed to fetch data", err);
       }
@@ -45,6 +67,11 @@ export default function Iuran() {
     }
     return `${selectedIurans.length} iuran dipilih`;
   };
+
+  // Filter selectedIurans jika iuran tiba-tiba dihapus dari list
+  useEffect(() => {
+    setSelectedIurans(prev => prev.filter(id => loadedIuranIds.includes(id)));
+  }, [loadedIuranIds]);
 
   const totalSelected = selectedIurans.reduce((sum, id) => {
     const i = iuranList.find(x => x.id === id);
@@ -191,8 +218,53 @@ export default function Iuran() {
               <h3>Pilih Iuran</h3>
               <button className="close-btn" onClick={() => setIsModalOpen(false)}>&times;</button>
             </div>
+            <div style={{ padding: '0 20px 12px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setSelectedIurans(iuranList.map(i => i.id))}
+                style={{
+                  flex: 'none',
+                  border: selectedIurans.length === iuranList.length ? '1.5px solid #15935A' : '1.5px solid #E6EBE7',
+                  background: selectedIurans.length === iuranList.length ? '#E8F5EE' : '#fff',
+                  color: selectedIurans.length === iuranList.length ? '#15935A' : '#6B7B72',
+                  padding: '8px 16px',
+                  borderRadius: 20,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {selectedIurans.length === iuranList.length ? '✓ Semua' : '☐ Pilih Semua'}
+              </button>
+              {selectedIurans.length > 0 && selectedIurans.length < iuranList.length && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedIurans([])}
+                  style={{
+                    flex: 'none',
+                    border: '1.5px solid #E8E5E4',
+                    background: '#fff',
+                    color: '#B04141',
+                    padding: '8px 16px',
+                    borderRadius: 20,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  ✕ Hapus Semua
+                </button>
+              )}
+            </div>
             <div className="modal-body">
-              {iuranList.map((iuran) => {
+              {iuranList.length === 0 ? (
+                <div style={{ padding: 20, textAlign: 'center', color: '#8A9991', fontSize: 13 }}>
+                  Semua iuran sudah dibayar atau menunggu konfirmasi.
+                </div>
+              ) : (
+                iuranList.map((iuran) => {
                 const checked = selectedIurans.includes(iuran.id);
                 return (
                   <label
@@ -241,7 +313,7 @@ export default function Iuran() {
                     </span>
                   </label>
                 );
-              })}
+              }))}
             </div>
             <div className="modal-footer">
               <button

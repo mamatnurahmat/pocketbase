@@ -349,7 +349,155 @@ class TagihanApprove(Resource):
             return error_response(str(e), 500)
 
 
+# ── Tagihan Tambah Lampiran (dari halaman Tagihan) ──
+
+tagihan_lampiran_upload_response = api.model("TagihanLampiranUploadResponse", {
+    "success": fields.Boolean,
+    "lampiran_id": fields.String(description="ID record lampiran"),
+    "message": fields.String,
+})
+
+tagihan_lampiran_upload_parser = reqparse.RequestParser(bundle_errors=True)
+tagihan_lampiran_upload_parser.add_argument(
+    "tagihan_id", type=str, required=True,
+    location="form",
+    help="ID tagihan",
+)
+tagihan_lampiran_upload_parser.add_argument(
+    "file_bukti", type=type(open), required=True,
+    location="files",
+    help="File bukti pembayaran (Gambar/PDF, max ~10MB)",
+)
+
+
+@tagihan_ns.route("/tambah-lampiran")
+class TagihanTambahLampiran(Resource):
+    @tagihan_ns.expect(tagihan_lampiran_upload_parser)
+    @tagihan_ns.response(200, "Berhasil", tagihan_lampiran_upload_response)
+    @tagihan_ns.response(400, "Request tidak valid")
+    @tagihan_ns.response(401, "Token tidak valid")
+    @tagihan_ns.response(502, "PocketBase error")
+    def post(self):
+        """Upload lampiran untuk tagihan tertentu (1-to-1 dengan iuran tagihan).
+
+        Menerima multipart/form-data:
+        - tagihan_id (string): ID tagihan
+        - file_bukti (file): Gambar/PDF
+
+        Membuat lampiran + update tagihan (link lampiran + status Menunggu Konfirmasi).
+        Header: Authorization = token pengurus
+        """
+        token = request.headers.get("Authorization", "")
+        if not token:
+            return error_response("Header Authorization diperlukan", 401)
+
+        tagihan_id = request.form.get("tagihan_id", "").strip()
+        file = request.files.get("file_bukti")
+
+        client_ip = request.remote_addr or "unknown"
+
+        if not tagihan_id:
+            return error_response("tagihan_id diperlukan", 400)
+        if not file:
+            return error_response("file_bukti diperlukan", 400)
+
+        try:
+            # 1. Ambil data tagihan (expand iuran + warga)
+            tagihan = pb_get(f"collections/tagihan/records/{tagihan_id}", token, expand="iuran,warga")
+            warga_id = tagihan.get("warga")
+            iuran_id = tagihan.get("iuran")
+            iuran_data = (tagihan.get("expand") or {}).get("iuran") or {}
+            warga_data = (tagihan.get("expand") or {}).get("warga") or {}
+
+            if not warga_id or not iuran_id:
+                return error_response("Tagihan tidak memiliki warga atau iuran", 400)
+
+            no_rumah = warga_data.get("no_rumah", "")
+
+            log.info(
+                "TAMBAH_LAMPIRAN tagihan=%s warga=%s iuran=%s file=%s ip=%s",
+                tagihan_id, warga_id, iuran_id, file.filename, client_ip,
+            )
+
+            # 2. Generate ID lampiran
+            lampiran_id = _generate_id()
+
+            # 3. Upload file → create lampiran
+            pb_form = [
+                ("id", lampiran_id),
+                ("warga", warga_id),
+                ("iuran", iuran_id),
+                ("approval", "false"),
+            ]
+            pb_files = {"file_bukti": (file.filename, file.stream, file.content_type)}
+
+            headers = {"Authorization": token}
+            r = requests.post(
+                f"{PB_URL}/api/collections/lampiran/records",
+                headers=headers,
+                data=pb_form,
+                files=pb_files,
+            )
+            r.raise_for_status()
+
+            # 4. Update tagihan: link lampiran + set status menunggu konfirmasi
+            pb_patch(f"collections/tagihan/records/{tagihan_id}", token, {
+                "lampiran": lampiran_id,
+                "status_pembayaran": "Menunggu Konfirmasi",
+            })
+
+            # 5. Catat log aktivitas
+            kode_iuran = iuran_data.get("kode", iuran_id)
+            log_detail = (
+                f"Tujuan Koleksi: lampiran\n"
+                f"ID Record: {lampiran_id}\n"
+                f"Oleh: Pengurus untuk Warga {no_rumah}\n"
+                f"Waktu: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}\n"
+                f"Keterangan: Iuran {kode_iuran} (via tambah lampiran tagihan)"
+            )
+            try:
+                pb_post("collections/aktivitas_warga/records", token, {
+                    "warga": warga_id,
+                    "aktivitas": "Upload Bukti Pembayaran (oleh Pengurus)",
+                    "detail": log_detail,
+                })
+            except requests.HTTPError:
+                pass
+
+            log.info(
+                "TAMBAH_LAMPIRAN SUCCESS tagihan=%s lampiran=%s file=%s",
+                tagihan_id, lampiran_id, file.filename,
+            )
+            return {
+                "success": True,
+                "lampiran_id": lampiran_id,
+                "message": "Lampiran berhasil ditambahkan",
+            }, 200
+
+        except requests.HTTPError as e:
+            status = e.response.status_code
+            msg = e.response.text[:200]
+            log.error("TAMBAH_LAMPIRAN FAILED tagihan=%s pb_error=%s", tagihan_id, status)
+            return error_response(f"PocketBase error ({status}): {msg}", 502 if status >= 500 else 400)
+        except Exception as e:
+            log.error("TAMBAH_LAMPIRAN ERROR tagihan=%s %s", tagihan_id, str(e))
+            return error_response(str(e), 500)
+
+
 # ── Iuran Upload Bukti ────────────────────────────
+
+iuran_available_response = api.model("IuranAvailableResponse", {
+    "success": fields.Boolean,
+    "items": fields.List(fields.Nested(api.model("IuranItem", {
+        "id": fields.String,
+        "kode": fields.String,
+        "nominal": fields.Float,
+        "keterangan": fields.String(description="Deskripsi iuran"),
+        "jatuh_tempo": fields.String(description="ISO date"),
+    }))),
+    "total": fields.Integer,
+    "message": fields.String,
+})
 
 iuran_upload_response = api.model("IuranUploadResponse", {
     "success": fields.Boolean,
@@ -365,6 +513,104 @@ def _generate_id() -> str:
     import string
     chars = string.ascii_lowercase + string.digits
     return ''.join(random.choices(chars, k=15))
+
+
+@iuran_ns.route("/available")
+class IuranAvailable(Resource):
+    @iuran_ns.doc(params={
+        "warga_id": {
+            "description": "ID warga",
+            "type": "string",
+            "required": True,
+            "in": "query",
+        },
+    })
+    @iuran_ns.response(200, "Berhasil", iuran_available_response)
+    @iuran_ns.response(400, "Request tidak valid")
+    @iuran_ns.response(401, "Token tidak valid")
+    @iuran_ns.response(502, "PocketBase error")
+    def get(self):
+        """Daftar iuran tersedia (belum dibayar) untuk warga.
+
+        Filter otomatis iuran yg sudah punya tagihan (status apa pun).
+        Header: Authorization = token user
+
+        ### Contoh response:
+        ```json
+        {
+          "success": true,
+          "items": [
+            {
+              "id": "iuran01",
+              "kode": "IPL-06-26",
+              "nominal": 170000,
+              "keterangan": "Iuran Juni 2026",
+              "jatuh_tempo": "2026-06-20T00:00:00.000Z"
+            }
+          ],
+          "total": 1,
+          "message": "1 iuran tersedia"
+        }
+        ```
+        """
+        token = request.headers.get("Authorization", "")
+        if not token:
+            return error_response("Header Authorization diperlukan", 401)
+
+        warga_id = request.args.get("warga_id", "").strip()
+        if not warga_id:
+            return error_response("warga_id diperlukan", 400)
+
+        try:
+            # 1. Ambil semua iuran
+            all_iuran = pb_get(
+                "collections/iuran/records",
+                token,
+                sort="kode",
+                perPage=200,
+            )
+            iuran_items = all_iuran.get("items", [])
+
+            # 2. Ambil tagihan existing warga ini
+            existing_tagihan = pb_get(
+                "collections/tagihan/records",
+                token,
+                filter=f'warga="{warga_id}"',
+                perPage=200,
+            )
+            tagihan_items = existing_tagihan.get("items", [])
+
+            # 3. Filter: skip iuran yg sdh ada tagihan (status apa pun)
+            paid_iuran_ids = set(
+                t["iuran"] for t in tagihan_items
+                if t.get("iuran")
+            )
+
+            available = [
+                i for i in iuran_items
+                if i["id"] not in paid_iuran_ids
+            ]
+
+            log.info(
+                "IURAN_AVAILABLE warga=%s total=%d available=%d",
+                warga_id, len(iuran_items), len(available),
+            )
+
+            return {
+                "success": True,
+                "items": available,
+                "total": len(available),
+                "message": f"{len(available)} iuran tersedia",
+            }, 200
+
+        except requests.HTTPError as e:
+            status = e.response.status_code
+            msg = e.response.text[:200]
+            log.error("IURAN_AVAILABLE FAILED warga=%s pb_error=%s", warga_id, status)
+            return error_response(f"PocketBase error ({status}): {msg}", 502 if status >= 500 else 400)
+        except Exception as e:
+            log.error("IURAN_AVAILABLE ERROR warga=%s %s", warga_id, str(e))
+            return error_response(str(e), 500)
 
 
 @iuran_ns.route("/upload-bukti")
@@ -431,6 +677,39 @@ class IuranUploadBukti(Resource):
             return error_response("file_bukti diperlukan", 400)
 
         try:
+            # ── CEK DUPLIKAT: iuran yg sudah ada tagihan (pending/lunas) ──
+            existing_tagihan = pb_get(
+                "collections/tagihan/records",
+                token,
+                filter=f'warga="{warga_id}"',
+                perPage=200,
+            )
+            existing_items = existing_tagihan.get("items", [])
+            paid_iuran_ids = set(
+                t["iuran"] for t in existing_items
+                if t.get("iuran") and t.get("status_pembayaran") in ("Menunggu Konfirmasi", "Lunas")
+            )
+
+            # Filter iuran_ids: skip yg sudah ada tagihan lunas/pending
+            filtered_iuran_ids = [iid for iid in iuran_ids if iid not in paid_iuran_ids]
+            skipped_ids = [iid for iid in iuran_ids if iid in paid_iuran_ids]
+
+            if not filtered_iuran_ids:
+                log.warning(
+                    "UPLOAD REJECTED all iuran already paid ip=%s warga=%s iuran=%s",
+                    client_ip, warga_id, iuran_ids,
+                )
+                return error_response(
+                    "Semua iuran yang dipilih sudah memiliki tagihan (lunas/menunggu konfirmasi)",
+                    400,
+                )
+
+            if skipped_ids:
+                log.info(
+                    "UPLOAD skip paid iuran ip=%s warga=%s skipped=%s",
+                    client_ip, warga_id, skipped_ids,
+                )
+
             # 1. Ambil data warga untuk no_rumah
             warga = pb_get(f"collections/warga/records/{warga_id}", token)
             no_rumah = warga.get("no_rumah", "")
@@ -449,25 +728,9 @@ class IuranUploadBukti(Resource):
             lampiran_id = _generate_id()
 
             # 4. Upload file → create lampiran
-            form_data = {
-                "id": lampiran_id,
-                "warga": warga_id,
-                "approval": "false",
-            }
-            for iid in iuran_ids:
-                form_data.setdefault("iuran", [])
-                # PB accepts array via multiple keys
-                # We'll pass them individually below
-
-            # Build multipart data properly for PB
-            pb_data = {"id": lampiran_id, "warga": warga_id, "approval": "false"}
-            for iid in iuran_ids:
-                pb_data[f"iuran___{iid}"] = iid  # placeholder, actual approach below
-
-            # Use proper format: PB accepts repeated form keys for relations
-            import itertools
+            # PB accepts repeated form keys for relations
             pb_form = [("id", lampiran_id), ("warga", warga_id), ("approval", "false")]
-            for iid in iuran_ids:
+            for iid in filtered_iuran_ids:
                 pb_form.append(("iuran", iid))
 
             pb_files = {"file_bukti": (file.filename, file.stream, file.content_type)}
@@ -484,7 +747,7 @@ class IuranUploadBukti(Resource):
 
             # 5. Loop tiap iuran → cari/buat tagihan, link lampiran
             tagihan_count = 0
-            for iuran_id in iuran_ids:
+            for iuran_id in filtered_iuran_ids:
                 iuran_data = iuran_map.get(iuran_id, {})
                 nominal = iuran_data.get("nominal", 0)
                 jatuh_tempo = iuran_data.get("jatuh_tempo", "")
@@ -519,7 +782,7 @@ class IuranUploadBukti(Resource):
 
             # 6. Catat log aktivitas
             iuran_codes = []
-            for iid in iuran_ids:
+            for iid in filtered_iuran_ids:
                 i = iuran_map.get(iid, {})
                 iuran_codes.append(i.get("kode", iid))
 
@@ -541,9 +804,9 @@ class IuranUploadBukti(Resource):
                 pass  # log gagal bukan fatal
 
             log.info(
-                "UPLOAD SUCCESS ip=%s warga=%s no_rumah=%s iuran=%s lampiran=%s file=%s tagihan_count=%s",
-                client_ip, warga_id, no_rumah, iuran_ids, lampiran_id,
-                file.filename, tagihan_count,
+                "UPLOAD SUCCESS ip=%s warga=%s no_rumah=%s iuran=%s lampiran=%s file=%s tagihan_count=%s skipped=%s",
+                client_ip, warga_id, no_rumah, filtered_iuran_ids, lampiran_id,
+                file.filename, tagihan_count, skipped_ids,
             )
             return {
                 "success": True,

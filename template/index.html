@@ -698,8 +698,9 @@ class Component extends DCLogic {
       { id:'b2', icon:'home', title:'Iuran Bulanan RT', period:'Juni 2026', amount:50000, due:'25 Jun', status:'unpaid' },
       { id:'b3', icon:'heart', title:'Dana Sosial', period:'Juni 2026', amount:25000, due:'25 Jun', status:'unpaid' },
     ];
-    const bills = billsRaw.map(b=>{ const m={ ...b, amountStr:rupiah(b.amount) }; m.open=()=>{ self.setState({ selBill:m, payMethod:'qris', screen:'pay' }); self.go('pay'); }; return m; });
-    const totalDue = billsRaw.reduce((a,b)=>a+b.amount,0);
+    const activeBills = billsRaw.filter(b=>b.status==='unpaid');
+    const bills = activeBills.map(b=>{ const m={ ...b, amountStr:rupiah(b.amount) }; m.open=()=>{ self.setState({ selBill:m, payMethod:'qris', screen:'pay' }); self.go('pay'); }; return m; });
+    const totalDue = activeBills.reduce((a,b)=>a+b.amount,0);
 
     const riwayatRaw=[
       { id:'r1', title:'Keamanan & Kebersihan', period:'Mei 2026', amount:150000, date:'24 Mei 2026', method:'QRIS' },
@@ -771,7 +772,7 @@ class Component extends DCLogic {
     return {
       ...flags, showNav, isPengurus,
       roleLabel: isPengurus?'Pengurus RT':'Warga',
-      bills, totalDue, totalDueStr:rupiah(totalDue), billCount:billsRaw.length,
+      bills, totalDue, totalDueStr:rupiah(totalDue), billCount:activeBills.length,
       riwayat, reports, news, kasTx, kasBalance, kasIn, kasOut, family, verif, verifCount:verifRaw.length,
       pinDots, keys, qr:this.qr(),
       selBill, selBillAmountStr:selBill?rupiah(selBill.amount):'', selBillFee:selBill?rupiah(selBill.amount):'',

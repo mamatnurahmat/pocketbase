@@ -1,3 +1,22 @@
+# Task: API Iuran Tersedia + Pilih Semua di Modal
+
+## Perubahan yang Dilakukan
+
+### 1. `api/app.py` — Endpoint Baru
+- **GET /v1/iuran/available?warga_id=xxx**:
+  - Mengembalikan daftar iuran yg belum punya tagihan utk warga tertentu
+  - Filter otomatis iuran yg sdh ada tagihan (status apa pun)
+  - Auth: Bearer token
+  - Response: `{ success, items[], total, message }`
+- Model `IuranAvailableResponse` + `IuranItem` ditambahkan ke Swagger
+
+### 2. `client/src/pages/Iuran.jsx` — Pilih Semua
+- Tombol **"☐ Pilih Semua"** di modal pilih iuran → centang semua item
+- Tombol **"✕ Hapus Semua"** muncul jika sebagian terpilih
+
+### 3. Build
+- Docker rebuild `pocketbase-api` container
+
 # Task: Tambah Opsi Report PDF dengan Margin Tabel yang Rapih
 
 ## Perubahan yang Dilakukan

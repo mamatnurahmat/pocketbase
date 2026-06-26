@@ -622,14 +622,34 @@ a { color: var(--primary); text-decoration: none; font-weight: 600; }
 }
 
 #app-root.desktop-mode .dashboard-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
   max-width: 960px;
 }
 
-#app-root.desktop-mode .dashboard-cards > .card:first-child {
-  grid-column: 1 / -1;
+#app-root.desktop-mode .dashboard-cards .slide-dots {
+  display: none;
+}
+
+#app-root.desktop-mode .dashboard-cards .slide-track-wrapper {
+  overflow: visible;
+  border-radius: 0;
+}
+
+#app-root.desktop-mode .dashboard-cards .slide-track {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  transform: none !important;
+  transition: none;
+}
+
+#app-root.desktop-mode .dashboard-cards .slide-item {
+  min-width: auto;
+  padding: 0;
+}
+
+#app-root.desktop-mode .dashboard-cards .slide-card {
+  min-height: 180px;
+  height: 100%;
 }
 
 #app-root.desktop-mode .auth-page {

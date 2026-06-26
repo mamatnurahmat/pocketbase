@@ -18,6 +18,9 @@ export default function Tagihan() {
   const [searchRumah, setSearchRumah] = useState('');
   const [confirmApproveId, setConfirmApproveId] = useState(null);
   const [previewFile, setPreviewFile] = useState(null); // { url, name, isImage, isPdf }
+  const [lampiranUpload, setLampiranUpload] = useState(null); // tagihan yg perlu lampiran
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('modePengurus', modePengurus);
@@ -537,15 +540,33 @@ export default function Tagihan() {
                     <span className={`badge ${statusBadge(t.status_pembayaran)}`}>
                       {t.status_pembayaran}
                     </span>
-                    {modePengurus && t.status_pembayaran !== 'Lunas' && (
-                      <button 
-                        className="btn" 
-                        style={{ background: '#15935A', color: '#fff', fontSize: 11, padding: '4px 10px', height: 'auto', borderRadius: 8 }}
-                        onClick={(e) => { e.stopPropagation(); setConfirmApproveId(t.id); }}
-                      >
-                        Setujui
-                      </button>
-                    )}
+                    {t.status_pembayaran !== 'Lunas' && (() => {
+                      const lampirans = Array.isArray(t.expand?.lampiran) ? t.expand.lampiran : (t.expand?.lampiran ? [t.expand.lampiran] : []);
+                      return (
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                          {modePengurus && (
+                            <button 
+                              className="btn" 
+                              style={{ background: '#15935A', color: '#fff', fontSize: 11, padding: '4px 10px', height: 'auto', borderRadius: 8 }}
+                              onClick={(e) => { e.stopPropagation(); setConfirmApproveId(t.id); }}
+                            >
+                              Setujui
+                            </button>
+                          )}
+                          {lampirans.length === 0 && (
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setLampiranUpload(t);
+                              }}
+                              style={{ background: '#fff', color: '#15935A', fontSize: 11, padding: '4px 10px', height: 'auto', borderRadius: 8, border: '1.5px dashed #15935A', cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit' }}
+                            >
+                              + Lampiran
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                     {(() => {
                       const lampirans = Array.isArray(t.expand?.lampiran) ? t.expand.lampiran : (t.expand?.lampiran ? [t.expand.lampiran] : []);
                       if (lampirans.length === 0) return null;
@@ -583,6 +604,162 @@ export default function Tagihan() {
           </div>
         )}
       </div>
+
+      {/* Modal Upload Lampiran (form style seperti LampiranForm) */}
+      {lampiranUpload && (
+        <div className="modal-overlay" onClick={() => { setLampiranUpload(null); setUploadFile(null); }} style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 20
+        }}>
+          <div 
+            style={{ 
+              background: '#fff', padding: 24, borderRadius: 12, width: '100%', maxWidth: 400,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.15)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 12px 0', fontSize: 18, color: '#1B211E' }}>Tambah Lampiran</h3>
+
+            {/* Warga info */}
+            {lampiranUpload.expand?.warga && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16,
+                padding: '8px 12px', background: '#E8F5EE', borderRadius: 8
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="8" r="3.5" stroke="#15935A" strokeWidth="2"/>
+                  <path d="M5 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5" stroke="#15935A" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#15935A' }}>
+                  {lampiranUpload.expand.warga.expand?.user?.name || 'Warga'} — No. {lampiranUpload.expand.warga.no_rumah}
+                </span>
+              </div>
+            )}
+
+            {/* Iuran (pre-selected, read-only) */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#3A453F', display: 'block', marginBottom: 6 }}>
+                Iuran yang Dibayar
+              </label>
+              <div style={{
+                padding: '10px 12px',
+                background: '#F5F7F5',
+                border: '1.5px solid #D0D8D2',
+                borderRadius: 8,
+                color: '#6B7B72',
+                fontSize: 13,
+              }}>
+                <span style={{ fontWeight: 700, color: '#15935A' }}>
+                  {lampiranUpload.expand?.iuran?.kode || '-'}
+                </span>
+                <span style={{ marginLeft: 8, color: '#3A453F' }}>
+                  {rupiah(lampiranUpload.nominal)}
+                </span>
+                {lampiranUpload.expand?.iuran?.keterangan && (
+                  <span style={{ marginLeft: 8, fontSize: 11, color: '#8A9991' }}>
+                    — {lampiranUpload.expand.iuran.keterangan}
+                  </span>
+                )}
+              </div>
+              <p style={{ fontSize: 11, color: '#8A9991', margin: '4px 0 0', fontStyle: 'italic' }}>
+                Iuran dikunci sesuai tagihan ini (1-to-1)
+              </p>
+            </div>
+
+            {/* File input */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 13, fontWeight: 600, color: '#3A453F', display: 'block', marginBottom: 6 }}>
+                File Bukti (Gambar / PDF)
+              </label>
+              <input
+                type="file"
+                accept="image/jpeg, image/png, image/webp, application/pdf"
+                onChange={(e) => setUploadFile(e.target.files[0] || null)}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  borderRadius: 8,
+                  border: '1.5px solid #E6EBE7',
+                  fontSize: 12,
+                  fontFamily: 'inherit',
+                  background: '#fff',
+                  color: '#3A453F',
+                }}
+              />
+            </div>
+
+            {/* Message / Status */}
+            {uploading && (
+              <p style={{ fontSize: 13, color: '#15935A', fontWeight: 600, marginBottom: 12, textAlign: 'center' }}>
+                Mengupload...
+              </p>
+            )}
+
+            {/* Actions */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button 
+                onClick={async () => {
+                  if (!uploadFile) return alert('Pilih file lampiran dulu');
+                  setUploading(true);
+                  try {
+                    const formData = new FormData();
+                    formData.append('tagihan_id', lampiranUpload.id);
+                    formData.append('file_bukti', uploadFile);
+
+                    const res = await fetch(`${API_URL}/v1/tagihan/tambah-lampiran`, {
+                      method: 'POST',
+                      headers: { 'Authorization': pb.authStore.token },
+                      body: formData,
+                    });
+
+                    if (!res.ok) {
+                      const err = await res.json();
+                      throw new Error(err.message || `HTTP ${res.status}`);
+                    }
+
+                    // Upload berhasil, refresh data
+                    const userId = pb.authStore.model.id;
+                    const w = await pb.collection('warga').getFirstListItem(`user="${userId}"`);
+                    const records = await pb.collection('tagihan').getFullList({ 
+                      expand: 'iuran,warga,warga.user,lampiran'
+                    });
+                    records.sort((a, b) => new Date(b.created) - new Date(a.created));
+                    setTagihan(records);
+
+                    setUploadFile(null);
+                    setLampiranUpload(null);
+                  } catch (e) {
+                    console.error(e);
+                    alert('Gagal upload: ' + e.message);
+                  }
+                  setUploading(false);
+                }}
+                disabled={uploading || !uploadFile}
+                style={{ 
+                  padding: '11px 0', borderRadius: 8, border: 'none',
+                  background: uploadFile ? '#15935A' : '#B0D8C0',
+                  color: '#fff', fontSize: 14, fontWeight: 700, cursor: uploadFile ? 'pointer' : 'not-allowed',
+                  fontFamily: 'inherit'
+                }}
+              >
+                {uploading ? 'Mengupload...' : 'Upload Lampiran'}
+              </button>
+              <button 
+                onClick={() => { setLampiranUpload(null); setUploadFile(null); }}
+                style={{ 
+                  padding: '10px 0', borderRadius: 8, border: '1.5px solid #E6EBE7',
+                  background: '#fff', color: '#6B7B72', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                  fontFamily: 'inherit'
+                }}
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal Preview File (Image / PDF) */}
       {previewFile && (
