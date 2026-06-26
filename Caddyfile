@@ -13,5 +13,5 @@ admin.sawangan.web.id {
 api.sawangan.web.id {
 
     # Reverse proxy ke API service (Flask)
-    reverse_proxy api:8888
+    reverse_proxy pocketbase-api:8888
 }

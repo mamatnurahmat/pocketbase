@@ -18,6 +18,7 @@ export default function Profil() {
   const [phoneInput, setPhoneInput] = useState(phone);
   const [agama, setAgama] = useState('islam');
   const [pengurus, setPengurus] = useState(false);
+  const [kebersihan, setKebersihan] = useState(true);
 
   // PIN fields
   const [pin, setPin] = useState('');
@@ -46,6 +47,7 @@ export default function Profil() {
         setWarga(w);
         setAgama(w.agama || 'islam');
         setPengurus(w.pengurus || false);
+        setKebersihan(w.kebersihan !== false ? true : false);
       } catch (e) {
         // Coba scurity
         try {
@@ -135,6 +137,11 @@ export default function Profil() {
 
         if (agama !== warga.agama) {
           wargaUpdateData.agama = agama;
+          needWargaUpdate = true;
+        }
+
+        if (kebersihan !== (warga.kebersihan !== false)) {
+          wargaUpdateData.kebersihan = kebersihan;
           needWargaUpdate = true;
         }
 
@@ -269,6 +276,25 @@ export default function Profil() {
                   <option value="budha">Budha</option>
                   <option value="konghucu">Konghucu</option>
                 </select>
+              </div>
+            )}
+
+            {warga && (
+              <div className="form-group">
+                <label>Kebersihan</label>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
+                  <span style={{ fontSize: 14, color: '#3A453F' }}>
+                    {kebersihan ? 'Terdaftar' : 'Tidak terdaftar'} di jadwal kebersihan
+                  </span>
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      checked={kebersihan}
+                      onChange={(e) => setKebersihan(e.target.checked)}
+                    />
+                    <span className="slider round"></span>
+                  </label>
+                </div>
               </div>
             )}
 
