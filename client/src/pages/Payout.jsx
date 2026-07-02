@@ -45,13 +45,13 @@ export default function Payout() {
         let records = [];
         if (isPengurusDb) {
           records = await pb.collection('payout').getFullList({
-            sort: '-created',
+            sort: '-tanggal_diajukan',
             expand: 'warga,warga.user',
           });
         } else {
           records = await pb.collection('payout').getFullList({
             filter: `warga="${w.id}"`,
-            sort: '-created',
+            sort: '-tanggal_diajukan',
             expand: 'warga,warga.user',
           });
         }
@@ -98,7 +98,7 @@ export default function Payout() {
       const w = await pb.collection('warga').getFirstListItem(`user="${pb.authStore.model.id}"`);
       const newRecords = await pb.collection('payout').getFullList({
         filter: `warga="${w.id}"`,
-        sort: '-created',
+        sort: '-tanggal_diajukan',
         expand: 'warga,warga.user',
       });
       setPayouts(newRecords);
@@ -139,7 +139,7 @@ export default function Payout() {
       }
 
       const records = await pb.collection('payout').getFullList({
-        sort: '-created',
+        sort: '-tanggal_diajukan',
         expand: 'warga,warga.user',
       });
       setPayouts(records);
@@ -175,7 +175,7 @@ export default function Payout() {
       }
 
       const records = await pb.collection('payout').getFullList({
-        sort: '-created',
+        sort: '-tanggal_diajukan',
         expand: 'warga,warga.user',
       });
       setPayouts(records);
@@ -208,7 +208,7 @@ export default function Payout() {
       }
 
       const records = await pb.collection('payout').getFullList({
-        sort: '-created',
+        sort: '-tanggal_diajukan',
         expand: 'warga,warga.user',
       });
       setPayouts(records);
@@ -458,7 +458,7 @@ export default function Payout() {
                 </div>
               )}
               <div style={{ fontSize: 11, color: '#A6B0AA', marginTop: 8 }}>
-                {new Date(p.created).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                {new Date(p.tanggal_diajukan).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </div>
 
               {/* Expanded detail */}
@@ -501,7 +501,7 @@ export default function Payout() {
 
                   {/* Tanggal */}
                   <div style={{ marginTop: 10, fontSize: 11, color: '#A6B0AA' }}>
-                    Diajukan: {new Date(p.created).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    Diajukan: {new Date(p.tanggal_diajukan).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     {p.tanggal_disetujui && <> | Disetujui: {new Date(p.tanggal_disetujui).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</>}
                     {p.tanggal_dibayar && <> | Dibayar: {new Date(p.tanggal_dibayar).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</>}
                   </div>
