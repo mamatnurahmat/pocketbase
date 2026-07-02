@@ -436,12 +436,14 @@ export default function Payout() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14, paddingBottom: 80 }}>
-          {filtered.map((p) => (
-            <div key={p.id} className="card" style={{ padding: 14, cursor: 'pointer', border: selectedPayout?.id === p.id ? '1.5px solid #15935A' : '1.5px solid #E6EBE7' }}
-              onClick={() => setSelectedPayout(selectedPayout?.id === p.id ? null : p)}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
+          {filtered.map((p) => {
+            const isExpanded = selectedPayout?.id === p.id;
+            return (
+            <div key={p.id} className="card" style={{ padding: 14, border: isExpanded ? '1.5px solid #15935A' : '1.5px solid #E6EBE7' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', cursor: 'pointer' }}
+                onClick={() => setSelectedPayout(isExpanded ? null : p)}
+              >
+                <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: 15, color: '#0F1A14' }}>{rupiah(p.nominal)}</div>
                   <div style={{ fontSize: 12, color: '#6B7B72', marginTop: 2 }}>{p.bank} • {p.no_rekening} • {p.atas_nama}</div>
                   {p.expand?.warga?.expand?.user?.name && isPengurus && (
@@ -450,9 +452,12 @@ export default function Payout() {
                     </div>
                   )}
                 </div>
-                <span className={`badge ${statusBadge(p.status)}`} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, whiteSpace: 'nowrap' }}>
-                  {statusLabel(p.status)}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span className={`badge ${statusBadge(p.status)}`} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, whiteSpace: 'nowrap' }}>
+                    {statusLabel(p.status)}
+                  </span>
+                  <span style={{ color: '#A6B0AA', fontSize: 11, transition: 'transform 0.2s', transform: isExpanded ? 'rotate(180deg)' : 'none' }}>▼</span>
+                </div>
               </div>
               {p.keterangan_warga && (
                 <div style={{ fontSize: 12, color: '#3A453F', marginTop: 8, padding: '8px 10px', background: '#F4F6F4', borderRadius: 8 }}>
@@ -464,7 +469,7 @@ export default function Payout() {
               </div>
 
               {/* Expanded detail */}
-              {selectedPayout?.id === p.id && (
+              {isExpanded && (
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #E6EBE7' }}>
                   {/* Info rekening */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 13 }}>
@@ -603,7 +608,8 @@ export default function Payout() {
                 </div>
               )}
             </div>
-          ))}
+          );
+        })}
         </div>
       )}
     </div>
