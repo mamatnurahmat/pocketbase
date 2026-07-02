@@ -340,15 +340,32 @@ export default function Payout() {
             </div>
 
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#3A453F', display: 'block', marginBottom: 4 }}>Lampiran (foto nota/bukti, opsional)</label>
-              <div style={{ border: '1.5px dashed #DFE5E1', borderRadius: 12, padding: 16, textAlign: 'center', cursor: 'pointer' }}
+              <label style={{ fontSize: 12, fontWeight: 700, color: '#0F1A14', display: 'block', marginBottom: 6 }}>
+                📎 Upload Lampiran  <span style={{ fontWeight: 400, color: '#8A9991' }}>(opsional)</span>
+              </label>
+              <div style={{ fontSize: 11, color: '#8A9991', marginBottom: 6 }}>Foto nota / bukti pengeluaran (maks 5MB, format JPG/PNG/PDF)</div>
+              <div
                 onClick={() => fileInputRef.current?.click()}
+                style={{
+                  border: lampiranFile ? '2px solid #15935A' : '2px dashed #15935A',
+                  borderRadius: 12, padding: 24, textAlign: 'center', cursor: 'pointer',
+                  background: lampiranFile ? '#F0FBF4' : '#FAFCFA',
+                  transition: 'all 0.2s',
+                }}
               >
                 <input ref={fileInputRef} type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={e => setLampiranFile(e.target.files[0])} />
                 {lampiranFile ? (
-                  <div style={{ color: '#15935A', fontWeight: 600, fontSize: 13 }}>📎 {lampiranFile.name}</div>
+                  <div style={{ color: '#15935A', fontWeight: 700, fontSize: 14 }}>
+                    <div style={{ fontSize: 32, marginBottom: 4 }}>📄</div>
+                    {lampiranFile.name}
+                    <div style={{ fontSize: 11, fontWeight: 400, marginTop: 4, color: '#6B7B72' }}>Klik untuk ganti file</div>
+                  </div>
                 ) : (
-                  <div style={{ color: '#8A9991', fontSize: 13 }}>Klik untuk upload file</div>
+                  <div>
+                    <div style={{ fontSize: 36, marginBottom: 6 }}>📤</div>
+                    <div style={{ color: '#15935A', fontWeight: 700, fontSize: 14 }}>Klik untuk upload file</div>
+                    <div style={{ color: '#8A9991', fontSize: 12, marginTop: 4 }}>Tap di area ini untuk pilih file</div>
+                  </div>
                 )}
               </div>
             </div>
@@ -406,10 +423,12 @@ export default function Payout() {
         <div style={{ textAlign: 'center', padding: 40, color: '#8A9991', fontSize: 14 }}>
           {filter === 'all' ? 'Belum ada pengajuan pencairan' : `Tidak ada pengajuan dengan status "${filter}"`}
           {!isPengurus && !showForm && (
-            <div style={{ marginTop: 12 }}>
+            <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
+              <div style={{ fontSize: 48, opacity: 0.3 }}>📋</div>
               <button onClick={() => setShowForm(true)}
-                style={{ background: '#15935A', color: '#fff', border: 'none', borderRadius: 12, padding: '10px 20px', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}
-              >Ajukan Pencairan</button>
+                style={{ background: '#15935A', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 28px', fontSize: 15, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', boxShadow: '0 4px 12px rgba(21,147,90,0.3)' }}
+              >+ Ajukan Pencairan Baru</button>
+              <div style={{ fontSize: 12, color: '#8A9991' }}>Isi data rekening & upload bukti</div>
             </div>
           )}
         </div>
