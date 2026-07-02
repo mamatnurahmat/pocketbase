@@ -258,8 +258,7 @@ export default function Payout() {
     <div className="page-padded">
       <div style={{ padding: '16px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 style={{ margin: 0 }}>Pembayaran Dana</h2>
-        {!isPengurus && (
-          <button
+        <button
             onClick={() => setShowForm(!showForm)}
             style={{
               background: showForm ? '#E8E5E4' : '#15935A',
@@ -286,10 +285,8 @@ export default function Payout() {
             )}
           </button>
         )}
-      </div>
-
-      {/* Form Pengajuan */}
-      {showForm && !isPengurus && (
+      </div>      {/* Form Pengajuan */}
+      {showForm && (
         <form onSubmit={handleSubmit} className="card" style={{ margin: '16px 0', padding: 20, border: '1.5px solid #15935A', background: '#F8FDFA' }}>
           <h3 style={{ margin: '0 0 16px', fontSize: 15, color: '#15935A' }}>Pengajuan Pembayaran Baru</h3>
 
@@ -424,7 +421,7 @@ export default function Payout() {
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 40, color: '#8A9991', fontSize: 14 }}>
           {filter === 'all' ? 'Belum ada pengajuan pembayaran' : `Tidak ada pengajuan dengan status "${filter}"`}
-          {!isPengurus && !showForm && (
+          {!showForm && (
             <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
               <div style={{ fontSize: 48, opacity: 0.3 }}>📋</div>
               <button onClick={() => setShowForm(true)}
