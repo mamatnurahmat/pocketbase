@@ -22,6 +22,16 @@ const tabs = [
     ),
   },
   {
+    path: '/payout',
+    label: 'Pencairan',
+    icon: (c) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2a10 10 0 100 20 10 10 0 000-20z" stroke={c} strokeWidth="1.8"/>
+        <path d="M12 6v12M6 12h12" stroke={c} strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    ),
+  },
+  {
     path: '/lapor',
     label: 'Lapor',
     icon: (c) => (
