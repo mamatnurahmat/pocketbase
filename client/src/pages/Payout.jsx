@@ -25,10 +25,12 @@ export default function Payout() {
 
   // Approval
   const [approveKeterangan, setApproveKeterangan] = useState('');
-  const [approveFile, setApproveFile] = useState(null);
   const [approving, setApproving] = useState(false);
   const [rejectKeterangan, setRejectKeterangan] = useState('');
   const [rejecting, setRejecting] = useState(false);
+  const [bayarKeterangan, setBayarKeterangan] = useState('');
+  const [bayarFile, setBayarFile] = useState(null);
+  const [bayarLoading, setBayarLoading] = useState(false);
 
   const rupiah = (n) => { const v = n || 0; return 'Rp ' + v.toLocaleString('id-ID'); };
 
@@ -190,11 +192,11 @@ export default function Payout() {
 
   // Bayar payout
   const handleBayar = async (payoutId) => {
-    setApproving(true);
+    setBayarLoading(true);
     try {
       const formData = new FormData();
-      if (approveKeterangan.trim()) formData.append('keterangan_pengurus', approveKeterangan.trim());
-      if (approveFile) formData.append('lampiran_pengurus', approveFile);
+      if (bayarKeterangan.trim()) formData.append('keterangan_pengurus', bayarKeterangan.trim());
+      if (bayarFile) formData.append('lampiran_pengurus', bayarFile);
 
       const res = await fetch(`${API_URL}/v1/payout/${payoutId}/bayar`, {
         method: 'POST',
@@ -213,9 +215,9 @@ export default function Payout() {
       });
       setPayouts(records);
       setSelectedPayout(null);
-      setApproveKeterangan('');
-      setApproveFile(null);
-      alert('Payout dibayarkan! Kas otomatis terupdate.');
+      setBayarKeterangan('');
+      setBayarFile(null);
+      alert('Pembayaran berhasil! Saldo KAS otomatis terupdate.');
     } catch (e) {
       alert('Gagal: ' + e.message);
     }
@@ -508,49 +510,93 @@ export default function Payout() {
 
                   {/* Actions (Pengurus only) */}
                   {isPengurus && p.status === 'Menunggu Konfirmasi' && (
-                    <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ marginTop: 14 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#6B7B72', marginBottom: 10 }}>TINDAKAN</div>
+                      
                       {/* Approve */}
-                      <div style={{ background: '#F8FDFA', borderRadius: 12, padding: 14, border: '1px solid #15935A' }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#15935A', marginBottom: 8 }}>✅ Setujui & bayar nanti</div>
-                        <input type="text" placeholder="Catatan (opsional)" value={approveKeterangan} onChange={e => setApproveKeterangan(e.target.value)}
-                          style={{ width: '100%', padding: '8px 12px', borderRadius: 10, border: '1.5px solid #DFE5E1', fontSize: 13, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }}
+                      <div style={{ background: '#F8FDFA', borderRadius: 12, padding: 16, border: '1.5px solid #15935A', marginBottom: 10 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#15935A', marginBottom: 6 }}>✅ Setujui pembayaran</div>
+                        <textarea rows="2" placeholder="Catatan approval (opsional)" value={approveKeterangan}
+                          onChange={e => setApproveKeterangan(e.target.value)}
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: 10, border: '1.5px solid #DFE5E1', fontSize: 13, fontFamily: 'inherit', outline: 'none', marginBottom: 8, resize: 'vertical' }}
                         />
                         <button onClick={() => handleApprove(p.id)} disabled={approving}
                           style={{ background: '#15935A', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', opacity: approving ? 0.6 : 1, width: '100%' }}
-                        >{approving ? 'Memproses...' : 'Setujui'}</button>
+                        >{approving ? 'Memproses...' : '✅ Setujui Sekarang'}</button>
                       </div>
 
+                      {/* Quick approve tanpa catatan */}
+                      <button onClick={() => handleApprove(p.id)} disabled={approving}
+                        style={{ background: 'transparent', color: '#15935A', border: '1.5px dashed #15935A', borderRadius: 10, padding: '8px 16px', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer', opacity: approving ? 0.6 : 1, width: '100%', marginBottom: 10 }}
+                      >⚡ Setujui Langsung (tanpa catatan)</button>
+
                       {/* Reject */}
-                      <div style={{ background: '#FFF5F4', borderRadius: 12, padding: 14, border: '1px solid #C24A4A' }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#C24A4A', marginBottom: 8 }}>❌ Tolak</div>
-                        <input type="text" placeholder="Alasan penolakan (wajib)" value={rejectKeterangan} onChange={e => setRejectKeterangan(e.target.value)}
-                          style={{ width: '100%', padding: '8px 12px', borderRadius: 10, border: '1.5px solid #DFE5E1', fontSize: 13, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }}
+                      <div style={{ background: '#FFF5F4', borderRadius: 12, padding: 16, border: '1.5px solid #C24A4A' }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#C24A4A', marginBottom: 6 }}>❌ Tolak pembayaran</div>
+                        <textarea rows="2" placeholder="Alasan penolakan (wajib diisi)" value={rejectKeterangan}
+                          onChange={e => setRejectKeterangan(e.target.value)}
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: 10, border: '1.5px solid #DFE5E1', fontSize: 13, fontFamily: 'inherit', outline: 'none', marginBottom: 8, resize: 'vertical' }}
                         />
                         <button onClick={() => handleReject(p.id)} disabled={rejecting || !rejectKeterangan.trim()}
                           style={{ background: '#C24A4A', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', opacity: (rejecting || !rejectKeterangan.trim()) ? 0.6 : 1, width: '100%' }}
-                        >{rejecting ? 'Memproses...' : 'Tolak'}</button>
+                        >{rejecting ? 'Memproses...' : '❌ Tolak & Beri Alasan'}</button>
                       </div>
                     </div>
                   )}
 
                   {/* Bayar (Pengurus: setelah disetujui) */}
                   {isPengurus && p.status === 'Disetujui' && (
-                    <div style={{ marginTop: 14, background: '#F0F7FF', borderRadius: 12, padding: 14, border: '1px solid #2563EB' }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#2563EB', marginBottom: 8 }}>💰 Bayarkan</div>
-                      <input type="text" placeholder="Catatan pembayaran (opsional)" value={approveKeterangan} onChange={e => setApproveKeterangan(e.target.value)}
-                        style={{ width: '100%', padding: '8px 12px', borderRadius: 10, border: '1.5px solid #DFE5E1', fontSize: 13, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }}
-                      />
-                      <div style={{ border: '1.5px dashed #BFDBFE', borderRadius: 10, padding: 12, textAlign: 'center', cursor: 'pointer', marginBottom: 8, background: '#fff' }}
-                        onClick={() => document.getElementById('bayar-file-' + p.id)?.click()}
-                      >
-                        <input id={'bayar-file-' + p.id} type="file" accept="image/*,application/pdf" style={{ display: 'none' }} onChange={e => setApproveFile(e.target.files[0])} />
-                        {approveFile ? <span style={{ color: '#2563EB', fontWeight: 600, fontSize: 13 }}>📎 {approveFile.name}</span> : <span style={{ color: '#6B7B72', fontSize: 13 }}>Upload bukti transfer (opsional)</span>}
-                      </div>
-                      <button onClick={() => handleBayar(p.id)} disabled={approving}
-                        style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', opacity: approving ? 0.6 : 1, width: '100%' }}
-                      >{approving ? 'Memproses...' : 'Konfirmasi Bayar'}</button>
-                      <div style={{ fontSize: 11, color: '#6B7B72', marginTop: 6, textAlign: 'center' }}>
-                        ⚡ Saldo KAS akan otomatis berkurang
+                    <div style={{ marginTop: 14 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#6B7B72', marginBottom: 10 }}>PROSES PEMBAYARAN</div>
+                      <div style={{ background: 'linear-gradient(145deg, #F0F7FF, #E8F4FF)', borderRadius: 14, padding: 16, border: '1.5px solid #2563EB' }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#2563EB', marginBottom: 4 }}>💰 Konfirmasi Pembayaran</div>
+                        <div style={{ fontSize: 12, color: '#6B7B72', marginBottom: 12 }}>Upload bukti transfer dan catatan pembayaran</div>
+                        
+                        <textarea rows="2" placeholder="Catatan pembayaran (opsional)" value={bayarKeterangan}
+                          onChange={e => setBayarKeterangan(e.target.value)}
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: 10, border: '1.5px solid #BFDBFE', fontSize: 13, fontFamily: 'inherit', outline: 'none', marginBottom: 10, resize: 'vertical', background: '#fff' }}
+                        />
+                        
+                        {/* Upload bukti transfer */}
+                        <div onClick={() => document.getElementById('bayar-file-' + p.id)?.click()}
+                          style={{
+                            border: bayarFile ? '2px solid #2563EB' : '2px dashed #2563EB',
+                            borderRadius: 12, padding: 20, textAlign: 'center', cursor: 'pointer',
+                            background: bayarFile ? '#F0F7FF' : '#fff',
+                            marginBottom: 10, transition: 'all 0.2s',
+                          }}
+                        >
+                          <input id={'bayar-file-' + p.id} type="file" accept="image/*,application/pdf" style={{ display: 'none' }}
+                            onChange={e => setBayarFile(e.target.files[0])}
+                          />
+                          {bayarFile ? (
+                            <div>
+                              <span style={{ fontSize: 28 }}>📄</span>
+                              <div style={{ color: '#2563EB', fontWeight: 700, fontSize: 13, marginTop: 4 }}>{bayarFile.name}</div>
+                              <div style={{ fontSize: 11, color: '#6B7B72', marginTop: 2 }}>Klik untuk ganti file</div>
+                            </div>
+                          ) : (
+                            <div>
+                              <span style={{ fontSize: 32 }}>📤</span>
+                              <div style={{ color: '#2563EB', fontWeight: 700, fontSize: 13, marginTop: 4 }}>Upload Bukti Transfer</div>
+                              <div style={{ color: '#6B7B72', fontSize: 11, marginTop: 2 }}>Format: JPG, PNG, PDF (maks 5MB)</div>
+                            </div>
+                          )}
+                        </div>
+
+                        <button onClick={() => handleBayar(p.id)} disabled={bayarLoading}
+                          style={{
+                            background: '#2563EB', color: '#fff', border: 'none', borderRadius: 12,
+                            padding: '12px 20px', fontSize: 14, fontWeight: 700, fontFamily: 'inherit',
+                            cursor: 'pointer', opacity: bayarLoading ? 0.6 : 1, width: '100%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                          }}
+                        >
+                          {bayarLoading ? '⏳ Memproses...' : '💰 Konfirmasi Bayar'}
+                        </button>
+                        <div style={{ fontSize: 11, color: '#6B7B72', marginTop: 8, textAlign: 'center', background: '#fff', borderRadius: 8, padding: '6px 10px' }}>
+                          ⚡ Saldo KAS akan otomatis berkurang sebesar <strong>{rupiah(p.nominal)}</strong>
+                        </div>
                       </div>
                     </div>
                   )}
