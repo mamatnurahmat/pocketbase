@@ -1259,7 +1259,7 @@ class PayoutList(Resource):
                 filters.append(f'status="{status_filter}"')
 
             params = {
-                "sort": "-created",
+                "sort": "-tanggal_diajukan",
                 "expand": "warga",
                 "page": page,
                 "perPage": perPage,
