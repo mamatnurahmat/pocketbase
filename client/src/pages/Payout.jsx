@@ -221,7 +221,7 @@ export default function Payout() {
     } catch (e) {
       alert('Gagal: ' + e.message);
     }
-    setApproving(false);
+    setBayarLoading(false);
   };
 
   const statusBadge = (status) => {
