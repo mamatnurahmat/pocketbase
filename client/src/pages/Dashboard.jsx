@@ -238,12 +238,12 @@ export default function Dashboard() {
               <div style={{ color: '#fff', fontSize: 16, fontWeight: 700 }}>{displayName}</div>
             </div>
           </div>
-          <div className="avatar avatar-green">
+          <button className="avatar avatar-green" onClick={() => navigate('/notifikasi')}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M13.7 21a2 2 0 01-3.4 0" stroke="#fff" strokeWidth="1.8" strokeLinecap="round"/>
             </svg>
-          </div>
+          </button>
         </div>
       </div>
 

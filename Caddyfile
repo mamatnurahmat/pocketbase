@@ -1,14 +1,19 @@
 prestige2.sawangan.web.id {
 
+    # API endpoint proxied ke Flask service
+#    handle_path /api/* {
+#        reverse_proxy pocketbase-api:8888
+#    }
+
     # Reverse proxy ke PocketBase untuk semua request lainnya
     reverse_proxy pocketbase:8090
 }
 
-admin.sawangan.web.id {
-
-    # Reverse proxy ke Admin service
-    reverse_proxy localhost:43249
-}
+#admin.sawangan.web.id {
+#
+#    # Reverse proxy ke Admin service
+#    reverse_proxy localhost:43249
+#}
 
 api.sawangan.web.id {
 

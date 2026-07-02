@@ -133,28 +133,6 @@ onRecordAfterUpdateSuccess(function(e) {
 
   if (!wargaId || !iuranId) return;
 
-  // Ambil status lama dari nilai lama
-  var oldStatus = "";
-  try {
-    oldStatus = e.record.getOriginal("status_pembayaran") || "";
-  } catch (err) {
-    console.warn("tagihan_notify: gagal ambil original status:", err);
-  }
-
-  // Jika status tidak berubah, skip (kecuali perubahan lain yang penting)
-  if (oldStatus === status && status !== "") {
-    // Cek apakah ada field lain yang berubah (misal lampiran ditambahkan)
-    var oldLampiran = "";
-    try {
-      oldLampiran = e.record.getOriginal("lampiran") || "";
-    } catch (err) {}
-    var newLampiran = record.getString("lampiran") || "";
-
-    if (oldLampiran === newLampiran) {
-      return; // Tidak ada perubahan signifikan
-    }
-  }
-
   var info = _tagihanGetWarga(wargaId);
   var iuranName = _tagihanGetIuran(iuranId);
   var waktu = new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
@@ -170,50 +148,16 @@ onRecordAfterUpdateSuccess(function(e) {
   else if (status === "Menunggu Konfirmasi") statusEmoji = "⏳";
   else if (status === "Belum Dibayar") statusEmoji = "🔴";
 
-  var message = "";
-  var title = "";
+  // PB 0.39 tidak support getOriginal → kirim notifikasi generic tiap update
+  var message = statusEmoji + " *Status Tagihan Diupdate*\n\n";
+  message += "👤 *Warga:* " + info.name + " (No. " + info.noRumah + ")\n";
+  message += "📂 *Iuran:* " + iuranName + "\n";
+  message += "💰 *Nominal:* " + nominalStr + "\n";
+  message += "📌 *Status:* " + status + "\n";
+  message += "🆔 *ID Tagihan:* " + tagihanId + "\n";
+  message += "🕐 *Diupdate:* " + waktu + "\n";
 
-  // Deteksi jenis perubahan
-  if (oldStatus === "Menunggu Konfirmasi" && status === "Lunas") {
-    // Pembayaran dikonfirmasi
-    message = "✅ *Pembayaran Dikonfirmasi Lunas*\n\n";
-    message += "👤 *Warga:* " + info.name + " (No. " + info.noRumah + ")\n";
-    message += "📂 *Iuran:* " + iuranName + "\n";
-    message += "💰 *Nominal:* " + nominalStr + "\n";
-    message += "✅ *Status:* Lunas (Dikonfirmasi)\n";
-    message += "🆔 *ID Tagihan:* " + tagihanId + "\n";
-    message += "🕐 *Diupdate:* " + waktu + "\n";
-
-    title = "✅ Pembayaran " + iuranName + " - " + info.noRumah + " Lunas";
-  } else if (oldStatus === "Belum Dibayar" && status === "Menunggu Konfirmasi") {
-    // Warga upload bukti bayar
-    message = "⏳ *Bukti Pembayaran Diupload*\n\n";
-    message += "👤 *Warga:* " + info.name + " (No. " + info.noRumah + ")\n";
-    message += "📂 *Iuran:* " + iuranName + "\n";
-    message += "💰 *Nominal:* " + nominalStr + "\n";
-    message += "📌 *Status:* Menunggu Konfirmasi\n";
-    message += "🆔 *ID Tagihan:* " + tagihanId + "\n";
-    message += "🕐 *Diupdate:* " + waktu + "\n";
-
-    title = "⏳ Bukti Bayar " + iuranName + " - " + info.noRumah;
-  } else {
-    // Perubahan status lainnya
-    message = statusEmoji + " *Status Tagihan Berubah*\n\n";
-    message += "👤 *Warga:* " + info.name + " (No. " + info.noRumah + ")\n";
-    message += "📂 *Iuran:* " + iuranName + "\n";
-    message += "💰 *Nominal:* " + nominalStr + "\n";
-
-    if (oldStatus) {
-      message += "📌 *Status:* " + oldStatus + " → " + status + "\n";
-    } else {
-      message += "📌 *Status:* " + status + "\n";
-    }
-
-    message += "🆔 *ID Tagihan:* " + tagihanId + "\n";
-    message += "🕐 *Diupdate:* " + waktu + "\n";
-
-    title = statusEmoji + " Tagihan " + iuranName + " - " + info.noRumah;
-  }
+  var title = statusEmoji + " Tagihan " + iuranName + " - " + info.noRumah + ": " + status;
 
   var adminUrl = _tagihanBaseUrl + "/_/#/collections/tagihan/records/" + tagihanId;
 

@@ -79,6 +79,7 @@ API untuk approve tagihan & topup wallet warga.
 auth_ns = api.namespace("auth", description="Autentikasi")
 tagihan_ns = api.namespace("tagihan", description="Operasi tagihan")
 iuran_ns = api.namespace("iuran", description="Upload bukti bayar")
+aktivitas_ns = api.namespace("aktivitas", description="Log aktivitas warga")
 
 # ── Models ──────────────────────────────────────────────────────────
 
@@ -1009,6 +1010,120 @@ class TagihanGenerate(Resource):
         except Exception as e:
             log.error("GENERATE ERROR iuran=%s warga=%s %s", iuran_id, warga_id or "all", str(e))
             return error_response(str(e), 500)
+
+
+# ── Aktivitas ──────────────────────────────────────────────────
+
+aktivitas_model = api.model("AktivitasItem", {
+    "id": fields.String(description="ID record"),
+    "warga": fields.String(description="ID warga"),
+    "aktivitas": fields.String(description="Nama aktivitas"),
+    "detail": fields.String(description="Detail aktivitas"),
+    "created": fields.String(description="Waktu dibuat"),
+})
+
+aktivitas_list_response = api.model("AktivitasListResponse", {
+    "items": fields.List(fields.Nested(aktivitas_model)),
+    "total": fields.Integer,
+    "page": fields.Integer,
+    "perPage": fields.Integer,
+})
+
+
+@aktivitas_ns.route("")
+class AktivitasList(Resource):
+    @aktivitas_ns.response(200, "Berhasil", aktivitas_list_response)
+    @aktivitas_ns.response(401, "Token tidak valid")
+    def get(self):
+        """Daftar aktivitas warga.
+
+        - Warga biasa: hanya aktivitas miliknya sendiri
+        - Pengurus: semua aktivitas (global)
+        Urut descending (terbaru dulu).
+        """
+        token = request.headers.get("Authorization", "")
+        if not token:
+            return error_response("Header Authorization diperlukan", 401)
+
+        page = request.args.get("page", 1, type=int)
+        perPage = request.args.get("perPage", 50, type=int)
+
+        try:
+            warga_id = _get_warga_id(token)
+            if not warga_id:
+                return {"items": [], "total": 0, "page": page, "perPage": perPage}
+
+            # Cek apakah user adalah pengurus
+            warga_me = pb_get(f"collections/warga/records/{warga_id}", token)
+            is_pengurus = warga_me.get("pengurus", False)
+
+            # Filter: pengurus lihat semua, warga biasa lihat miliknya
+            filter_str = None if is_pengurus else f'warga="{warga_id}"'
+
+            params = {
+                "sort": "-id",
+                "expand": "warga",
+                "page": page,
+                "perPage": perPage,
+            }
+            if filter_str:
+                params["filter"] = filter_str
+
+            result = pb_get("collections/aktivitas_warga/records", token, **params)
+
+            items = result.get("items", [])
+            # Format response: parser detail + expand warga name
+            formatted = []
+            for item in items:
+                warga_expand = (item.get("expand") or {}).get("warga") or {}
+                no_rumah = warga_expand.get("no_rumah", "")
+                warga_name = warga_expand.get("name", no_rumah) or no_rumah
+
+                # Parse detail jadi structured fields
+                detail_text = item.get("detail", "") or ""
+                detail_lines = {}
+                for line in detail_text.split("\n"):
+                    if ":" in line:
+                        key, val = line.split(":", 1)
+                        detail_lines[key.strip()] = val.strip()
+
+                formatted.append({
+                    "id": item["id"],
+                    "warga_id": item.get("warga", ""),
+                    "warga_label": warga_name or item.get("warga", ""),
+                    "aktivitas": item.get("aktivitas", ""),
+                    "detail": detail_lines,
+                    "detail_raw": detail_text,
+                    "created": item.get("created", ""),
+                })
+
+            return {
+                "items": formatted,
+                "total": result.get("totalItems", 0),
+                "page": result.get("page", page),
+                "perPage": result.get("perPage", perPage),
+            }, 200
+
+        except requests.HTTPError as e:
+            status = e.response.status_code
+            log.error("AKTIVITAS LIST error token=%s code=%s", token[:20], status)
+            return error_response(f"PocketBase error ({status})", 502 if status >= 500 else 400)
+        except Exception as e:
+            log.error("AKTIVITAS LIST error %s", str(e))
+            return error_response(str(e), 500)
+
+
+def _get_warga_id(token: str) -> str | None:
+    """Get warga id for the current user from token."""
+    user_id = _get_user_id(token)
+    if not user_id:
+        return None
+    try:
+        warga_result = pb_get("collections/warga/records", token, filter=f'user="{user_id}"', perPage=1)
+        items = warga_result.get("items", [])
+        return items[0]["id"] if items else None
+    except Exception:
+        return None
 
 
 def _get_user_id(token: str) -> str | None:

@@ -1,10 +1,10 @@
-const CACHE_NAME = 'warga-p2s-v3';
+const CACHE_NAME = 'warga-p2s-v4';
 const STATIC_ASSETS = [
   '/manifest.json',
 ];
 
 // Don't cache HTML pages - always fetch from network
-const HTML_ROUTES = ['/', '/login', '/register', '/dashboard', '/iuran', '/tagihan', '/lapor', '/laporan-warga', '/lampiran', '/profil'];
+const HTML_ROUTES = ['/', '/login', '/register', '/dashboard', '/iuran', '/tagihan', '/lapor', '/laporan-warga', '/laporan-scurity', '/lampiran', '/profil', '/warga', '/notifikasi'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -47,7 +47,9 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return response;
-      }).catch(() => cached);
+      }).catch(() => {
+        return cached || new Response('Offline', { status: 503 });
+      });
       
       return cached || fetchPromise;
     })

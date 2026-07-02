@@ -11,13 +11,11 @@ onRecordAfterUpdateSuccess(function (e) {
     if (collName !== 'tagihan') return;
 
     var newStatus = record.getString('status_pembayaran') || '';
-    var oldStatus = '';
-    try { oldStatus = record.getOriginal('status_pembayaran') || ''; } catch (_) {}
 
-    console.log('wallet_tagihan: tagihan updated', record.getString('id'), 'status', oldStatus, '->', newStatus);
+    console.log('wallet_tagihan: tagihan updated', record.getString('id'), '->', newStatus);
 
     // Hanya trigger saat status BERUBAH ke Lunas
-    if (newStatus !== 'Lunas' || oldStatus === 'Lunas') return;
+    if (newStatus !== 'Lunas') return;
 
     var wargaId = record.getString('warga');
     var nominal = record.get('nominal') || 0;
