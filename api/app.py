@@ -55,12 +55,20 @@ api = Api(
     version="1.0",
     title="Kas Warga API",
     description="""
-API untuk approve tagihan & topup wallet warga.
+API untuk Kas Warga - Prestige 2 Sawangan.
+
+## Endpoint
+- **Auth** → login
+- **Tagihan** → approve tagihan, upload lampiran, generate tagihan
+- **Iuran** → upload bukti bayar, daftar iuran tersedia
+- **Payout** → ajukan klaim pencairan dana, setujui/tolak/bayar
+- **Aktivitas** → log aktivitas warga
 
 ## Alur Testing
 1. **POST /v1/auth/login** → dapatkan token
 2. Copy token, klik tombol **Authorize** 🔒 di kanan atas
 3. **POST /v1/tagihan/approve** → approve tagihan
+4. **POST /v1/payout/submit** → ajukan pencairan
 """,
     doc="/swagger",
     prefix="/v1",
@@ -80,6 +88,7 @@ auth_ns = api.namespace("auth", description="Autentikasi")
 tagihan_ns = api.namespace("tagihan", description="Operasi tagihan")
 iuran_ns = api.namespace("iuran", description="Upload bukti bayar")
 aktivitas_ns = api.namespace("aktivitas", description="Log aktivitas warga")
+payout_ns = api.namespace("payout", description="Klaim & Reimbursement (Pencairan Dana)")
 
 # ── Models ──────────────────────────────────────────────────────────
 
@@ -1009,6 +1018,474 @@ class TagihanGenerate(Resource):
             return error_response(f"PocketBase error ({status}): {msg}", 502 if status >= 500 else 400)
         except Exception as e:
             log.error("GENERATE ERROR iuran=%s warga=%s %s", iuran_id, warga_id or "all", str(e))
+            return error_response(str(e), 500)
+
+
+# ── Payout ─────────────────────────────────────────────────────
+
+payout_submit_model = api.model("PayoutSubmitRequest", {
+    "nominal": fields.Float(
+        required=True,
+        description="Jumlah pengajuan (min Rp 1.000)",
+        example=50000,
+    ),
+    "jenis": fields.String(
+        required=True,
+        description="Jenis: Bank atau E-Wallet",
+        example="Bank",
+        enum=["Bank", "E-Wallet"],
+    ),
+    "bank": fields.String(
+        required=True,
+        description="Nama Bank / Wallet",
+        example="BCA",
+    ),
+    "no_rekening": fields.String(
+        required=True,
+        description="Nomor rekening / wallet ID",
+        example="1234567890",
+    ),
+    "atas_nama": fields.String(
+        required=True,
+        description="Nama pemilik rekening",
+        example="John Doe",
+    ),
+    "keterangan_warga": fields.String(
+        required=False,
+        description="Alasan pengajuan",
+        example="Pembelian alat kebersihan lingkungan",
+    ),
+})
+
+payout_approve_model = api.model("PayoutApproveRequest", {
+    "keterangan_pengurus": fields.String(
+        required=False,
+        description="Catatan pengurus",
+        example="Sudah diverifikasi, silakan dicairkan",
+    ),
+})
+
+payout_reject_model = api.model("PayoutRejectRequest", {
+    "keterangan_pengurus": fields.String(
+        required=True,
+        description="Alasan penolakan",
+        example="Bukti tidak lengkap, harap upload ulang",
+    ),
+})
+
+payout_response = api.model("PayoutResponse", {
+    "success": fields.Boolean,
+    "payout_id": fields.String,
+    "message": fields.String,
+})
+
+payout_list_response = api.model("PayoutListResponse", {
+    "success": fields.Boolean,
+    "items": fields.List(fields.Raw),
+    "total": fields.Integer,
+})
+
+payout_submit_parser = reqparse.RequestParser(bundle_errors=True)
+payout_submit_parser.add_argument(
+    "nominal", type=float, required=True, location="form",
+    help="Jumlah pengajuan (min Rp 1.000)",
+)
+payout_submit_parser.add_argument(
+    "jenis", type=str, required=True, location="form",
+    choices=["Bank", "E-Wallet"],
+    help="Jenis: Bank / E-Wallet",
+)
+payout_submit_parser.add_argument(
+    "bank", type=str, required=True, location="form",
+    help="Nama Bank / Wallet",
+)
+payout_submit_parser.add_argument(
+    "no_rekening", type=str, required=True, location="form",
+    help="Nomor rekening / wallet ID",
+)
+payout_submit_parser.add_argument(
+    "atas_nama", type=str, required=True, location="form",
+    help="Nama pemilik rekening",
+)
+payout_submit_parser.add_argument(
+    "keterangan_warga", type=str, required=False, location="form",
+    help="Alasan pengajuan",
+)
+payout_submit_parser.add_argument(
+    "lampiran_warga", type=type(open), required=False, location="files",
+    help="File bukti/foto (Gambar/PDF, max 5MB)",
+)
+
+
+@payout_ns.route("/submit")
+class PayoutSubmit(Resource):
+    @payout_ns.expect(payout_submit_parser)
+    @payout_ns.response(200, "Berhasil", payout_response)
+    @payout_ns.response(400, "Request tidak valid")
+    @payout_ns.response(401, "Token tidak valid")
+    @payout_ns.response(502, "PocketBase error")
+    def post(self):
+        """Ajukan klaim pencairan dana baru.
+
+        Menerima multipart/form-data:
+        - nominal, jenis, bank, no_rekening, atas_nama (wajib)
+        - keterangan_warga (opsional)
+        - lampiran_warga (file opsional)
+
+        Header: Authorization = token user warga
+        """
+        token = request.headers.get("Authorization", "")
+        if not token:
+            return error_response("Header Authorization diperlukan", 401)
+
+        nominal = request.form.get("nominal", type=float)
+        jenis = request.form.get("jenis", "").strip()
+        bank = request.form.get("bank", "").strip()
+        no_rekening = request.form.get("no_rekening", "").strip()
+        atas_nama = request.form.get("atas_nama", "").strip()
+        keterangan_warga = request.form.get("keterangan_warga", "").strip()
+        file = request.files.get("lampiran_warga")
+
+        if not nominal or nominal < 1000:
+            return error_response("Nominal minimal Rp 1.000", 400)
+        if not jenis or jenis not in ("Bank", "E-Wallet"):
+            return error_response("Jenis harus Bank atau E-Wallet", 400)
+        if not bank:
+            return error_response("Nama bank/wallet diperlukan", 400)
+        if not no_rekening:
+            return error_response("No rekening diperlukan", 400)
+        if not atas_nama:
+            return error_response("Atas nama diperlukan", 400)
+
+        try:
+            # Dapatkan warga_id dari token
+            warga_id = _get_warga_id(token)
+            if not warga_id:
+                return error_response("Warga tidak ditemukan untuk user ini", 400)
+
+            payout_id = _generate_id()
+
+            # Build data
+            pb_data = [
+                ("id", payout_id),
+                ("warga", warga_id),
+                ("nominal", str(nominal)),
+                ("jenis", jenis),
+                ("bank", bank),
+                ("no_rekening", no_rekening),
+                ("atas_nama", atas_nama),
+                ("status", "Menunggu Konfirmasi"),
+            ]
+            if keterangan_warga:
+                pb_data.append(("keterangan_warga", keterangan_warga))
+
+            pb_files = {}
+            if file:
+                pb_files["lampiran_warga"] = (file.filename, file.stream, file.content_type)
+
+            headers = {"Authorization": token}
+            r = requests.post(
+                f"{PB_URL}/api/collections/payout/records",
+                headers=headers,
+                data=pb_data,
+                files=pb_files if pb_files else None,
+            )
+            r.raise_for_status()
+
+            # Catat aktivitas
+            try:
+                pb_post("collections/aktivitas_warga/records", token, {
+                    "warga": warga_id,
+                    "aktivitas": "Pengajuan pencairan dana",
+                    "detail": f"Pengajuan pencairan Rp {nominal:,.0f} - {bank} {no_rekening} a.n. {atas_nama}",
+                })
+            except requests.HTTPError:
+                pass
+
+            log.info(
+                "PAYOUT SUBMIT warga=%s nominal=%s jenis=%s bank=%s",
+                warga_id, nominal, jenis, bank,
+            )
+
+            return {
+                "success": True,
+                "payout_id": payout_id,
+                "message": "Pengajuan pencairan berhasil dikirim",
+            }, 200
+
+        except requests.HTTPError as e:
+            status = e.response.status_code
+            msg = e.response.text[:200]
+            log.error("PAYOUT SUBMIT FAILED warga=%s pb_error=%s", warga_id, status)
+            return error_response(f"PocketBase error ({status}): {msg}", 502 if status >= 500 else 400)
+        except Exception as e:
+            log.error("PAYOUT SUBMIT ERROR %s", str(e))
+            return error_response(str(e), 500)
+
+
+@payout_ns.route("/list")
+class PayoutList(Resource):
+    @payout_ns.response(200, "Berhasil", payout_list_response)
+    @payout_ns.response(401, "Token tidak valid")
+    def get(self):
+        """Daftar pengajuan payout.
+
+        - Warga biasa: hanya pengajuannya sendiri
+        - Pengurus: semua pengajuan
+
+        Query params: status (opsional), page, perPage
+        Header: Authorization = token user
+        """
+        token = request.headers.get("Authorization", "")
+        if not token:
+            return error_response("Header Authorization diperlukan", 401)
+
+        page = request.args.get("page", 1, type=int)
+        perPage = request.args.get("perPage", 50, type=int)
+        status_filter = request.args.get("status", "").strip()
+
+        try:
+            warga_id = _get_warga_id(token)
+            if not warga_id:
+                return {"success": True, "items": [], "total": 0}
+
+            warga = pb_get(f"collections/warga/records/{warga_id}", token)
+            is_pengurus = warga.get("pengurus", False)
+
+            filters = []
+            if not is_pengurus:
+                filters.append(f'warga="{warga_id}"')
+            if status_filter:
+                filters.append(f'status="{status_filter}"')
+
+            params = {
+                "sort": "-created",
+                "expand": "warga",
+                "page": page,
+                "perPage": perPage,
+            }
+            if filters:
+                params["filter"] = " && ".join(filters)
+
+            result = pb_get("collections/payout/records", token, **params)
+
+            return {
+                "success": True,
+                "items": result.get("items", []),
+                "total": result.get("totalItems", 0),
+            }, 200
+
+        except requests.HTTPError as e:
+            status = e.response.status_code
+            return error_response(f"PocketBase error ({status})", 502 if status >= 500 else 400)
+        except Exception as e:
+            return error_response(str(e), 500)
+
+
+@payout_ns.route("/<payout_id>/approve")
+class PayoutApprove(Resource):
+    @payout_ns.expect(payout_approve_model)
+    @payout_ns.response(200, "Berhasil", payout_response)
+    @payout_ns.response(400, "Request tidak valid")
+    @payout_ns.response(401, "Token tidak valid")
+    @payout_ns.response(502, "PocketBase error")
+    def post(self, payout_id):
+        """Setujui pengajuan payout (ubah status jadi Disetujui).
+
+        Pengurus dapat memberi keterangan (opsional).
+        Setelah disetujui, pengurus akan membayar manual lalu
+        menggunakan endpoint /bayar untuk menandai sudah dibayar.
+
+        Header: Authorization = token pengurus
+        """
+        token = request.headers.get("Authorization", "")
+        if not token:
+            return error_response("Header Authorization diperlukan", 401)
+
+        data = request.get_json(silent=True) or {}
+        keterangan = data.get("keterangan_pengurus", "").strip()
+
+        try:
+            # Validasi: hanya pengurus yang bisa approve
+            warga_id = _get_warga_id(token)
+            if not warga_id:
+                return error_response("User tidak terdaftar sebagai warga", 400)
+
+            warga = pb_get(f"collections/warga/records/{warga_id}", token)
+            if not warga.get("pengurus", False):
+                return error_response("Hanya pengurus yang dapat menyetujui payout", 403)
+
+            # Get existing payout
+            payout = pb_get(f"collections/payout/records/{payout_id}", token)
+            if payout.get("status") != "Menunggu Konfirmasi":
+                return error_response("Payout sudah diproses sebelumnya", 400)
+
+            now_iso = datetime.now(timezone.utc).isoformat()
+
+            update_data = {
+                "status": "Disetujui",
+                "tanggal_disetujui": now_iso,
+            }
+            if keterangan:
+                update_data["keterangan_pengurus"] = keterangan
+
+            pb_patch(f"collections/payout/records/{payout_id}", token, update_data)
+
+            log.info("PAYOUT APPROVED payout=%s by warga=%s", payout_id, warga_id)
+
+            return {
+                "success": True,
+                "payout_id": payout_id,
+                "message": "Payout disetujui",
+            }, 200
+
+        except requests.HTTPError as e:
+            status = e.response.status_code
+            msg = e.response.text[:200]
+            return error_response(f"PocketBase error ({status}): {msg}", 502 if status >= 500 else 400)
+        except Exception as e:
+            log.error("PAYOUT APPROVE ERROR %s", str(e))
+            return error_response(str(e), 500)
+
+
+@payout_ns.route("/<payout_id>/reject")
+class PayoutReject(Resource):
+    @payout_ns.expect(payout_reject_model)
+    @payout_ns.response(200, "Berhasil", payout_response)
+    @payout_ns.response(400, "Request tidak valid")
+    @payout_ns.response(401, "Token tidak valid")
+    @payout_ns.response(502, "PocketBase error")
+    def post(self, payout_id):
+        """Tolak pengajuan payout.
+
+        Pengurus wajib memberi alasan penolakan.
+
+        Header: Authorization = token pengurus
+        """
+        token = request.headers.get("Authorization", "")
+        if not token:
+            return error_response("Header Authorization diperlukan", 401)
+
+        data = request.get_json(silent=True) or {}
+        keterangan = data.get("keterangan_pengurus", "").strip()
+
+        if not keterangan:
+            return error_response("Alasan penolakan diperlukan", 400)
+
+        try:
+            warga_id = _get_warga_id(token)
+            if not warga_id:
+                return error_response("User tidak terdaftar sebagai warga", 400)
+
+            warga = pb_get(f"collections/warga/records/{warga_id}", token)
+            if not warga.get("pengurus", False):
+                return error_response("Hanya pengurus yang dapat menolak payout", 403)
+
+            payout = pb_get(f"collections/payout/records/{payout_id}", token)
+            if payout.get("status") != "Menunggu Konfirmasi":
+                return error_response("Payout sudah diproses sebelumnya", 400)
+
+            pb_patch(f"collections/payout/records/{payout_id}", token, {
+                "status": "Ditolak",
+                "keterangan_pengurus": keterangan,
+                "tanggal_disetujui": datetime.now(timezone.utc).isoformat(),
+            })
+
+            log.info("PAYOUT REJECTED payout=%s by warga=%s alasan=%s", payout_id, warga_id, keterangan[:100])
+
+            return {
+                "success": True,
+                "payout_id": payout_id,
+                "message": "Payout ditolak",
+            }, 200
+
+        except requests.HTTPError as e:
+            status = e.response.status_code
+            msg = e.response.text[:200]
+            return error_response(f"PocketBase error ({status}): {msg}", 502 if status >= 500 else 400)
+        except Exception as e:
+            log.error("PAYOUT REJECT ERROR %s", str(e))
+            return error_response(str(e), 500)
+
+
+@payout_ns.route("/<payout_id>/bayar")
+class PayoutBayar(Resource):
+    @payout_ns.expect(payout_approve_model)
+    @payout_ns.response(200, "Berhasil", payout_response)
+    @payout_ns.response(400, "Request tidak valid")
+    @payout_ns.response(401, "Token tidak valid")
+    @payout_ns.response(502, "PocketBase error")
+    def post(self, payout_id):
+        """Tandai payout sudah dibayar + upload bukti transfer.
+
+        Menerima multipart/form-data:
+        - keterangan_pengurus (opsional)
+        - lampiran_pengurus (file: bukti transfer)
+
+        Ketika status berubah jadi Dibayar, otomatis:
+        - Saldo KAS wallet berkurang
+        - Transaksi PENGELUARAN tercatat
+        - Ledger ter-update
+
+        Header: Authorization = token pengurus
+        """
+        token = request.headers.get("Authorization", "")
+        if not token:
+            return error_response("Header Authorization diperlukan", 401)
+
+        keterangan = request.form.get("keterangan_pengurus", "").strip()
+        file = request.files.get("lampiran_pengurus")
+
+        try:
+            warga_id = _get_warga_id(token)
+            if not warga_id:
+                return error_response("User tidak terdaftar sebagai warga", 400)
+
+            warga = pb_get(f"collections/warga/records/{warga_id}", token)
+            if not warga.get("pengurus", False):
+                return error_response("Hanya pengurus yang dapat membayar payout", 403)
+
+            payout = pb_get(f"collections/payout/records/{payout_id}", token)
+            if payout.get("status") != "Disetujui":
+                return error_response("Payout harus disetujui terlebih dahulu", 400)
+
+            now_iso = datetime.now(timezone.utc).isoformat()
+
+            # Update payout
+            pb_data = [
+                ("status", "Dibayar"),
+                ("tanggal_dibayar", now_iso),
+            ]
+            if keterangan:
+                pb_data.append(("keterangan_pengurus", keterangan))
+
+            pb_files = {}
+            if file:
+                pb_files["lampiran_pengurus"] = (file.filename, file.stream, file.content_type)
+
+            headers = {"Authorization": token}
+            r = requests.patch(
+                f"{PB_URL}/api/collections/payout/records/{payout_id}",
+                headers=headers,
+                data=pb_data,
+                files=pb_files if pb_files else None,
+            )
+            r.raise_for_status()
+
+            log.info("PAYOUT PAID payout=%s by warga=%s", payout_id, warga_id)
+
+            return {
+                "success": True,
+                "payout_id": payout_id,
+                "message": "Payout dibayarkan. Saldo KAS otomatis berkurang.",
+            }, 200
+
+        except requests.HTTPError as e:
+            status = e.response.status_code
+            msg = e.response.text[:200]
+            return error_response(f"PocketBase error ({status}): {msg}", 502 if status >= 500 else 400)
+        except Exception as e:
+            log.error("PAYOUT PAY ERROR %s", str(e))
             return error_response(str(e), 500)
 
 
