@@ -284,8 +284,9 @@ export default function Payout() {
               </>
             )}
           </button>
-        )}
-      </div>      {/* Form Pengajuan */}
+      </div>
+
+      {/* Form Pengajuan */}
       {showForm && (
         <form onSubmit={handleSubmit} className="card" style={{ margin: '16px 0', padding: 20, border: '1.5px solid #15935A', background: '#F8FDFA' }}>
           <h3 style={{ margin: '0 0 16px', fontSize: 15, color: '#15935A' }}>Pengajuan Pembayaran Baru</h3>
