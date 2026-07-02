@@ -36,7 +36,7 @@ const allItems = [
     icon: (c) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   },
   {
-    label: 'Pencairan', path: '/payout',
+    label: 'Pembayaran', path: '/payout',
     icon: (c) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z" stroke={c} strokeWidth="1.8"/><path d="M12 6v12M6 12h12" stroke={c} strokeWidth="2" strokeLinecap="round"/></svg>,
   },
   {

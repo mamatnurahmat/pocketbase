@@ -255,7 +255,7 @@ export default function Payout() {
   return (
     <div className="page-padded">
       <div style={{ padding: '16px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ margin: 0 }}>Pencairan Dana</h2>
+        <h2 style={{ margin: 0 }}>Pembayaran Dana</h2>
         {!isPengurus && (
           <button
             onClick={() => setShowForm(!showForm)}
@@ -289,7 +289,7 @@ export default function Payout() {
       {/* Form Pengajuan */}
       {showForm && !isPengurus && (
         <form onSubmit={handleSubmit} className="card" style={{ margin: '16px 0', padding: 20, border: '1.5px solid #15935A', background: '#F8FDFA' }}>
-          <h3 style={{ margin: '0 0 16px', fontSize: 15, color: '#15935A' }}>Pengajuan Pencairan Baru</h3>
+          <h3 style={{ margin: '0 0 16px', fontSize: 15, color: '#15935A' }}>Pengajuan Pembayaran Baru</h3>
 
           <div style={{ display: 'grid', gap: 12 }}>
             <div>
@@ -377,7 +377,7 @@ export default function Payout() {
                 marginTop: 4,
               }}
             >
-              {submitting ? 'Mengirim...' : 'Ajukan Pencairan'}
+              {submitting ? 'Mengirim...' : 'Ajukan Pembayaran'}
             </button>
           </div>
         </form>
@@ -421,13 +421,13 @@ export default function Payout() {
         <div style={{ textAlign: 'center', padding: 40, color: '#8A9991', fontSize: 14 }}>Memuat...</div>
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 40, color: '#8A9991', fontSize: 14 }}>
-          {filter === 'all' ? 'Belum ada pengajuan pencairan' : `Tidak ada pengajuan dengan status "${filter}"`}
+          {filter === 'all' ? 'Belum ada pengajuan pembayaran' : `Tidak ada pengajuan dengan status "${filter}"`}
           {!isPengurus && !showForm && (
             <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
               <div style={{ fontSize: 48, opacity: 0.3 }}>📋</div>
               <button onClick={() => setShowForm(true)}
                 style={{ background: '#15935A', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 28px', fontSize: 15, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', boxShadow: '0 4px 12px rgba(21,147,90,0.3)' }}
-              >+ Ajukan Pencairan Baru</button>
+              >+ Ajukan Pembayaran Baru</button>
               <div style={{ fontSize: 12, color: '#8A9991' }}>Isi data rekening & upload bukti</div>
             </div>
           )}

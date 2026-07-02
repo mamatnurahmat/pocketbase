@@ -23,7 +23,7 @@ const tabs = [
   },
   {
     path: '/payout',
-    label: 'Pencairan',
+    label: 'Pembayaran',
     icon: (c) => (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
         <path d="M12 2a10 10 0 100 20 10 10 0 000-20z" stroke={c} strokeWidth="1.8"/>

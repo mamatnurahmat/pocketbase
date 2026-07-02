@@ -61,14 +61,14 @@ API untuk Kas Warga - Prestige 2 Sawangan.
 - **Auth** → login
 - **Tagihan** → approve tagihan, upload lampiran, generate tagihan
 - **Iuran** → upload bukti bayar, daftar iuran tersedia
-- **Payout** → ajukan klaim pencairan dana, setujui/tolak/bayar
+- **Payout** → ajukan klaim pembayaran dana, setujui/tolak/bayar
 - **Aktivitas** → log aktivitas warga
 
 ## Alur Testing
 1. **POST /v1/auth/login** → dapatkan token
 2. Copy token, klik tombol **Authorize** 🔒 di kanan atas
 3. **POST /v1/tagihan/approve** → approve tagihan
-4. **POST /v1/payout/submit** → ajukan pencairan
+4. **POST /v1/payout/submit** → ajukan pembayaran
 """,
     doc="/swagger",
     prefix="/v1",
@@ -88,7 +88,7 @@ auth_ns = api.namespace("auth", description="Autentikasi")
 tagihan_ns = api.namespace("tagihan", description="Operasi tagihan")
 iuran_ns = api.namespace("iuran", description="Upload bukti bayar")
 aktivitas_ns = api.namespace("aktivitas", description="Log aktivitas warga")
-payout_ns = api.namespace("payout", description="Klaim & Reimbursement (Pencairan Dana)")
+payout_ns = api.namespace("payout", description="Klaim & Reimbursement (Pembayaran Dana)")
 
 # ── Models ──────────────────────────────────────────────────────────
 
@@ -1125,7 +1125,7 @@ class PayoutSubmit(Resource):
     @payout_ns.response(401, "Token tidak valid")
     @payout_ns.response(502, "PocketBase error")
     def post(self):
-        """Ajukan klaim pencairan dana baru.
+        """Ajukan klaim pembayaran dana baru.
 
         Menerima multipart/form-data:
         - nominal, jenis, bank, no_rekening, atas_nama (wajib)
@@ -1196,8 +1196,8 @@ class PayoutSubmit(Resource):
             try:
                 pb_post("collections/aktivitas_warga/records", token, {
                     "warga": warga_id,
-                    "aktivitas": "Pengajuan pencairan dana",
-                    "detail": f"Pengajuan pencairan Rp {nominal:,.0f} - {bank} {no_rekening} a.n. {atas_nama}",
+                    "aktivitas": "Pengajuan pembayaran dana",
+                    "detail": f"Pengajuan pembayaran Rp {nominal:,.0f} - {bank} {no_rekening} a.n. {atas_nama}",
                 })
             except requests.HTTPError:
                 pass
@@ -1210,7 +1210,7 @@ class PayoutSubmit(Resource):
             return {
                 "success": True,
                 "payout_id": payout_id,
-                "message": "Pengajuan pencairan berhasil dikirim",
+                "message": "Pengajuan pembayaran berhasil dikirim",
             }, 200
 
         except requests.HTTPError as e:
@@ -1449,9 +1449,15 @@ class PayoutBayar(Resource):
             if payout.get("status") != "Disetujui":
                 return error_response("Payout harus disetujui terlebih dahulu", 400)
 
+            nominal = payout.get("nominal", 0)
+            warga_pengaju = payout.get("warga", "")
+
+            if nominal <= 0:
+                return error_response("Nominal tidak valid", 400)
+
             now_iso = datetime.now(timezone.utc).isoformat()
 
-            # Update payout
+            # ===== 1. Update payout status =====
             pb_data = [
                 ("status", "Dibayar"),
                 ("tanggal_dibayar", now_iso),
@@ -1472,7 +1478,75 @@ class PayoutBayar(Resource):
             )
             r.raise_for_status()
 
-            log.info("PAYOUT PAID payout=%s by warga=%s", payout_id, warga_id)
+            # ===== 2. Cari KAS wallet =====
+            kas_resp = pb_get("collections/wallets/records", token, filter='wallet_type="KAS"', perPage=1)
+            kas_items = kas_resp.get("items", [])
+            if not kas_items:
+                log.error("PAYOUT BAYAR: KAS wallet not found")
+                return {
+                    "success": True,
+                    "payout_id": payout_id,
+                    "message": "Payout dibayarkan, tetapi KAS wallet tidak ditemukan. Saldo tidak terupdate.",
+                }, 200
+
+            kas_wallet = kas_items[0]
+            kas_id = kas_wallet["id"]
+            balance_before = kas_wallet.get("balance", 0) or 0
+
+            if balance_before < nominal:
+                log.error("PAYOUT BAYAR: saldo KAS tidak cukup %s < %s", balance_before, nominal)
+                return error_response(f"Saldo KAS tidak cukup (Rp {balance_before:,} < Rp {nominal:,})", 400)
+
+            balance_after = balance_before - nominal
+
+            # ===== 3. Update KAS wallet balance =====
+            pb_patch(f"collections/wallets/records/{kas_id}", token, {
+                "balance": balance_after,
+            })
+            log.info("PAYOUT BAYAR: KAS wallet updated %s -> %s", balance_before, balance_after)
+
+            # ===== 4. Buat transaksi PENGELUARAN =====
+            ref_no = "POUT-" + now_iso[:10].replace("-", "") + "-" + uuid.uuid4().hex[:4].upper()
+
+            user_id = _get_user_id(token)
+
+            trx = pb_post("collections/transactions/records", token, {
+                "reference_no": ref_no,
+                "type": "PENGELUARAN",
+                "status": "SUCCESS",
+                "from_wallet": kas_id,
+                "amount": nominal,
+                "fee": 0,
+                "net_amount": nominal,
+                "note": f"Pembayaran dana ke warga #{warga_pengaju} ({ref_no})",
+                "created_by": user_id or "",
+            })
+            trx_id = trx["id"]
+            log.info("PAYOUT BAYAR: transaction created %s %s", ref_no, trx_id)
+
+            # ===== 5. Buat ledger entry (DEBIT) =====
+            pb_post("collections/ledgers/records", token, {
+                "wallet": kas_id,
+                "transaction": trx_id,
+                "entry_type": "DEBIT",
+                "amount": nominal,
+                "balance_before": balance_before,
+                "balance_after": balance_after,
+            })
+            log.info("PAYOUT BAYAR: ledger DEBIT created for KAS wallet %s", kas_id)
+
+            # ===== 6. Catat aktivitas warga =====
+            try:
+                pb_post("collections/aktivitas_warga/records", token, {
+                    "warga": warga_pengaju,
+                    "aktivitas": "Pembayaran dana",
+                    "detail": f"Pembayaran Rp {nominal:,.0f} - {ref_no}",
+                })
+                log.info("PAYOUT BAYAR: aktivitas_warga created")
+            except requests.HTTPError as e:
+                log.warning("PAYOUT BAYAR: gagal catat aktivitas: %s", e.response.text[:100])
+
+            log.info("PAYOUT BAYAR: DONE - %s", ref_no)
 
             return {
                 "success": True,
