@@ -6,11 +6,11 @@ migrate((app) => {
     id: "payout_collection_id",
     name: "payout",
     type: "base",
-    listRule: "@request.auth.id != '' && (warga.user = @request.auth.id || warga.pengurus = true)",
-    viewRule: "@request.auth.id != '' && (warga.user = @request.auth.id || warga.pengurus = true)",
+    listRule: "@request.auth.id != ''",
+    viewRule: "@request.auth.id != ''",
     createRule: "@request.auth.id != ''",
-    updateRule: "@request.auth.id != '' && (warga.pengurus = true || (warga.user = @request.auth.id && status = 'Menunggu Konfirmasi'))",
-    deleteRule: "@request.auth.id != '' && warga.user = @request.auth.id && status = 'Menunggu Konfirmasi'",
+    updateRule: "@request.auth.id != ''",
+    deleteRule: "@request.auth.id != ''",
     fields: [
       {
         id: "relation_warga",
