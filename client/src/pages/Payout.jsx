@@ -510,7 +510,7 @@ export default function Payout() {
 
                   {/* Actions (Pengurus only) */}
                   {isPengurus && p.status === 'Menunggu Konfirmasi' && (
-                    <div style={{ marginTop: 14 }}>
+                    <div onClick={e => e.stopPropagation()} style={{ marginTop: 14 }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: '#6B7B72', marginBottom: 10 }}>TINDAKAN</div>
                       
                       {/* Approve */}
@@ -546,7 +546,7 @@ export default function Payout() {
 
                   {/* Bayar (Pengurus: setelah disetujui) */}
                   {isPengurus && p.status === 'Disetujui' && (
-                    <div style={{ marginTop: 14 }}>
+                    <div onClick={e => e.stopPropagation()} style={{ marginTop: 14 }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: '#6B7B72', marginBottom: 10 }}>PROSES PEMBAYARAN</div>
                       <div style={{ background: 'linear-gradient(145deg, #F0F7FF, #E8F4FF)', borderRadius: 14, padding: 16, border: '1.5px solid #2563EB' }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#2563EB', marginBottom: 4 }}>💰 Konfirmasi Pembayaran</div>
