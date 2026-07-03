@@ -9,6 +9,7 @@ export default function Payout() {
 
   // Form pengajuan
   const [showForm, setShowForm] = useState(false);
+  const [tipe, setTipe] = useState('Klaim Warga');
   const [nominal, setNominal] = useState('');
   const [jenis, setJenis] = useState('Bank');
   const [bank, setBank] = useState('');
@@ -70,20 +71,33 @@ export default function Payout() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nominal || nominal < 1000) return alert('Nominal minimal Rp 1.000');
-    if (!bank.trim()) return alert('Nama bank/wallet diperlukan');
-    if (!noRekening.trim()) return alert('No rekening diperlukan');
-    if (!atasNama.trim()) return alert('Atas nama diperlukan');
+
+    if (tipe === 'Klaim Warga') {
+      if (!bank.trim()) return alert('Nama bank/wallet diperlukan');
+      if (!noRekening.trim()) return alert('No rekening diperlukan');
+      if (!atasNama.trim()) return alert('Atas nama diperlukan');
+    } else {
+      if (!keterangan.trim()) return alert('Deskripsi pengeluaran diperlukan');
+      if (!lampiranFile) return alert('Lampiran bukti pengeluaran diperlukan');
+    }
 
     setSubmitting(true);
     try {
       const formData = new FormData();
+      formData.append('tipe', tipe);
       formData.append('nominal', nominal);
-      formData.append('jenis', jenis);
-      formData.append('bank', bank.trim());
-      formData.append('no_rekening', noRekening.trim());
-      formData.append('atas_nama', atasNama.trim());
-      if (keterangan.trim()) formData.append('keterangan_warga', keterangan.trim());
-      if (lampiranFile) formData.append('lampiran_warga', lampiranFile);
+
+      if (tipe === 'Klaim Warga') {
+        formData.append('jenis', jenis);
+        formData.append('bank', bank.trim());
+        formData.append('no_rekening', noRekening.trim());
+        formData.append('atas_nama', atasNama.trim());
+        if (keterangan.trim()) formData.append('keterangan_warga', keterangan.trim());
+        if (lampiranFile) formData.append('lampiran_warga', lampiranFile);
+      } else {
+        formData.append('keterangan_pengurus', keterangan.trim());
+        if (lampiranFile) formData.append('lampiran_pengurus', lampiranFile);
+      }
 
       const res = await fetch(`${API_URL}/v1/payout/submit`, {
         method: 'POST',
@@ -99,7 +113,6 @@ export default function Payout() {
       // Refresh list
       const w = await pb.collection('warga').getFirstListItem(`user="${pb.authStore.model.id}"`);
       const newRecords = await pb.collection('payout').getFullList({
-        filter: `warga="${w.id}"`,
         sort: '-tanggal_diajukan',
         expand: 'warga,warga.user',
       });
@@ -107,6 +120,7 @@ export default function Payout() {
 
       // Reset form
       setShowForm(false);
+      setTipe('Klaim Warga');
       setNominal('');
       setBank('');
       setNoRekening('');
@@ -291,6 +305,34 @@ export default function Payout() {
         <form onSubmit={handleSubmit} className="card" style={{ margin: '16px 0', padding: 20, border: '1.5px solid #15935A', background: '#F8FDFA' }}>
           <h3 style={{ margin: '0 0 16px', fontSize: 15, color: '#15935A' }}>Pengajuan Pembayaran Baru</h3>
 
+          {/* Tipe selector - only show for pengurus */}
+          {isPengurus && (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              <button type="button" onClick={() => { setTipe('Klaim Warga'); setKeterangan(''); }}
+                style={{
+                  flex: 1, padding: '10px 14px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+                  fontFamily: 'inherit', cursor: 'pointer', border: tipe === 'Klaim Warga' ? '2px solid #15935A' : '2px solid #E6EBE7',
+                  background: tipe === 'Klaim Warga' ? '#E8F5EE' : '#fff',
+                  color: tipe === 'Klaim Warga' ? '#15935A' : '#6B7B72',
+                }}
+              >🙋 Klaim Warga</button>
+              <button type="button" onClick={() => { setTipe('Pengeluaran Kas'); setBank(''); setNoRekening(''); setAtasNama(''); }}
+                style={{
+                  flex: 1, padding: '10px 14px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+                  fontFamily: 'inherit', cursor: 'pointer', border: tipe === 'Pengeluaran Kas' ? '2px solid #2563EB' : '2px solid #E6EBE7',
+                  background: tipe === 'Pengeluaran Kas' ? '#F0F7FF' : '#fff',
+                  color: tipe === 'Pengeluaran Kas' ? '#2563EB' : '#6B7B72',
+                }}
+              >💰 Pengeluaran Kas</button>
+            </div>
+          )}
+
+          {tipe === 'Pengeluaran Kas' && isPengurus && (
+            <div style={{ background: '#F0F7FF', borderRadius: 10, padding: '8px 12px', marginBottom: 14, fontSize: 12, color: '#2563EB', fontWeight: 600 }}>
+              💡 Pengeluaran Kas akan langsung dibayarkan dan saldo KAS otomatis berkurang
+            </div>
+          )}
+
           <div style={{ display: 'grid', gap: 12 }}>
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: '#3A453F', display: 'block', marginBottom: 4 }}>Nominal *</label>
@@ -299,51 +341,61 @@ export default function Payout() {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#3A453F', display: 'block', marginBottom: 4 }}>Jenis *</label>
-                <select value={jenis} onChange={e => setJenis(e.target.value)}
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1.5px solid #DFE5E1', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', outline: 'none', appearance: 'none', background: '#fff' }}
-                >
-                  <option value="Bank">Bank</option>
-                  <option value="E-Wallet">E-Wallet</option>
-                </select>
+            {/* Fields for Klaim Warga */}
+            {tipe === 'Klaim Warga' && (<>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#3A453F', display: 'block', marginBottom: 4 }}>Jenis *</label>
+                  <select value={jenis} onChange={e => setJenis(e.target.value)}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1.5px solid #DFE5E1', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', outline: 'none', appearance: 'none', background: '#fff' }}
+                  >
+                    <option value="Bank">Bank</option>
+                    <option value="E-Wallet">E-Wallet</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#3A453F', display: 'block', marginBottom: 4 }}>Nama Bank/Wallet *</label>
+                  <input type="text" value={bank} onChange={e => setBank(e.target.value)} placeholder="BCA, Mandiri, GoPay..." required
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1.5px solid #DFE5E1', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', outline: 'none' }}
+                  />
+                </div>
               </div>
+
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#3A453F', display: 'block', marginBottom: 4 }}>Nama Bank/Wallet *</label>
-                <input type="text" value={bank} onChange={e => setBank(e.target.value)} placeholder="BCA, Mandiri, GoPay..." required
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#3A453F', display: 'block', marginBottom: 4 }}>No Rekening / Wallet ID *</label>
+                <input type="text" value={noRekening} onChange={e => setNoRekening(e.target.value)} placeholder="1234567890" required
                   style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1.5px solid #DFE5E1', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', outline: 'none' }}
                 />
               </div>
-            </div>
 
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#3A453F', display: 'block', marginBottom: 4 }}>No Rekening / Wallet ID *</label>
-              <input type="text" value={noRekening} onChange={e => setNoRekening(e.target.value)} placeholder="1234567890" required
-                style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1.5px solid #DFE5E1', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', outline: 'none' }}
-              />
-            </div>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#3A453F', display: 'block', marginBottom: 4 }}>Atas Nama *</label>
+                <input type="text" value={atasNama} onChange={e => setAtasNama(e.target.value)} placeholder="Nama pemilik rekening" required
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1.5px solid #DFE5E1', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', outline: 'none' }}
+                />
+              </div>
+            </>)}
 
+            {/* Keterangan / Deskripsi */}
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#3A453F', display: 'block', marginBottom: 4 }}>Atas Nama *</label>
-              <input type="text" value={atasNama} onChange={e => setAtasNama(e.target.value)} placeholder="Nama pemilik rekening" required
-                style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1.5px solid #DFE5E1', fontSize: 14, fontWeight: 600, fontFamily: 'inherit', outline: 'none' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#3A453F', display: 'block', marginBottom: 4 }}>Keterangan (opsional)</label>
-              <textarea value={keterangan} onChange={e => setKeterangan(e.target.value)} placeholder="Alasan pengajuan... (contoh: Pembelian alat kebersihan)"
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#3A453F', display: 'block', marginBottom: 4 }}>
+                {tipe === 'Klaim Warga' ? 'Keterangan (opsional)' : 'Deskripsi Pengeluaran *'}
+              </label>
+              <textarea value={keterangan} onChange={e => setKeterangan(e.target.value)}
+                placeholder={tipe === 'Klaim Warga' ? 'Alasan pengajuan...' : 'Contoh: Gaji security bulan Juni 2026'}
                 rows={3}
                 style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1.5px solid #DFE5E1', fontSize: 14, fontWeight: 500, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }}
               />
             </div>
 
+            {/* Upload Lampiran */}
             <div>
               <label style={{ fontSize: 12, fontWeight: 700, color: '#0F1A14', display: 'block', marginBottom: 6 }}>
-                📎 Upload Lampiran  <span style={{ fontWeight: 400, color: '#8A9991' }}>(opsional)</span>
+                📎 Upload Lampiran {tipe === 'Pengeluaran Kas' ? <span style={{ color: '#C24A4A' }}>* (wajib)</span> : <span style={{ fontWeight: 400, color: '#8A9991' }}>(opsional)</span>}
               </label>
-              <div style={{ fontSize: 11, color: '#8A9991', marginBottom: 6 }}>Foto nota / bukti pengeluaran (maks 5MB, format JPG/PNG/PDF)</div>
+              <div style={{ fontSize: 11, color: '#8A9991', marginBottom: 6 }}>
+                {tipe === 'Klaim Warga' ? 'Foto nota / bukti pengeluaran (maks 5MB, format JPG/PNG/PDF)' : 'Upload bukti pengeluaran / invoice (maks 5MB, format JPG/PNG/PDF)'}
+              </div>
               <div
                 onClick={() => fileInputRef.current?.click()}
                 style={{
@@ -372,12 +424,13 @@ export default function Payout() {
 
             <button type="submit" disabled={submitting}
               style={{
-                background: '#15935A', color: '#fff', border: 'none', borderRadius: 12, padding: '12px 20px',
+                background: tipe === 'Pengeluaran Kas' ? '#2563EB' : '#15935A',
+                color: '#fff', border: 'none', borderRadius: 12, padding: '12px 20px',
                 fontSize: 14, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer', opacity: submitting ? 0.6 : 1,
                 marginTop: 4,
               }}
             >
-              {submitting ? 'Mengirim...' : 'Ajukan Pembayaran'}
+              {submitting ? 'Mengirim...' : tipe === 'Pengeluaran Kas' ? '💰 Bayarkan dari KAS' : 'Ajukan Pembayaran'}
             </button>
           </div>
         </form>
@@ -443,7 +496,13 @@ export default function Payout() {
               >
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: 15, color: '#0F1A14' }}>{rupiah(p.nominal)}</div>
-                  <div style={{ fontSize: 12, color: '#6B7B72', marginTop: 2 }}>{p.bank} • {p.no_rekening} • {p.atas_nama}</div>
+                  <div style={{ fontSize: 12, color: '#6B7B72', marginTop: 2 }}>
+                    {p.tipe === 'Pengeluaran Kas' ? (
+                      <span style={{ color: '#2563EB', fontWeight: 600 }}>💰 Pengeluaran Kas</span>
+                    ) : (
+                      <>{p.bank} • {p.no_rekening} • {p.atas_nama}</>
+                    )}
+                  </div>
                   {p.expand?.warga?.expand?.user?.name && isPengurus && (
                     <div style={{ fontSize: 12, color: '#8A9991', marginTop: 2 }}>
                       {p.expand.warga.expand.user.name} ({p.expand.warga.no_rumah})
@@ -469,13 +528,19 @@ export default function Payout() {
               {/* Expanded detail */}
               {isExpanded && (
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #E6EBE7' }}>
-                  {/* Info rekening */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 13 }}>
-                    <div><span style={{ color: '#6B7B72' }}>Jenis:</span></div><div style={{ fontWeight: 600 }}>{p.jenis}</div>
-                    <div><span style={{ color: '#6B7B72' }}>Bank/Wallet:</span></div><div style={{ fontWeight: 600 }}>{p.bank}</div>
-                    <div><span style={{ color: '#6B7B72' }}>No Rekening:</span></div><div style={{ fontWeight: 600 }}>{p.no_rekening}</div>
-                    <div><span style={{ color: '#6B7B72' }}>Atas Nama:</span></div><div style={{ fontWeight: 600 }}>{p.atas_nama}</div>
-                  </div>
+                  {/* Info rekening - only for Klaim Warga */}
+                  {p.tipe === 'Pengeluaran Kas' ? (
+                    <div style={{ background: '#F0F7FF', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#2563EB', fontWeight: 600, marginBottom: 8 }}>
+                      💰 Pengeluaran Kas — Langsung dibayarkan dari KAS
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 13 }}>
+                      <div><span style={{ color: '#6B7B72' }}>Jenis:</span></div><div style={{ fontWeight: 600 }}>{p.jenis}</div>
+                      <div><span style={{ color: '#6B7B72' }}>Bank/Wallet:</span></div><div style={{ fontWeight: 600 }}>{p.bank}</div>
+                      <div><span style={{ color: '#6B7B72' }}>No Rekening:</span></div><div style={{ fontWeight: 600 }}>{p.no_rekening}</div>
+                      <div><span style={{ color: '#6B7B72' }}>Atas Nama:</span></div><div style={{ fontWeight: 600 }}>{p.atas_nama}</div>
+                    </div>
+                  )}
 
                   {/* Lampiran warga */}
                   {p.lampiran_warga && (
