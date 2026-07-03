@@ -193,9 +193,9 @@ export default function Dashboard() {
           <button
             className="btn btn-outline"
             style={{ marginTop: 16 }}
-            onClick={() => navigate('/tagihan')}
+            onClick={() => navigate(`/riwayat/${walletKas?.id}`)}
           >
-            Riwayat kas
+            Lihat Riwayat
           </button>
         </>
       );
@@ -214,13 +214,22 @@ export default function Dashboard() {
           <div style={{ marginTop: 6, fontSize: 12, color: '#8A9991' }}>
             Top up untuk bayar iuran & transfer antar warga
           </div>
-          <button
-            className="btn btn-outline"
-            style={{ marginTop: 16 }}
-            onClick={() => navigate('/iuran')}
-          >
-            Bayar iuran
-          </button>
+          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+            <button
+              className="btn btn-outline"
+              style={{ flex: 1 }}
+              onClick={() => navigate('/iuran')}
+            >
+              Bayar iuran
+            </button>
+            <button
+              className="btn btn-outline"
+              style={{ flex: 1, borderColor: '#2563EB', color: '#2563EB' }}
+              onClick={() => navigate(`/riwayat/${walletPribadi?.id}`)}
+            >
+              📊 Riwayat
+            </button>
+          </div>
         </>
       );
     }

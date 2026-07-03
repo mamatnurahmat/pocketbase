@@ -14,6 +14,7 @@ import Lampiran from './pages/Lampiran'
 import Warga from './pages/Warga'
 import Notifikasi from './pages/Notifikasi'
 import Payout from './pages/Payout'
+import Riwayat from './pages/Riwayat'
 import ProtectedRoute from './components/ProtectedRoute'
 import PinScreen from './components/PinScreen'
 import Sidebar from './components/Sidebar'
@@ -73,6 +74,7 @@ function App() {
       <Route path="/warga" element={<ProtectedRoute><AppLayout><Warga /></AppLayout></ProtectedRoute>} />
       <Route path="/notifikasi" element={<ProtectedRoute><AppLayout><Notifikasi /></AppLayout></ProtectedRoute>} />
       <Route path="/payout" element={<ProtectedRoute><AppLayout><Payout /></AppLayout></ProtectedRoute>} />
+      <Route path="/riwayat/:walletId" element={<ProtectedRoute><Riwayat /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
