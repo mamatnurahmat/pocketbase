@@ -271,7 +271,6 @@ export default function Tagihan() {
 
   return (
     <div className="page-padded">
-      <div style={{ padding: '16px 20px 0' }}>
       <div style={{ padding: '16px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <h2 style={{ margin: 0 }}>Tagihan</h2>

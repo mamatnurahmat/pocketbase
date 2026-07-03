@@ -113,7 +113,6 @@ export default function Lampiran() {
       </div>
 
       <div className="page-content" style={{ marginTop: 16 }}>
-        )}
 
         {/* List */}
         <div className="section-title" style={{ marginBottom: 12 }}>
