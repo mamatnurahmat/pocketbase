@@ -13,7 +13,7 @@ export default function Riwayat() {
   const [expandedId, setExpandedId] = useState(null);
   const [isPengurus, setIsPengurus] = useState(false);
 
-  const rupiah = (n) => { const v = n || 0; return 'Rp ' + v.toLocaleString('id-ID'); };
+  const rupiah = (n) => { let v = n || 0; if (v < 1 && v > 0) v = 0; return 'Rp ' + v.toLocaleString('id-ID'); };
 
   // Icon & color per transaction type
   const txInfo = (type, entryType) => ({
@@ -45,22 +45,18 @@ export default function Riwayat() {
           setIsPengurus(wargaMe.pengurus || false);
         } catch (_) {}
 
-        // Build date filter
-        let dateFilter = '';
+        // Build date filter (client-side, since ledgers don't have created field)
+        let dateCutoff = null;
         if (filterWaktu === '7') {
-          const d = new Date(); d.setDate(d.getDate() - 7);
-          dateFilter = `created >= "${d.toISOString()}"`;
+          dateCutoff = new Date(); dateCutoff.setDate(dateCutoff.getDate() - 7);
         } else if (filterWaktu === '30') {
-          const d = new Date(); d.setDate(d.getDate() - 30);
-          dateFilter = `created >= "${d.toISOString()}"`;
+          dateCutoff = new Date(); dateCutoff.setDate(dateCutoff.getDate() - 30);
         } else if (filterWaktu === '90') {
-          const d = new Date(); d.setDate(d.getDate() - 90);
-          dateFilter = `created >= "${d.toISOString()}"`;
+          dateCutoff = new Date(); dateCutoff.setDate(dateCutoff.getDate() - 90);
         }
 
         // Fetch ledgers for this wallet with expand transaction
         let filter = `wallet="${walletId}"`;
-        if (dateFilter) filter += ` && ${dateFilter}`;
 
         const result = await pb.collection('ledgers').getFullList({
           filter: filter,
@@ -73,6 +69,15 @@ export default function Riwayat() {
         let filtered = result;
         if (filterTipe === 'masuk') filtered = result.filter(l => l.entry_type === 'CREDIT');
         else if (filterTipe === 'keluar') filtered = result.filter(l => l.entry_type === 'DEBIT');
+
+        // Filter by date (client-side, using transaction.created)
+        if (dateCutoff) {
+          filtered = filtered.filter(l => {
+            const tx = l.expand?.transaction;
+            if (tx?.created) return new Date(tx.created) >= dateCutoff;
+            return true;
+          });
+        }
 
         setLedgers(filtered);
       } catch (e) {
@@ -195,7 +200,7 @@ export default function Riwayat() {
                         </div>
                         {tx.note && <div style={{ fontSize: 11, color: '#6B7B72', marginTop: 2 }}>{tx.note}</div>}
                         <div style={{ fontSize: 10, color: '#A6B0AA', marginTop: 2 }}>
-                          {l.created ? new Date(l.created).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                          {l.created ? new Date(l.created).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : (l.expand?.transaction?.created ? new Date(l.expand.transaction.created).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '')}
                         </div>
                       </div>
                     </div>
