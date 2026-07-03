@@ -91,35 +91,28 @@ export default function Lampiran() {
 
   return (
     <div className="page-padded">
-      <div style={{ padding: '16px 20px 0' }}>
-        <h2>Lampiran {modePengurus && isPengurus && <span style={{ fontSize: 14, color: '#15935A', fontWeight: 600 }}>(Mode Pengurus)</span>}</h2>
+      <div style={{ padding: '16px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <h2 style={{ margin: 0 }}>Lampiran</h2>
+          {isPengurus && (
+            <button onClick={() => setModePengurus(!modePengurus)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '5px 10px', borderRadius: 20, border: '1.5px solid',
+                borderColor: modePengurus ? '#15935A' : '#E6EBE7',
+                background: modePengurus ? '#E8F5EE' : '#fff',
+                color: modePengurus ? '#15935A' : '#6B7B72',
+                fontSize: 12, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer',
+              }}
+            >
+              <span>{modePengurus ? '⭐' : '👤'}</span>
+              {modePengurus ? 'Mode Pengurus' : 'Mode Warga'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="page-content" style={{ marginTop: 16 }}>
-        {/* Toggle Mode Pengurus */}
-        {isPengurus && (
-          <div className="card" style={{
-            padding: '12px 16px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 16,
-            background: modePengurus ? '#E8F5EE' : '#fff',
-            border: modePengurus ? '1.5px solid #15935A' : 'none'
-          }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: modePengurus ? '#15935A' : '#3A453F' }}>Mode Pengurus</div>
-              <div style={{ fontSize: 12, color: modePengurus ? '#0C6B40' : '#8A9991' }}>Tampilkan semua lampiran warga</div>
-            </div>
-            <label className="switch">
-              <input
-                type="checkbox"
-                checked={modePengurus}
-                onChange={(e) => setModePengurus(e.target.checked)}
-              />
-              <span className="slider round"></span>
-            </label>
-          </div>
         )}
 
         {/* List */}
