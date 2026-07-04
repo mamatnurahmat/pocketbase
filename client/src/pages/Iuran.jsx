@@ -81,25 +81,61 @@ export default function Iuran() {
     setMessage({ text: '', type: '' });
 
     try {
-      const formData = new FormData();
-      formData.append('warga_id', warga.id);
-      selectedIurans.forEach(id => formData.append('iuran_ids[]', id));
-      formData.append('file_bukti', uploadFile);
-
-      const res = await fetch(`${API_URL}/v1/iuran/upload-bukti`, {
-        method: 'POST',
-        headers: { 'Authorization': pb.authStore.token },
-        body: formData,
+      // Upload langsung ke PocketBase (skip Flask API agar lebih cepat)
+      const lampiran = await pb.collection('lampiran').create({
+        warga: warga.id,
+        iuran: selectedIurans,
+        file_bukti: uploadFile,
+        approval: false,
       });
+      const lampiranId = lampiran.id;
 
-      if (!res.ok) {
-        const errBody = await res.json();
-        throw new Error(errBody.message || `HTTP ${res.status}`);
+      // Buat tagihan untuk setiap iuran yang dipilih
+      let tagihanCount = 0;
+      for (const iuranId of selectedIurans) {
+        const iuran = iuranList.find(i => i.id === iuranId);
+        if (!iuran) continue;
+
+        // Cek apakah sudah ada tagihan untuk iuran ini
+        const existing = await pb.collection('tagihan').getFullList({
+          filter: `warga="${warga.id}" && iuran="${iuranId}"`,
+          perPage: 1,
+        });
+
+        if (existing.length > 0) {
+          // Update existing
+          await pb.collection('tagihan').update(existing[0].id, {
+            lampiran: lampiranId,
+            status_pembayaran: 'Menunggu Konfirmasi',
+          });
+        } else {
+          // Buat baru
+          await pb.collection('tagihan').create({
+            warga: warga.id,
+            iuran: iuranId,
+            nominal: iuran.nominal,
+            jatuh_tempo: iuran.jatuh_tempo || new Date().toISOString(),
+            status_pembayaran: 'Menunggu Konfirmasi',
+            lampiran: lampiranId,
+          });
+        }
+        tagihanCount++;
       }
 
-      const result = await res.json();
+      // Catat aktivitas
+      try {
+        const codes = selectedIurans.map(id => {
+          const i = iuranList.find(x => x.id === id);
+          return i ? i.kode : id;
+        }).join(', ');
+        await pb.collection('aktivitas_warga').create({
+          warga: warga.id,
+          aktivitas: 'Upload Bukti Pembayaran',
+          detail: `Iuran ${codes} - ID: ${lampiranId}`,
+        });
+      } catch (_) {}
 
-      setMessage({ text: result.message || 'Bukti pembayaran berhasil diupload!', type: 'success' });
+      setMessage({ text: `Berhasil upload! ${tagihanCount} tagihan dibuat.`, type: 'success' });
       setSelectedIurans([]);
       setUploadFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
