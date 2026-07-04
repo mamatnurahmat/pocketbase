@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { pb, API_URL } from '../lib/pocketbase';
 export default function Iuran() {
+  const navigate = useNavigate();
   const [warga, setWarga] = useState(null);
   const [iuranList, setIuranList] = useState([]);
   const [selectedIurans, setSelectedIurans] = useState([]);
@@ -139,6 +141,9 @@ export default function Iuran() {
       setSelectedIurans([]);
       setUploadFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
+
+      // Redirect ke dashboard setelah 1.5 detik
+      setTimeout(() => navigate('/dashboard'), 1500);
     } catch (err) {
       setMessage({ text: 'Gagal upload. ' + err.message, type: 'error' });
     } finally {
@@ -172,9 +177,46 @@ export default function Iuran() {
           </div>
         )}
 
-        {message.text && (
-          <div className={`alert mt-2 ${message.type === 'error' ? 'alert-error' : 'alert-success'}`}>
-            {message.text}
+        {message.text && message.type === 'error' && (
+          <div className="alert mt-2 alert-error" style={{ fontSize: 13 }}>
+            ❌ {message.text}
+          </div>
+        )}
+
+        {/* Success Overlay */}
+        {message.text && message.type === 'success' && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)', zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 20,
+          }}>
+            <div style={{
+              background: '#fff', borderRadius: 20, padding: 32,
+              textAlign: 'center', maxWidth: 320, width: '100%',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+            }}>
+              <div style={{ fontSize: 56, marginBottom: 12 }}>✅</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#15935A', marginBottom: 8 }}>
+                Upload Berhasil!
+              </div>
+              <div style={{ fontSize: 13, color: '#6B7B72', marginBottom: 16 }}>
+                {message.text}
+              </div>
+              <div style={{ fontSize: 12, color: '#A6B0AA' }}>
+                Mengalihkan ke Dashboard...
+              </div>
+              <div style={{
+                width: '100%', height: 4, borderRadius: 2,
+                background: '#E6EBE7', marginTop: 16, overflow: 'hidden',
+              }}>
+                <div style={{
+                  width: '100%', height: '100%', borderRadius: 2,
+                  background: '#15935A',
+                  animation: 'shrink 1.5s linear forwards',
+                }} />
+              </div>
+            </div>
           </div>
         )}
 
