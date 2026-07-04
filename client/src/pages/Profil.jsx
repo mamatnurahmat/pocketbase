@@ -9,6 +9,11 @@ export default function Profil() {
   const [warga, setWarga] = useState(null);
   const [scurity, setScurity] = useState(null);
 
+  const [modePengurus, setModePengurus] = useState(() => {
+    const saved = localStorage.getItem('modePengurus');
+    return saved === null ? true : saved === 'true';
+  });
+
   const phone = user?.username?.replace('hp_', '') || '';
   const displayName = user?.name || phone || 'Warga';
 
@@ -215,6 +220,42 @@ export default function Profil() {
             </div>
           </div>
         </div>
+
+        {/* Mode Pengurus Toggle */}
+        {pengurus && (
+          <div onClick={() => { const newMode = !modePengurus; setModePengurus(newMode); localStorage.setItem('modePengurus', newMode ? 'true' : 'false'); }}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '12px 16px', marginTop: 12, borderRadius: 12,
+              border: modePengurus ? '1.5px solid #15935A' : '1.5px solid #E6EBE7',
+              background: modePengurus ? '#E8F5EE' : '#fff',
+              cursor: 'pointer', transition: 'all 0.2s',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 18 }}>{modePengurus ? '⭐' : '👤'}</span>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: modePengurus ? '#15935A' : '#3A453F' }}>
+                  {modePengurus ? 'Mode Pengurus' : 'Mode Warga'}
+                </div>
+                <div style={{ fontSize: 12, color: modePengurus ? '#0C6B40' : '#8A9991' }}>
+                  {modePengurus ? 'Lihat semua data warga' : 'Lihat data sendiri'}
+                </div>
+              </div>
+            </div>
+            <div style={{
+              width: 44, height: 24, borderRadius: 12, position: 'relative',
+              background: modePengurus ? '#15935A' : '#D0D8D2',
+              transition: 'background 0.2s',
+            }}>
+              <div style={{
+                width: 20, height: 20, borderRadius: '50%', background: '#fff',
+                position: 'absolute', top: 2, left: modePengurus ? 22 : 2,
+                transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+              }} />
+            </div>
+          </div>
+        )}
 
         {/* Unified Update Form */}
         <div className="mt-3 section-title">Ubah Profil</div>

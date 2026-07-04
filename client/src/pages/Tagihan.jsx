@@ -274,21 +274,6 @@ export default function Tagihan() {
       <div style={{ padding: '16px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <h2 style={{ margin: 0 }}>Tagihan</h2>
-          {isPengurus && (
-            <button onClick={() => setModePengurus(!modePengurus)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 5,
-                padding: '5px 10px', borderRadius: 20, border: '1.5px solid',
-                borderColor: modePengurus ? '#15935A' : '#E6EBE7',
-                background: modePengurus ? '#E8F5EE' : '#fff',
-                color: modePengurus ? '#15935A' : '#6B7B72',
-                fontSize: 12, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer',
-              }}
-            >
-              <span>{modePengurus ? '⭐' : '👤'}</span>
-              {modePengurus ? 'Mode Pengurus' : 'Mode Warga'}
-            </button>
-          )}
         </div>
       </div>
 
