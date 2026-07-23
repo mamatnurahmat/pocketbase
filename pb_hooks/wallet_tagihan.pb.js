@@ -1,100 +1,87 @@
-// Hook: Saat tagihan disetujui (Lunas), auto topup wallet warga + buat transaksi
-console.log('wallet_tagihan: loaded v2');
+// Hook: Saat tagihan disetujui (Lunas), auto topup KAS wallet + buat transaksi
+// NOTE: Semua tagihan masuk ke KAS.
+// Hook ini fallback jika Flask API gagal.
+console.log('wallet_tagihan: loaded v3 (fallback only)');
 
 onRecordAfterUpdateSuccess(function (e) {
   try {
     var record = e.record;
     if (!record) return;
 
-    // ponytail: check collection via collectionName (simpler, works across PB versions)
     var collName = record.collectionName || (record.collection ? record.collection().name : null);
     if (collName !== 'tagihan') return;
 
     var newStatus = record.getString('status_pembayaran') || '';
-
     console.log('wallet_tagihan: tagihan updated', record.getString('id'), '->', newStatus);
 
     // Hanya trigger saat status BERUBAH ke Lunas
     if (newStatus !== 'Lunas') return;
 
-    var wargaId = record.getString('warga');
-    var nominal = record.get('nominal') || 0;
-    console.log('wallet_tagihan: APPROVE detected', 'warga=', wargaId, 'nominal=', nominal);
+    var tagihanId = record.getString('id');
 
-    if (!wargaId || nominal <= 0) {
-      console.error('wallet_tagihan: skip - no wargaId or nominal');
+    // Cek apakah transaksi sudah dibuat oleh Flask API
+    var existingTrx = $app.findRecordsByFilter('transactions', 'note ~ "' + tagihanId + '"', '', 1, 0);
+    if (existingTrx.length > 0) {
+      console.log('wallet_tagihan: transaksi sudah ada, skip (handled by API)');
       return;
     }
 
-    // 1. Dapatkan user_id dari warga
-    var warga = $app.findFirstRecordByData('warga', 'id', wargaId);
-    if (!warga) { console.error('wallet_tagihan: warga not found', wargaId); return; }
+    var nominal = record.get('nominal') || 0;
+    console.log('wallet_tagihan: APPROVE detected', 'tagihan=', tagihanId, 'nominal=', nominal);
 
-    var userId = warga.getString('user');
-    if (!userId) { console.error('wallet_tagihan: warga tidak punya user', wargaId); return; }
-    console.log('wallet_tagihan: user found', userId);
+    if (nominal <= 0) {
+      console.error('wallet_tagihan: skip - nominal 0');
+      return;
+    }
 
-    // 2. Cari wallet PERSONAL warga
-    var wallet;
-    try {
-      wallet = $app.findFirstRecordByData('wallets', 'user', userId);
-    } catch (_) {}
+    // 1. Cari KAS wallet
+    var wallets = $app.findRecordsByFilter('wallets', 'wallet_type="KAS"', '', 1, 0);
+    var wallet = wallets.length > 0 ? wallets[0] : null;
 
     if (!wallet) {
-      console.error('wallet_tagihan: wallet not found for user', userId);
+      console.error('wallet_tagihan: KAS wallet not found');
       return;
     }
 
-    if (wallet.getString('wallet_type') !== 'PERSONAL') {
-      console.error('wallet_tagihan: wallet bukan PERSONAL, type=', wallet.getString('wallet_type'));
-      return;
-    }
-
-    // 3. Update balance wallet
+    // 2. Update balance KAS wallet
     var balanceBefore = wallet.get('balance') || 0;
     var balanceAfter = balanceBefore + nominal;
 
-    var walletsColl = $app.findCollectionByNameOrId('wallets');
-    var walletRecord = new Record(walletsColl, {
-      id: wallet.getString('id'),
-      balance: balanceAfter,
-    });
+    var walletRecord = $app.findRecordById('wallets', wallet.getString('id'));
+    walletRecord.set('balance', balanceAfter);
     $app.save(walletRecord);
-    console.log('wallet_tagihan: wallet updated', userId, balanceBefore, '->', balanceAfter);
+    console.log('wallet_tagihan: KAS wallet updated', balanceBefore, '->', balanceAfter);
 
-    // 4. Buat transaksi TOPUP
+    // 3. Buat transaksi TOPUP ke KAS
     var now = new Date().toISOString();
     var refNo = 'TRX-' + now.slice(0, 10).replace(/-/g, '') + '-' +
       Math.random().toString(36).substring(2, 6).toUpperCase();
 
     var trxColl = $app.findCollectionByNameOrId('transactions');
-    var trxRecord = new Record(trxColl, {
-      reference_no: refNo,
-      type: 'TOPUP',
-      status: 'SUCCESS',
-      to_wallet: wallet.getString('id'),
-      amount: nominal,
-      fee: 0,
-      net_amount: nominal,
-      note: 'Auto topup dari tagihan #' + record.getString('id'),
-      created_by: userId,
-    });
+    var trxRecord = new Record(trxColl);
+    trxRecord.set('reference_no', refNo);
+    trxRecord.set('type', 'TOPUP');
+    trxRecord.set('status', 'SUCCESS');
+    trxRecord.set('to_wallet', wallet.getString('id'));
+    trxRecord.set('amount', nominal);
+    trxRecord.set('fee', 0);
+    trxRecord.set('net_amount', nominal);
+    trxRecord.set('note', 'Auto topup dari tagihan #' + tagihanId);
     $app.save(trxRecord);
     var trxId = trxRecord.getString('id');
     console.log('wallet_tagihan: transaction created', refNo, trxId);
 
-    // 5. Buat ledger entry (CREDIT ke wallet warga)
+    // 4. Buat ledger entry (CREDIT ke KAS)
     var ledColl = $app.findCollectionByNameOrId('ledgers');
-    var ledRecord = new Record(ledColl, {
-      wallet: wallet.getString('id'),
-      transaction: trxId,
-      entry_type: 'CREDIT',
-      amount: nominal,
-      balance_before: balanceBefore,
-      balance_after: balanceAfter,
-    });
+    var ledRecord = new Record(ledColl);
+    ledRecord.set('wallet', wallet.getString('id'));
+    ledRecord.set('transaction', trxId);
+    ledRecord.set('entry_type', 'CREDIT');
+    ledRecord.set('amount', nominal);
+    ledRecord.set('balance_before', balanceBefore);
+    ledRecord.set('balance_after', balanceAfter);
     $app.save(ledRecord);
-    console.log('wallet_tagihan: ledger CREDIT created for wallet', wallet.getString('id'));
+    console.log('wallet_tagihan: ledger CREDIT created for KAS');
     console.log('wallet_tagihan: DONE -', refNo);
   } catch (err) {
     console.error('wallet_tagihan: FATAL ERROR', String(err));

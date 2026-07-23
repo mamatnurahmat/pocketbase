@@ -258,35 +258,14 @@ class TagihanApprove(Resource):
                     "message": "Tagihan disetujui tanpa topup (nominal 0 atau warga tidak ditemukan)",
                 }, 200
 
-            # 3. Cek jatuh_tempo dari iuran → tentukan wallet tujuan
-            iuran = (tagihan.get("expand") or {}).get("iuran") or {}
-            jatuh_tempo = iuran.get("jatuh_tempo", "")
-
-            now = datetime.now(timezone.utc)
-            current_month = now.month
-            current_year = now.year
-
-            transfer_ke_kas = True  # default: iuran jatuh tempo → KAS
-            if jatuh_tempo:
-                try:
-                    jt = datetime.fromisoformat(jatuh_tempo.replace("Z", "+00:00"))
-                    # Jika jatuh_tempo bulan depan atau setelahnya → ke wallet pribadi
-                    if jt.year > current_year or (jt.year == current_year and jt.month > current_month):
-                        transfer_ke_kas = False
-                except (ValueError, AttributeError):
-                    pass  # format tanggal invalid → default ke KAS
-
+            # 3. Semua tagihan → KAS wallet (PERSONAL wallet untuk topup manual)
             # 4. Get warga → user
             warga = pb_get(f"collections/warga/records/{warga_id}", token)
             user_id = warga.get("user")
 
-            # 5. Find target wallet
-            if transfer_ke_kas:
-                wallet_filter = 'wallet_type="KAS"'
-                wallet_type = "KAS"
-            else:
-                wallet_filter = f'user="{user_id}" && wallet_type="PERSONAL"'
-                wallet_type = "PERSONAL"
+            # 5. Cari KAS wallet
+            wallet_filter = 'wallet_type="KAS"'
+            wallet_type = "KAS"
 
             wallets = pb_get(
                 f"collections/wallets/records",
