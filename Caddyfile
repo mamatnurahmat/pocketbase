@@ -20,3 +20,9 @@ api.sawangan.web.id {
     # Reverse proxy ke API service (Flask)
     reverse_proxy pocketbase-api:8888
 }
+
+dashboard.sawangan.web.id {
+
+    # Reverse proxy ke Vikunja
+    reverse_proxy vikunja:3456
+}
