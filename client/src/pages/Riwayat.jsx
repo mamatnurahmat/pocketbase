@@ -253,7 +253,7 @@ export default function Riwayat() {
                         {/* Tampilkan informasi warga jika ada */}
                         {tx.expand?.created_by?.name && (
                           <>
-                            <span style={{ color: '#6B7B72' }}>Dari Warga:</span>
+                            <span style={{ color: '#6B7B72' }}>Approved By:</span>
                             <span style={{ fontWeight: 700, color: '#0F1A14' }}>{tx.expand.created_by.name}</span>
                           </>
                         )}
