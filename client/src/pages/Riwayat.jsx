@@ -15,6 +15,22 @@ export default function Riwayat() {
 
   const rupiah = (n) => { let v = n || 0; if (v < 1 && v > 0) v = 0; return 'Rp ' + v.toLocaleString('id-ID'); };
 
+  // Extract warga house code from transaction note
+  const extractWarga = (note) => {
+    if (!note) return null;
+    // Cari pola #tagXXX... dan ambil 3 huruf setelah 'tag'
+    const match = note.match(/#tag([a-z0-9]{3})/);
+    if (match) return match[1].toUpperCase();
+    return null;
+  };
+
+  // Cari nama warga dari note (untuk transaksi tanpa tagihan ID)
+  const extractNoteWarga = (note) => {
+    if (!note) return null;
+    const match = note.match(/dari (.*?)(?:\s|$)/);
+    return match ? match[1] : null;
+  };
+
   // Icon & color per transaction type
   const txInfo = (type, entryType) => ({
     icon: type === 'TOPUP' || type === 'IURAN' ? '📥' :
@@ -61,7 +77,7 @@ export default function Riwayat() {
         const result = await pb.collection('ledgers').getFullList({
           filter: filter,
           sort: '-created',
-          expand: 'transaction',
+          expand: 'transaction,transaction.created_by',
           perPage: 200,
         });
 
@@ -119,10 +135,13 @@ export default function Riwayat() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: 13, opacity: 0.85, fontWeight: 600 }}>
-                {wallet.wallet_type === 'KAS' ? '💰 Saldo Kas Warga' : '💳 Saldo Dompet Pribadi'}
+                {wallet.wallet_type === 'KAS' ? '💰 ' + (wallet.note || 'Saldo Kas Warga') : '💳 Saldo Dompet Pribadi'}
               </div>
               {wallet.expand?.user?.name && (
                 <div style={{ fontSize: 12, opacity: 0.7, marginTop: 2 }}>{wallet.expand.user.name}</div>
+              )}
+              {wallet.wallet_type === 'KAS' && wallet.note && (
+                <div style={{ fontSize: 11, opacity: 0.6, marginTop: 1 }}>{wallet.note}</div>
               )}
             </div>
             <div style={{ fontSize: 11, opacity: 0.7, background: 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: 8 }}>
@@ -198,7 +217,20 @@ export default function Riwayat() {
                             fontWeight: 700,
                           }}>{info.label}</span>
                         </div>
-                        {tx.note && <div style={{ fontSize: 11, color: '#6B7B72', marginTop: 2 }}>{tx.note}</div>}
+                        {tx.note && (() => {
+                          const wargaCode = extractWarga(tx.note);
+                          return (
+                            <div style={{ fontSize: 11, color: '#6B7B72', marginTop: 2 }}>
+                              {wargaCode ? (
+                                <>
+                                  <span style={{ fontWeight: 700, color: '#0F1A14' }}>{wargaCode}</span>
+                                  {' · '}
+                                </>
+                              ) : null}
+                              {tx.note.replace(/#tag[a-z0-9]{15}/g, '').replace(/\(remapped ke Juli\)/g, '').replace(/→ KAS/g, '').replace(/Auto topup dari tagihan /g, '').replace(/^\s*[·]\s*/, '') || tx.note}
+                            </div>
+                          );
+                        })()}
                         <div style={{ fontSize: 10, color: '#A6B0AA', marginTop: 2 }}>
                           {l.created ? new Date(l.created).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : (l.expand?.transaction?.created ? new Date(l.expand.transaction.created).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '')}
                         </div>
@@ -218,6 +250,13 @@ export default function Riwayat() {
                   {isExpanded && (
                     <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #E6EBE7' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px', fontSize: 12 }}>
+                        {/* Tampilkan informasi warga jika ada */}
+                        {tx.expand?.created_by?.name && (
+                          <>
+                            <span style={{ color: '#6B7B72' }}>Dari Warga:</span>
+                            <span style={{ fontWeight: 700, color: '#0F1A14' }}>{tx.expand.created_by.name}</span>
+                          </>
+                        )}
                         <span style={{ color: '#6B7B72' }}>Referensi:</span>
                         <span style={{ fontWeight: 600 }}>{tx.reference_no || '-'}</span>
                         
