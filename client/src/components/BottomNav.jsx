@@ -109,7 +109,14 @@ export default function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const isScurity = localStorage.getItem('isScurity') === 'true';
-  const activeTabs = isScurity ? scurityTabs : tabs;
+  const isPengurus = localStorage.getItem('isPengurus') === 'true';
+  
+  // Filter tabs: Pembayaran hanya untuk pengurus
+  const filteredTabs = tabs.filter(t => {
+    if (t.path === '/payout') return isPengurus;
+    return true;
+  });
+  const activeTabs = isScurity ? scurityTabs : filteredTabs;
 
   return (
     <nav className="bottom-nav">
