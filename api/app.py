@@ -47,6 +47,7 @@ log.propagate = False
 
 # ── Config ──────────────────────────────────────────────────────────
 PB_URL = os.getenv("PB_URL", "http://pocketbase:8090")
+DEV_MODE = os.getenv("DEV_MODE", "").lower() in ("1", "true", "yes")
 
 app = Flask(__name__)
 CORS(app)
@@ -129,26 +130,59 @@ approve_response = api.model("ApproveResponse", {
     "message": fields.String,
 })
 
+# ── Dev Mode ───────────────────────────────────────────────────────
+# Collection yang TIDAK ikut dev mode
+DEV_EXCLUDE = ['users', 'warga']
+
+def get_collection_name(name: str, dev: bool = False) -> str:
+    """Kembalikan nama collection dengan prefix dev_ jika dev=True"""
+    if dev and name not in DEV_EXCLUDE:
+        return f"dev_{name}"
+    return name
+
+
+def dev_from_request(req) -> bool:
+    """Cek apakah request dalam mode dev (dari query param ?dev=1)"""
+    return req.args.get('dev') == '1' or req.args.get('dev') == 'true'
+
+
 # ── PocketBase helper ───────────────────────────────────────────────
 
 def pb_headers(token: str) -> dict:
     return {"Authorization": token, "Content-Type": "application/json"}
 
 
+def _with_dev(path: str) -> str:
+    """Tambahkan prefix dev_ pada collection path jika DEV_MODE aktif"""
+    if not DEV_MODE:
+        return path
+    # Cari pola "collections/{name}/" dan ubah jadi "collections/dev_{name}/"
+    import re
+    return re.sub(
+        r'collections/(users|warga)(/|$)',  # exclude users & warga
+        r'collections/\1\2',
+        re.sub(
+            r'collections/([a-z_]+)(/|$)',
+            r'collections/dev_\1\2',
+            path
+        )
+    )
+
+
 def pb_get(path: str, token: str, **kwargs) -> dict:
-    r = requests.get(f"{PB_URL}/api/{path}", headers=pb_headers(token), params=kwargs)
+    r = requests.get(f"{PB_URL}/api/{_with_dev(path)}", headers=pb_headers(token), params=kwargs)
     r.raise_for_status()
     return r.json()
 
 
 def pb_post(path: str, token: str, body: dict) -> dict:
-    r = requests.post(f"{PB_URL}/api/{path}", headers=pb_headers(token), json=body)
+    r = requests.post(f"{PB_URL}/api/{_with_dev(path)}", headers=pb_headers(token), json=body)
     r.raise_for_status()
     return r.json()
 
 
 def pb_patch(path: str, token: str, body: dict) -> dict:
-    r = requests.patch(f"{PB_URL}/api/{path}", headers=pb_headers(token), json=body)
+    r = requests.patch(f"{PB_URL}/api/{_with_dev(path)}", headers=pb_headers(token), json=body)
     r.raise_for_status()
     return r.json()
 
@@ -163,6 +197,17 @@ def pb_post_multipart(path: str, token: str, data: dict, files: dict) -> dict:
     r = requests.post(f"{PB_URL}/api/{path}", headers=headers, data=data, files=files)
     r.raise_for_status()
     return r.json()
+
+
+def pb_dev_path(collection: str, subpath: str = "", dev: bool = False) -> str:
+    """Bangun path API dengan prefix dev_ jika diperlukan
+    Contoh: pb_dev_path('tagihan', 'records/xxx', dev=True)
+            -> 'collections/dev_tagihan/records/xxx'
+    """
+    col = get_collection_name(collection, dev)
+    if subpath:
+        return f"collections/{col}/{subpath}"
+    return f"collections/{col}"
 
 
 # ── Endpoints ───────────────────────────────────────────────────────

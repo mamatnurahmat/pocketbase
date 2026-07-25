@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { pb } from '../lib/pocketbase';
+import { pb, isDevMode, setDevMode, applyDevMode, getCollectionName } from '../lib/pocketbase';
 import { useIdleTimer } from '../components/IdleTimer';
 export default function Profil() {
   const { loadPin } = useIdleTimer();
@@ -220,6 +220,48 @@ export default function Profil() {
             </div>
           </div>
         </div>
+
+        {/* Dev Mode Toggle */}
+        {pengurus && (
+          <div onClick={() => {
+            const newMode = !isDevMode();
+            setDevMode(newMode);
+            if (newMode) applyDevMode();
+            // Reload page to apply changes
+            window.location.reload();
+          }}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '12px 16px', marginTop: 12, borderRadius: 12,
+              border: isDevMode() ? '1.5px solid #E68A2E' : '1.5px solid #E6EBE7',
+              background: isDevMode() ? '#FFF8F0' : '#fff',
+              cursor: 'pointer', transition: 'all 0.2s',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 18 }}>{isDevMode() ? '🧪' : '🔬'}</span>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: isDevMode() ? '#E68A2E' : '#3A453F' }}>
+                  {isDevMode() ? 'Dev Mode: ON' : 'Dev Mode: OFF'}
+                </div>
+                <div style={{ fontSize: 12, color: isDevMode() ? '#C27620' : '#8A9991' }}>
+                  {isDevMode() ? 'Gunakan data development (dev_)' : 'Gunakan data produksi'}
+                </div>
+              </div>
+            </div>
+            <div style={{
+              width: 44, height: 24, borderRadius: 12, position: 'relative',
+              background: isDevMode() ? '#E68A2E' : '#D0D8D2',
+              transition: 'background 0.2s',
+            }}>
+              <div style={{
+                width: 20, height: 20, borderRadius: '50%', background: '#fff',
+                position: 'absolute', top: 2, left: isDevMode() ? 22 : 2,
+                transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+              }} />
+            </div>
+          </div>
+        )}
 
         {/* Mode Pengurus Toggle */}
         {pengurus && (
