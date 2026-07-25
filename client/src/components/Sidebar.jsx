@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
 
@@ -53,8 +53,27 @@ const scurityItems = allItems.filter(i =>
 export default function Sidebar({ open, onClose, persistent }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isPengurus, setIsPengurus] = useState(false);
   const isScurity = localStorage.getItem('isScurity') === 'true';
-  const items = isScurity ? scurityItems : allItems;
+
+  useEffect(() => {
+    const checkPengurus = async () => {
+      try {
+        if (pb.authStore.isValid) {
+          const warga = await pb.collection('warga').getFirstListItem(`user="${pb.authStore.model.id}"`);
+          setIsPengurus(warga.pengurus || false);
+        }
+      } catch (_) {}
+    };
+    checkPengurus();
+  }, []);
+
+  // Filter menu: Lampiran & Pembayaran hanya untuk pengurus
+  const filteredItems = allItems.filter(i => {
+    if (i.path === '/lampiran' || i.path === '/payout') return isPengurus;
+    return true;
+  });
+  const items = isScurity ? scurityItems : filteredItems;
 
   const handleNav = (path) => {
     navigate(path);
