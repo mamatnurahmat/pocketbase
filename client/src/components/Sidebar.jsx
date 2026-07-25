@@ -70,9 +70,9 @@ export default function Sidebar({ open, onClose, persistent }) {
     checkPengurus();
   }, []);
 
-  // Filter menu: Lampiran & Pembayaran hanya untuk pengurus
+  // Filter menu: Upload Bukti, Lampiran & Pembayaran hanya untuk pengurus
   const filteredItems = allItems.filter(i => {
-    if (i.path === '/lampiran' || i.path === '/payout') return isPengurus;
+    if (i.path === '/iuran' || i.path === '/lampiran' || i.path === '/payout') return isPengurus;
     return true;
   });
   const items = isScurity ? scurityItems : filteredItems;
