@@ -53,7 +53,7 @@ const scurityItems = allItems.filter(i =>
 export default function Sidebar({ open, onClose, persistent }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isPengurus, setIsPengurus] = useState(false);
+  const [isPengurus, setIsPengurus] = useState(() => localStorage.getItem('isPengurus') === 'true');
   const isScurity = localStorage.getItem('isScurity') === 'true';
 
   useEffect(() => {
@@ -61,7 +61,9 @@ export default function Sidebar({ open, onClose, persistent }) {
       try {
         if (pb.authStore.isValid) {
           const warga = await pb.collection('warga').getFirstListItem(`user="${pb.authStore.model.id}"`);
-          setIsPengurus(warga.pengurus || false);
+          const pengurus = warga.pengurus || false;
+          setIsPengurus(pengurus);
+          localStorage.setItem('isPengurus', pengurus ? 'true' : 'false');
         }
       } catch (_) {}
     };
