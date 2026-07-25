@@ -21,7 +21,7 @@ export default function Profil() {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phoneInput, setPhoneInput] = useState(phone);
-  const [agama, setAgama] = useState('islam');
+  const [agama, setAgama] = useState('');
   const [pengurus, setPengurus] = useState(false);
   const [kebersihan, setKebersihan] = useState(true);
 
@@ -50,7 +50,7 @@ export default function Profil() {
       try {
         const w = await pb.collection('warga').getFirstListItem(`user="${user.id}"`);
         setWarga(w);
-        setAgama(w.agama || 'islam');
+        setAgama(w.agama || '');
         setPengurus(w.pengurus || false);
         setKebersihan(w.kebersihan !== false ? true : false);
       } catch (e) {
@@ -310,6 +310,7 @@ export default function Profil() {
                   value={agama}
                   onChange={(e) => setAgama(e.target.value)}
                 >
+                  <option value="">-- Pilih Agama --</option>
                   <option value="islam">Islam</option>
                   <option value="katolik">Katolik</option>
                   <option value="protestan">Protestan</option>
