@@ -328,16 +328,18 @@ export default function Dashboard() {
               </>
             ) : (
               <>
-                <button className="quick-action" onClick={() => navigate('/iuran')}>
-                  <span className="quick-action-icon" style={{ background: '#E8F5EE' }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                      <rect x="3" y="6" width="18" height="13" rx="3" stroke="#15935A" strokeWidth="1.8"/>
-                      <path d="M3 10h18" stroke="#15935A" strokeWidth="1.8"/>
-                      <path d="M7 15h4" stroke="#15935A" strokeWidth="1.8" strokeLinecap="round"/>
-                    </svg>
-                  </span>
-                  <span>Upload Bukti</span>
-                </button>
+                {localStorage.getItem('isPengurus') === 'true' && (
+                  <button className="quick-action" onClick={() => navigate('/iuran')}>
+                    <span className="quick-action-icon" style={{ background: '#E8F5EE' }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="6" width="18" height="13" rx="3" stroke="#15935A" strokeWidth="1.8"/>
+                        <path d="M3 10h18" stroke="#15935A" strokeWidth="1.8"/>
+                        <path d="M7 15h4" stroke="#15935A" strokeWidth="1.8" strokeLinecap="round"/>
+                      </svg>
+                    </span>
+                    <span>Upload Bukti</span>
+                  </button>
+                )}
                 <button className="quick-action" onClick={() => navigate('/laporan-warga')}>
                   <span className="quick-action-icon" style={{ background: '#FCE4EC' }}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -366,14 +368,16 @@ export default function Dashboard() {
                   </span>
                   <span>Lap. Scurity</span>
                 </button>
-                <button className="quick-action" onClick={() => navigate('/lampiran')}>
-                  <span className="quick-action-icon" style={{ background: '#FEF3E2' }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                      <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke="#C8821A" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </span>
-                  <span>Lampiran</span>
-                </button>
+                {localStorage.getItem('isPengurus') === 'true' && (
+                  <button className="quick-action" onClick={() => navigate('/lampiran')}>
+                    <span className="quick-action-icon" style={{ background: '#FEF3E2' }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke="#C8821A" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </span>
+                    <span>Lampiran</span>
+                  </button>
+                )}
                 <button className="quick-action" onClick={() => setShowCallPopup(true)}>
                   <span className="quick-action-icon" style={{ background: '#E8F5EE' }}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
