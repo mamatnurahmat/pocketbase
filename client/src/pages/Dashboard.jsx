@@ -218,9 +218,9 @@ export default function Dashboard() {
             <button
               className="btn btn-outline"
               style={{ flex: 1 }}
-              onClick={() => navigate('/iuran')}
+              onClick={() => navigate('/tagihan')}
             >
-              Bayar iuran
+              Cek Tagihan
             </button>
             <button
               className="btn btn-outline"
