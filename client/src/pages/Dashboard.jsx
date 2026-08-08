@@ -147,7 +147,8 @@ export default function Dashboard() {
   // Fetch data mutasi untuk quick view (hanya pengurus)
   useEffect(() => {
     const fetchMutasiQuick = async () => {
-      if (localStorage.getItem('isPengurus') !== 'true') return;
+      const isP = localStorage.getItem('isPengurus') === 'true';
+      if (!isP) return;
       try {
         setMutasiLoading(true);
         const files = await pb.collection('file_mutasi').getFullList({ sort: '-created', perPage: 5 });
@@ -166,7 +167,12 @@ export default function Dashboard() {
       setMutasiLoading(false);
     };
     if (pb.authStore.isValid) fetchMutasiQuick();
-  }, []);
+    // Retry setelah warga fetch selesai (isPengurus mungkin baru diset)
+    const t = setTimeout(() => {
+      if (localStorage.getItem('isPengurus') === 'true') fetchMutasiQuick();
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [warga?.pengurus]);
 
   const rupiah2 = (n) => { let v = n || 0; if (v < 1 && v > 0) v = 0; return 'Rp ' + v.toLocaleString('id-ID'); };
 
