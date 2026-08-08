@@ -139,6 +139,16 @@ approve_response = api.model("ApproveResponse", {
 MONTHS = {"JAN": "01", "FEB": "02", "MAR": "03", "APR": "04", "MEI": "05", "JUN": "06",
           "JUL": "07", "AGS": "08", "SEP": "09", "OKT": "10", "NOV": "11", "DES": "12"}
 
+def parse_tgl_id(tgl_str):
+    """Konversi '01 JUL 2026' -> '2026-07-01 00:00:00' (ISO utk PocketBase)."""
+    m = re.match(r"^(\d{2})\s+([A-Z]{3})\s+(\d{4})$", tgl_str.strip())
+    if not m:
+        return None
+    month = MONTHS.get(m.group(2).upper())
+    if not month:
+        return None
+    return f"{m.group(3)}-{month}-{m.group(1)} 00:00:00"
+
 def parse_mutasi_pdf(pdf_bytes, password="08111992"):
     """Parse PDF mutasi BJB ke daftar transaksi."""
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -214,8 +224,8 @@ def parse_mutasi_pdf(pdf_bytes, password="08111992"):
         keterangan = re.sub(r"\s+", " ", " ".join(ket_parts)).strip()
         transactions.append({
             "no_urut": no,
-            "tanggal_posting": tgl_posting,
-            "tanggal_valuta": tgl_valuta,
+            "tanggal_posting": parse_tgl_id(tgl_posting),
+            "tanggal_valuta": parse_tgl_id(tgl_valuta),
             "keterangan": keterangan,
             "mutasi_debet": debet,
             "mutasi_kredit": kredit,
@@ -1987,10 +1997,10 @@ class MutasiUpload(Resource):
             # ── Buat/update file_mutasi (grouping per bulan) ──
             if not bulan:
                 # Fallback: pakai bulan dari transaksi terakhir
-                m = re.search(r"(\d{2})\s*([A-Z]{3})\s*(\d{4})", transactions[-1]["tanggal_posting"])
+                tp = transactions[-1].get("tanggal_posting") or ""
+                m = re.match(r"^(\d{4})-(\d{2})-", tp)
                 if m:
-                    month_map = {"JAN":"01","FEB":"02","MAR":"03","APR":"04","MEI":"05","JUN":"06","JUL":"07","AGS":"08","SEP":"09","OKT":"10","NOV":"11","DES":"12"}
-                    bulan = f"{month_map.get(m.group(2).upper(), '00')}-{m.group(3)}"
+                    bulan = f"{m.group(2)}-{m.group(1)}"
 
             # Cek file_mutasi existing utk bulan ini
             existing = pb_get("collections/file_mutasi/records", token, filter=f'bulan="{bulan}"', perPage=1)
