@@ -122,6 +122,9 @@ export default function Dashboard() {
   const lunasThisMonth = tagihan.filter(t => t.status_pembayaran === 'Lunas' && isCurrentMonth(t.jatuh_tempo)).length;
   
   const isScurity = localStorage.getItem('isScurity') === 'true';
+  const [mutasiFiles, setMutasiFiles] = useState([]);
+  const [mutasiRows, setMutasiRows] = useState([]);
+  const [mutasiLoading, setMutasiLoading] = useState(false);
   const displayName = user?.name || user?.username?.replace('hp_', '') || 'Warga';
 
   // ponytail: swipe handlers for slide carousel
@@ -138,7 +141,33 @@ export default function Dashboard() {
     var timer = setInterval(() => {
       setSlideIndex(prev => (prev + 1) % slides.length);
     }, 5000);
-    return () => clearInterval(timer);
+    // Fetch data mutasi untuk quick view (hanya pengurus)
+  useEffect(() => {
+    const fetchMutasiQuick = async () => {
+      if (localStorage.getItem('isPengurus') !== 'true') return;
+      try {
+        setMutasiLoading(true);
+        const files = await pb.collection('file_mutasi').getFullList({ sort: '-created', perPage: 5 });
+        setMutasiFiles(files);
+        if (files.length > 0) {
+          const rows = await pb.collection('mutasi').getFullList({
+            filter: `file_mutasi="${files[0].id}"`,
+            sort: '-no_urut',
+            perPage: 8,
+          });
+          setMutasiRows(rows);
+        }
+      } catch (e) {
+        console.warn('Error fetch mutasi quick:', e);
+      }
+      setMutasiLoading(false);
+    };
+    if (pb.authStore.isValid) fetchMutasiQuick();
+  }, []);
+
+  const rupiah2 = (n) => { let v = n || 0; if (v < 1 && v > 0) v = 0; return 'Rp ' + v.toLocaleString('id-ID'); };
+
+  return () => clearInterval(timer);
   }, [slides.length]);
 
   const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
@@ -512,6 +541,70 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Mutasi Terbaru — quick view tabel data convert (hanya pengurus) */}
+      {localStorage.getItem('isPengurus') === 'true' && (
+        <div className="card mt-3" style={{ padding: '18px 16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#0F1A14' }}>📊 Mutasi Terbaru</div>
+              <div style={{ fontSize: 11, color: '#6B7B72', marginTop: 2 }}>
+                {mutasiFiles.length > 0 ? (mutasiFiles[0].bulan || mutasiFiles[0].nama_file) : 'Belum ada data'}
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/mutasi')}
+              style={{
+                background: '#E0F2F1', color: '#00796B', border: 'none', borderRadius: 10,
+                padding: '8px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit'
+              }}
+            >
+              Lihat Semua →
+            </button>
+          </div>
+
+          {mutasiLoading ? (
+            <div style={{ textAlign: 'center', padding: 20, color: '#8A9991', fontSize: 12 }}>Memuat...</div>
+          ) : mutasiRows.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 20, color: '#8A9991', fontSize: 12 }}>
+              Belum ada data mutasi — upload PDF di halaman Mutasi
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10.5, minWidth: 480 }}>
+                <thead>
+                  <tr style={{ background: '#F5FAF7', color: '#0F1A14' }}>
+                    <th style={{ padding: '6px 4px', textAlign: 'center', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>No</th>
+                    <th style={{ padding: '6px 4px', textAlign: 'left', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Keterangan</th>
+                    <th style={{ padding: '6px 4px', textAlign: 'right', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Keluar</th>
+                    <th style={{ padding: '6px 4px', textAlign: 'right', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Masuk</th>
+                    <th style={{ padding: '6px 4px', textAlign: 'right', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Saldo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mutasiRows.map((m) => (
+                    <tr key={m.id} style={{ borderBottom: '1px solid #F0F3F1' }}>
+                      <td style={{ padding: '6px 4px', textAlign: 'center', color: '#6B7B72' }}>{m.no_urut}</td>
+                      <td style={{ padding: '6px 4px', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#0F1A14' }}>
+                        {m.keterangan}
+                      </td>
+                      <td style={{ padding: '6px 4px', textAlign: 'right', color: '#C24A4A', whiteSpace: 'nowrap' }}>
+                        {m.mutasi_debet ? rupiah2(m.mutasi_debet) : '-'}
+                      </td>
+                      <td style={{ padding: '6px 4px', textAlign: 'right', color: '#15935A', whiteSpace: 'nowrap' }}>
+                        {m.mutasi_kredit ? rupiah2(m.mutasi_kredit) : '-'}
+                      </td>
+                      <td style={{ padding: '6px 4px', textAlign: 'right', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                        {rupiah2(m.saldo_akhir)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
