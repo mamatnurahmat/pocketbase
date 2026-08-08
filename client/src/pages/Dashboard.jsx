@@ -378,6 +378,17 @@ export default function Dashboard() {
                     <span>Lampiran</span>
                   </button>
                 )}
+                {localStorage.getItem('isPengurus') === 'true' && (
+                  <button className="quick-action" onClick={() => navigate('/mutasi')}>
+                    <span className="quick-action-icon" style={{ background: '#E0F2F1' }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="4" width="18" height="16" rx="3" stroke="#00796B" strokeWidth="1.8"/>
+                        <path d="M7 9h4m-4 4h10m-10 4h6" stroke="#00796B" strokeWidth="1.8" strokeLinecap="round"/>
+                      </svg>
+                    </span>
+                    <span>Mutasi</span>
+                  </button>
+                )}
                 <button className="quick-action" onClick={() => setShowCallPopup(true)}>
                   <span className="quick-action-icon" style={{ background: '#E8F5EE' }}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
