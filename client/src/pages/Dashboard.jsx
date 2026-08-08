@@ -141,7 +141,10 @@ export default function Dashboard() {
     var timer = setInterval(() => {
       setSlideIndex(prev => (prev + 1) % slides.length);
     }, 5000);
-    // Fetch data mutasi untuk quick view (hanya pengurus)
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
+  // Fetch data mutasi untuk quick view (hanya pengurus)
   useEffect(() => {
     const fetchMutasiQuick = async () => {
       if (localStorage.getItem('isPengurus') !== 'true') return;
@@ -166,9 +169,6 @@ export default function Dashboard() {
   }, []);
 
   const rupiah2 = (n) => { let v = n || 0; if (v < 1 && v > 0) v = 0; return 'Rp ' + v.toLocaleString('id-ID'); };
-
-  return () => clearInterval(timer);
-  }, [slides.length]);
 
   const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
   const handleTouchEnd = (e) => {
