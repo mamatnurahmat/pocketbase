@@ -1,23 +1,16 @@
 import { useState, useEffect } from 'react';
-import { pb } from '../lib/pocketbase';
+import { pb, API_URL } from '../lib/pocketbase';
 
 export default function Rekon() {
   const [isPengurus, setIsPengurus] = useState(() => localStorage.getItem('isPengurus') === 'true');
-  const [rekonList, setRekonList] = useState([]);
   const [mutasiFiles, setMutasiFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [tagihanBelum, setTagihanBelum] = useState([]);
+  const [rekonList, setRekonList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [msg, setMsg] = useState(null);
   const [err, setErr] = useState(null);
-
-  // Form state
-  const [formTgl, setFormTgl] = useState('');
-  const [formKeterangan, setFormKeterangan] = useState('');
-  const [formKodeIPL, setFormKodeIPL] = useState(''); // pilihan tagihan IPL belum dilaporkan
-  const [formDebet, setFormDebet] = useState('');
-  const [formKredit, setFormKredit] = useState('');
+  const [filter, setFilter] = useState('ALL');
 
   const rupiah = (n) => { let v = n || 0; if (v < 1 && v > 0) v = 0; return 'Rp ' + v.toLocaleString('id-ID'); };
 
@@ -31,24 +24,13 @@ export default function Rekon() {
         setIsPengurus(isPengurusDb);
         localStorage.setItem('isPengurus', isPengurusDb ? 'true' : 'false');
 
-        // Files mutasi
         const files = await pb.collection('file_mutasi').getFullList({ sort: '-created' });
         files.sort((a, b) => new Date(b.created) - new Date(a.created));
         setMutasiFiles(files);
-        if (files.length > 0) setSelectedFile(files[0]);
-
-        // Rekon records
-        const rekon = await pb.collection('rekon').getFullList({ sort: '-created', expand: 'file_mutasi,tagihan,warga' });
-        rekon.sort((a, b) => new Date(b.created) - new Date(a.created));
-        setRekonList(rekon);
-
-        // Tagihan belum lunas (IPL) utk pilihan — semua warga utk pengurus
-        const tagihan = await pb.collection('tagihan').getFullList({
-          filter: `status_pembayaran != "Lunas"`,
-          expand: 'warga,warga.user,iuran'
-        });
-        tagihan.sort((a, b) => (a.expand?.warga?.no_rumah || '').localeCompare(b.expand?.warga?.no_rumah || ''));
-        setTagihanBelum(tagihan);
+        if (files.length > 0) {
+          setSelectedFile(files[0]);
+          await fetchRekon(files[0].id);
+        }
       } catch (e) {
         console.warn('Error fetch rekon:', e);
       }
@@ -57,47 +39,65 @@ export default function Rekon() {
     if (pb.authStore.isValid) fetchData();
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
+  const fetchRekon = async (fileId, statusFilter = filter) => {
+    try {
+      const token = pb.authStore.token;
+      let url = `${API_URL}/v1/mutasi/rekon/list?file_mutasi_id=${fileId}`;
+      if (statusFilter !== 'ALL') url += `&status=${statusFilter}`;
+      const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const result = await resp.json();
+      if (resp.ok) {
+        setRekonList(result.items || []);
+      } else {
+        setRekonList([]);
+      }
+    } catch (e) {
+      console.warn('Error fetch rekon list:', e);
+      setRekonList([]);
+    }
+  };
+
+  const handleSelectFile = (f) => {
+    setSelectedFile(f);
+    setFilter('ALL');
+    fetchRekon(f.id, 'ALL');
+  };
+
+  const handleProses = async () => {
+    if (!selectedFile) { setErr('Pilih file mutasi dulu'); return; }
+    setProcessing(true);
     setMsg(null);
     setErr(null);
     try {
-      const tagihanId = formKodeIPL || '';
-      const keterangan = tagihanId
-        ? (tagihanBelum.find(t => t.id === tagihanId)?.keterangan || formKeterangan || 'IPL warga')
-        : (formKeterangan || 'Transaksi rekon');
-      const data = {
-        no_urut: rekonList.length + 1,
-        tanggal_posting: formTgl ? new Date(formTgl).toISOString() : null,
-        keterangan: keterangan,
-        keterangan_bebas: formKeterangan,
-        mutasi_debet: formDebet ? parseInt(formDebet) : 0,
-        mutasi_kredit: formKredit ? parseInt(formKredit) : 0,
-        saldo_akhir: 0,
-        file_mutasi: selectedFile?.id || '',
-        tagihan: tagihanId || '',
-      };
-      const rec = await pb.collection('rekon').create(data);
-      setMsg('✅ Rekon berhasil disimpan');
-      setFormTgl(''); setFormKeterangan(''); setFormKodeIPL(''); setFormDebet(''); setFormKredit('');
-      setRekonList(prev => [rec, ...prev]);
+      const token = pb.authStore.token;
+      const resp = await fetch(`${API_URL}/v1/mutasi/rekon/proses`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_mutasi_id: selectedFile.id }),
+      });
+      const result = await resp.json();
+      if (!resp.ok) throw new Error(result.message || 'Proses gagal');
+      setMsg(`✅ Rekon selesai: ${result.cocok} cocok · ${result.tidak_cocok} tidak cocok · ${result.belum_ada_tagihan} tanpa tagihan`);
+      await fetchRekon(selectedFile.id, 'ALL');
     } catch (ex) {
       console.error(ex);
-      setErr(ex.message || 'Gagal menyimpan');
+      setErr(ex.message || 'Proses gagal');
     }
-    setSaving(false);
+    setProcessing(false);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Hapus rekon ini?')) return;
-    try {
-      await pb.collection('rekon').delete(id);
-      setRekonList(prev => prev.filter(r => r.id !== id));
-    } catch (ex) {
-      alert('Gagal hapus: ' + ex.message);
-    }
+  const statusInfo = (s) => {
+    if (s === 'COCOK') return { label: '✅ Cocok', color: '#15935A', bg: '#E8F5EE' };
+    if (s === 'TIDAK_COCOK') return { label: '⚠️ Tidak Cocok', color: '#C24A4A', bg: '#FFF5F4' };
+    return { label: '➖ Tanpa Tagihan', color: '#8A9991', bg: '#F5F5F5' };
   };
+
+  const filters = [
+    { key: 'ALL', label: 'Semua' },
+    { key: 'COCOK', label: '✅ Cocok' },
+    { key: 'TIDAK_COCOK', label: '⚠️ Tidak' },
+    { key: 'BELUM_ADA_TAGIHAN', label: '➖ Tanpa' },
+  ];
 
   if (!isPengurus) {
     return (
@@ -113,116 +113,105 @@ export default function Rekon() {
     <div className="page-padded" style={{ paddingBottom: 40 }}>
       <div style={{ padding: '16px 20px 0' }}>
         <h2 style={{ margin: 0 }}>Rekon Mutasi</h2>
-        <p style={{ margin: '4px 0 0', color: '#6B7B72', fontSize: 12 }}>Cocokkan transaksi mutasi dengan tagihan per warga</p>
+        <p style={{ margin: '4px 0 0', color: '#6B7B72', fontSize: 12 }}>
+          Cocokkan transaksi mutasi bank (sumber valid) dengan tagihan aplikasi per warga
+        </p>
       </div>
 
-      {/* Form Rekon */}
-      <form onSubmit={handleSubmit} className="card" style={{ margin: '16px 20px 0', padding: 16 }}>
-        <h4 style={{ margin: '0 0 12px', fontSize: 14 }}>➕ Tambah Rekon</h4>
-
-        <label style={{ fontSize: 11, color: '#6B7B72', fontWeight: 600 }}>Tanggal</label>
-        <input
-          type="date" value={formTgl} onChange={(e) => setFormTgl(e.target.value)}
-          style={{ width: '100%', padding: 10, border: '1.5px solid #E6EBE7', borderRadius: 10, fontSize: 13, margin: '4px 0 10px', fontFamily: 'inherit' }}
-        />
-
-        <label style={{ fontSize: 11, color: '#6B7B72', fontWeight: 600 }}>Pilih IPL Warga (belum dilaporkan)</label>
-        <select
-          value={formKodeIPL} onChange={(e) => setFormKodeIPL(e.target.value)}
-          style={{ width: '100%', padding: 10, border: '1.5px solid #E6EBE7', borderRadius: 10, fontSize: 13, margin: '4px 0 10px', fontFamily: 'inherit', background: '#fff' }}
-        >
-          <option value="">— Pilih tagihan IPL —</option>
-          {tagihanBelum.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.expand?.warga?.no_rumah || '?'} · {t.expand?.warga?.user?.name || ''} · Rp {(t.nominal || 0).toLocaleString('id-ID')}
-            </option>
+      {/* File selector + Proses */}
+      <div style={{ margin: '16px 20px 0' }}>
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
+          {mutasiFiles.map((f) => (
+            <button key={f.id} onClick={() => handleSelectFile(f)}
+              style={{
+                flex: 'none', border: selectedFile?.id === f.id ? '1.5px solid #15935A' : '1.5px solid #E6EBE7',
+                background: selectedFile?.id === f.id ? '#E8F5EE' : '#fff',
+                color: selectedFile?.id === f.id ? '#15935A' : '#6B7B72',
+                padding: '8px 14px', borderRadius: 20, fontSize: 11, fontWeight: selectedFile?.id === f.id ? 700 : 600,
+                cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+              }}
+            >{f.bulan || f.nama_file}</button>
           ))}
-        </select>
-
-        <label style={{ fontSize: 11, color: '#6B7B72', fontWeight: 600 }}>Atau Keterangan Bebas (free text)</label>
-        <textarea
-          value={formKeterangan} onChange={(e) => setFormKeterangan(e.target.value)}
-          placeholder="Contoh: IPL C09 Juli 2026 / Pembayaran via transfer / dll"
-          rows={2}
-          style={{ width: '100%', padding: 10, border: '1.5px solid #E6EBE7', borderRadius: 10, fontSize: 13, margin: '4px 0 10px', fontFamily: 'inherit', resize: 'vertical' }}
-        />
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <div>
-            <label style={{ fontSize: 11, color: '#6B7B72', fontWeight: 600 }}>Debet (keluar)</label>
-            <input
-              type="number" value={formDebet} onChange={(e) => setFormDebet(e.target.value)}
-              placeholder="0"
-              style={{ width: '100%', padding: 10, border: '1.5px solid #E6EBE7', borderRadius: 10, fontSize: 13, margin: '4px 0 10px', fontFamily: 'inherit' }}
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: 11, color: '#6B7B72', fontWeight: 600 }}>Kredit (masuk)</label>
-            <input
-              type="number" value={formKredit} onChange={(e) => setFormKredit(e.target.value)}
-              placeholder="0"
-              style={{ width: '100%', padding: 10, border: '1.5px solid #E6EBE7', borderRadius: 10, fontSize: 13, margin: '4px 0 10px', fontFamily: 'inherit' }}
-            />
-          </div>
         </div>
 
         <button
-          type="submit" disabled={saving}
+          onClick={handleProses} disabled={processing}
           style={{
-            width: '100%', background: saving ? '#A8C9B8' : '#15935A', color: '#fff',
-            border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 700,
-            cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit'
+            width: '100%', background: processing ? '#A8C9B8' : '#5E35B1', color: '#fff',
+            border: 'none', borderRadius: 12, padding: '12px', fontSize: 13, fontWeight: 700,
+            cursor: processing ? 'default' : 'pointer', fontFamily: 'inherit', marginTop: 4,
           }}
         >
-          {saving ? 'Menyimpan...' : 'Simpan Rekon'}
+          {processing ? '⏳ Memproses rekon...' : '⚡ Proses Rekon (cocokkan mutasi ↔ tagihan)'}
         </button>
         {msg && <div style={{ marginTop: 10, fontSize: 12, color: '#15935A', fontWeight: 600 }}>{msg}</div>}
         {err && <div style={{ marginTop: 10, fontSize: 12, color: '#C24A4A', fontWeight: 600 }}>❌ {err}</div>}
-      </form>
+      </div>
 
-      {/* List Rekon */}
-      <div style={{ marginTop: 20, padding: '0 20px' }}>
-        <h4 style={{ margin: '0 0 10px', fontSize: 14 }}>📋 Data Rekon ({rekonList.length})</h4>
+      {/* Filter status */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 16, padding: '0 20px', overflowX: 'auto' }}>
+        {filters.map((f) => (
+          <button key={f.key} onClick={() => { setFilter(f.key); fetchRekon(selectedFile?.id, f.key); }}
+            style={{
+              flex: 'none', border: filter === f.key ? '1.5px solid #15935A' : '1.5px solid #E6EBE7',
+              background: filter === f.key ? '#E8F5EE' : '#fff',
+              color: filter === f.key ? '#15935A' : '#6B7B72',
+              padding: '8px 14px', borderRadius: 20, fontSize: 11, fontWeight: filter === f.key ? 700 : 600,
+              cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+            }}
+          >{f.label}</button>
+        ))}
+      </div>
+
+      {/* Hasil Rekon */}
+      <div style={{ marginTop: 16, padding: '0 20px' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: 30, color: '#8A9991', fontSize: 13 }}>Memuat...</div>
         ) : rekonList.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 30, color: '#8A9991', fontSize: 13 }}>
-            Belum ada data rekon
+            Belum ada data rekon — klik "Proses Rekon" untuk mencocokkan
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {rekonList.map((r) => (
-              <div key={r.id} className="card" style={{ padding: 14, border: '1.5px solid #E6EBE7' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0F1A14' }}>
-                      {r.keterangan || 'Tanpa keterangan'}
-                    </div>
-                    {r.keterangan_bebas && r.keterangan_bebas !== r.keterangan && (
-                      <div style={{ fontSize: 11, color: '#6B7B72', marginTop: 2 }}>✏️ {r.keterangan_bebas}</div>
-                    )}
-                    <div style={{ fontSize: 11, color: '#A6B0AA', marginTop: 2 }}>
-                      {r.tanggal_posting ? new Date(r.tanggal_posting).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
-                      {' · '}{r.file_mutasi ? (r.expand?.file_mutasi?.bulan || 'file mutasi') : 'manual'}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    {r.mutasi_kredit > 0 && (
-                      <div style={{ fontWeight: 800, fontSize: 13, color: '#15935A' }}>+{rupiah(r.mutasi_kredit)}</div>
-                    )}
-                    {r.mutasi_debet > 0 && (
-                      <div style={{ fontWeight: 800, fontSize: 13, color: '#C24A4A' }}>-{rupiah(r.mutasi_debet)}</div>
-                    )}
-                    <button
-                      onClick={() => handleDelete(r.id)}
-                      style={{ background: 'none', border: 'none', color: '#C24A4A', fontSize: 11, cursor: 'pointer', marginTop: 6, fontFamily: 'inherit' }}
-                    >
-                      Hapus
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, minWidth: 640 }}>
+              <thead>
+                <tr style={{ background: '#F5FAF7', color: '#0F1A14' }}>
+                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>No</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Rumah</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'left', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Keterangan</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'right', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Masuk</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'right', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Keluar</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rekonList.map((r) => {
+                  const st = statusInfo(r.status);
+                  return (
+                    <tr key={r.id} style={{ borderBottom: '1px solid #F0F3F1' }}>
+                      <td style={{ padding: '7px 6px', textAlign: 'center', color: '#6B7B72' }}>{r.no_urut}</td>
+                      <td style={{ padding: '7px 6px', textAlign: 'center', fontWeight: 700, color: '#0F1A14' }}>
+                        {r.expand?.warga?.no_rumah || '-'}
+                      </td>
+                      <td style={{ padding: '7px 6px', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#0F1A14' }}>
+                        {r.keterangan}
+                      </td>
+                      <td style={{ padding: '7px 6px', textAlign: 'right', color: '#15935A', whiteSpace: 'nowrap' }}>
+                        {r.mutasi_kredit ? rupiah(r.mutasi_kredit) : '-'}
+                      </td>
+                      <td style={{ padding: '7px 6px', textAlign: 'right', color: '#C24A4A', whiteSpace: 'nowrap' }}>
+                        {r.mutasi_debet ? rupiah(r.mutasi_debet) : '-'}
+                      </td>
+                      <td style={{ padding: '7px 6px', textAlign: 'center' }}>
+                        <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 8, fontWeight: 700, color: st.color, background: st.bg, whiteSpace: 'nowrap' }}>
+                          {st.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

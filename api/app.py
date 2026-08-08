@@ -155,6 +155,97 @@ def current_bulan():
     now = datetime.now(timezone.utc)
     return f"{now.month:02d}-{now.year}"
 
+
+# Mapping nama pengirim (dari bank) ke no_rumah warga
+BANK_NAMA_MAP = {
+    "MOHAMMAD ADI TRYA": "C13",
+    "RIYADI WAHYU NUGR": "A04",
+    "ARIS NANDAR": "B03",
+    "MUHAMMAD ROLANDO": "C01",
+    "DAYANA RIZK": "E12",
+    "FEDRIAN FADLY": "C06",
+    "ANGGA PRAMANA": "G05",
+    "MUHAMMAD FIKRI": "C04",
+    "FIKI ARI RUSLI": "E05",
+    "RACHEL": "A05",
+    "INDAH MEY SASINTO": "D01",
+    "FADLY OCTAVIANO": "E02",
+    "GILANG RAKAPRATAM": "F01",
+    "YUNI ANDINI PERAW": "B05",
+    "EDWIN REGA PRAYOG": "F03",
+    "MAMAT NURAHMAT": "C09",
+    "FITRIANTO": "E06",
+    "DELLANANDA RIZKI": "F08",
+    "MULYADI": "F07",
+    "LIDER CAESAR SILI": "B01",
+    "RAHMAT WAHYUDI": "A06",
+    "EKO BUDI SANTOSO": "A01",
+    "MUTHIA DWI ANOM S": "E04",
+    "ERNY HENDRIASWATY": "C11",
+    "DEVIE SAVITRI YUL": "C14",
+    "ADAM SHOFI TARMAD": "D05",
+    "RIRIN RESPATIN": "F11",
+    "ANNISA NADHIRA SU": "D02",
+    "ALBERTUS EKA PURW": "F05",
+    "ANDIKA HARRY": "B06",
+    "EGI NOPRIANDI": "E10",
+    "YANUARI RIZA": "F04",
+    "NUR DEWI AFIFAH": "C07",
+    "FADHIS ABIPUTRA": "E03",
+    "ADES SAPTA WAHYON": "C03",
+    "PENNI ARUMDATI": "A02",
+    "MUHAMMAD ROLANDO": "C01",
+    "RATU CINDY AGNESY": "G04",
+    "FEDRIAN FADLY": "C06",
+    "MOHAMMAD ADI TRYA": "C13",
+    "IBADARROHMAN": "E09",
+    "SATRIO UTOMO GUNA": "E07",
+    "ANGGA PRAMANA": "G05",
+    "NANDA AGUSSAH PUT": "C02",
+    "JUHAERAH": "B03",
+    "MUKHAMMAD REZA": "E11",
+    "FARIS HUMAM JALAL": "G01",
+    "FIKI ARI RUSLI": "E05",
+    "ADI SETYO PRABOWO": "F10",
+    "ALMIRA VANIA": "F06",
+    "SARTIKASARI": "E11",
+    "DOMPET ANAK BANGS": "C10",
+}
+
+
+def extract_rumah(keterangan):
+    """Ekstrak kode rumah dari keterangan transaksi mutasi.
+    Pola: Blok C12, IPL C13, C04, B05, E12, G01, dll.
+    Return no_rumah (misal C12) atau None.
+    """
+    if not keterangan:
+        return None
+    ket = keterangan.upper()
+    # Pola: Blok C12 / Blok C 12 / Blok C-12
+    m = re.search(r"BLOK\s+([A-G])\s*-?\s*(\d{1,2})", ket)
+    if m:
+        return f"{m.group(1)}{int(m.group(2)):02d}"
+    # Pola: IPL C13 / IPL C 13 / C13 Juni / dll — kode rumah di tengah teks
+    m = re.search(r"(?<![A-Z0-9])([A-G])(\d{1,2})(?![0-9])", ket)
+    if m:
+        return f"{m.group(1)}{int(m.group(2)):02d}"
+    # Cek mapping nama pengirim
+    for nama, rumah in BANK_NAMA_MAP.items():
+        if nama in ket:
+            return rumah
+    return None
+
+
+def parse_uang(s):
+    """Parse string nominal ke int."""
+    try:
+        return int(s.replace(".", "").replace(",", ""))
+    except Exception:
+        return 0
+
+
+
+
 def parse_mutasi_pdf(pdf_bytes, password="08111992"):
     """Parse PDF mutasi BJB ke daftar transaksi."""
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -2177,6 +2268,229 @@ class MutasiDetail(Resource):
                 "file_mutasi": fm,
                 "mutasi": mutasi.get("items", []),
             }, 200
+        except requests.HTTPError as e:
+            return error_response(f"PocketBase error ({e.response.status_code if e.response else '?'})", 502)
+        except Exception as e:
+            return error_response(str(e), 500)
+
+
+
+
+
+# ── Rekon ──────────────────────────────────────────────────────
+
+@mutasi_ns.route("/rekon/proses")
+class RekonProses(Resource):
+    @mutasi_ns.response(200, "Berhasil")
+    @mutasi_ns.response(401, "Token tidak valid")
+    def post(self):
+        """Proses rekon: cocokkan transaksi mutasi bank (sumber valid) dengan tagihan aplikasi.
+
+        Body (JSON):
+        - file_mutasi_id (string, optional): ID file mutasi. Default: file terbaru.
+        - bulan (string, optional): MM-YYYY.
+
+        Logika:
+        1. Ambil semua transaksi mutasi dari file
+        2. Ekstrak kode rumah dari keterangan (Blok C12, C04, B05, dll) atau nama pengirim
+        3. Cari tagihan aplikasi utk warga tsb (IPL Juli / 17an) yang belum lunas
+        4. Cocokkan nominal & tanggal → status COCOK / TIDAK_COCOK / BELUM_ADA_TAGIHAN
+        5. Simpan hasil ke collection rekon
+
+        **Response:**
+        ```json
+        {
+          "success": true,
+          "total_mutasi": 74,
+          "cocok": 60,
+          "tidak_cocok": 5,
+          "belum_ada_tagihan": 9,
+          "detail": [{"no_urut": 1, "rumah": "C13", "nominal": 170000, "status": "COCOK", "tagihan_id": "..."}]
+        }
+        ```
+        """
+        token = request.headers.get("Authorization", "")
+        if not token:
+            return error_response("Header Authorization diperlukan", 401)
+
+        body = request.get_json(silent=True) or {}
+        file_id = body.get("file_mutasi_id", "")
+        bulan = body.get("bulan", "")
+
+        try:
+            # 1. Tentukan file mutasi
+            if not file_id:
+                if bulan:
+                    files = pb_get("collections/file_mutasi/records", token, filter=f'bulan="{bulan}"', perPage=1, sort="-created")
+                    items = files.get("items", [])
+                else:
+                    files = pb_get("collections/file_mutasi/records", token, perPage=1, sort="-created")
+                    items = files.get("items", [])
+                if not items:
+                    return error_response("Tidak ada file mutasi. Upload PDF mutasi dulu.", 400)
+                file_id = items[0]["id"]
+
+            # 2. Ambil semua mutasi dari file
+            mutasi = pb_get("collections/mutasi/records", token, filter=f'file_mutasi="{file_id}"', perPage=500, sort="no_urut")
+            mutasi_items = mutasi.get("items", [])
+
+            if not mutasi_items:
+                return error_response("Tidak ada transaksi mutasi utk file ini.", 400)
+
+            # 3. Ambil semua tagihan (belum lunas + lunas utk perbandingan)
+            tagihan = pb_get("collections/tagihan/records", token, perPage=500)
+            tagihan_items = tagihan.get("items", [])
+
+            # 4. Ambil semua warga
+            warga = pb_get("collections/warga/records", token, perPage=200)
+            warga_items = warga.get("items", [])
+            warga_by_rumah = {w["no_rumah"]: w for w in warga_items}
+
+            # Hapus rekon lama utk file ini
+            try:
+                old_rekon = pb_get("collections/rekon/records", token, filter=f'file_mutasi="{file_id}"', perPage=500)
+                for ork in old_rekon.get("items", []):
+                    try:
+                        requests.delete(f"{PB_URL}/api/collections/rekon/records/{ork['id']}", headers={"Authorization": token}).raise_for_status()
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
+            # 5. Matching
+            detail = []
+            cocok = tidak = belum = 0
+
+            for mtx in mutasi_items:
+                ket = mtx.get("keterangan", "")
+                rumah = extract_rumah(ket)
+                nominal = mtx.get("mutasi_kredit") or 0
+                if nominal == 0:
+                    nominal = mtx.get("mutasi_debet") or 0
+                tgl = mtx.get("tanggal_posting", "")
+
+                warga_rec = warga_by_rumah.get(rumah) if rumah else None
+                status = "BELUM_ADA_TAGIHAN"
+                tagihan_id = ""
+                ket_rekon = ket
+
+                if warga_rec:
+                    # Cari tagihan warga (status apa pun)
+                    tg_candidates = [t for t in tagihan_items
+                                     if t.get("warga") == warga_rec["id"]]
+                    matched = None
+                    matched_ids = []
+                    # Cek 1 tagihan
+                    for t in tg_candidates:
+                        diff = abs((t.get("nominal") or 0) - nominal)
+                        if diff <= 1000:  # toleransi 1.000 (fee/bulat)
+                            matched = t
+                            matched_ids = [t["id"]]
+                            break
+                    # Cek kombinasi 2 tagihan (IPL + 17an = 270.000, dst)
+                    if not matched and len(tg_candidates) >= 2:
+                        for i in range(len(tg_candidates)):
+                            for j in range(i + 1, len(tg_candidates)):
+                                total2 = (tg_candidates[i].get("nominal") or 0) + (tg_candidates[j].get("nominal") or 0)
+                                if abs(total2 - nominal) <= 1000:
+                                    matched = tg_candidates[i]
+                                    matched_ids = [tg_candidates[i]["id"], tg_candidates[j]["id"]]
+                                    break
+                            if matched:
+                                break
+                    if matched:
+                        status = "COCOK"
+                        tagihan_id = matched_ids[0] if matched_ids else ""
+                        # Simpan keterangan tambahan bila kombinasi
+                        if len(matched_ids) > 1:
+                            ket_rekon = f"{ket} [KOMBINASI: {len(matched_ids)} tagihan]"
+                        cocok += 1
+                    else:
+                        # Ada warga tapi nominal tidak cocok tagihan manapun
+                        if tg_candidates:
+                            status = "TIDAK_COCOK"
+                            tidak += 1
+                        else:
+                            status = "BELUM_ADA_TAGIHAN"
+                            belum += 1
+                else:
+                    belum += 1
+
+                # Simpan ke collection rekon
+                rekon_data = {
+                    "id": _generate_id(),
+                    "mutasi": mtx["id"],
+                    "tagihan": tagihan_id,
+                    "warga": warga_rec["id"] if warga_rec else "",
+                    "status": status,
+                    "keterangan": ket_rekon[:500],
+                    "no_urut": mtx.get("no_urut", 0),
+                    "tanggal_posting": tgl,
+                    "mutasi_debet": mtx.get("mutasi_debet") or 0,
+                    "mutasi_kredit": mtx.get("mutasi_kredit") or 0,
+                    "saldo_akhir": mtx.get("saldo_akhir") or 0,
+                    "file_mutasi": file_id,
+                }
+                try:
+                    pb_post("collections/rekon/records", token, rekon_data)
+                except Exception as e:
+                    log.error("REKON save error %s", str(e))
+
+                detail.append({
+                    "no_urut": mtx.get("no_urut", 0),
+                    "rumah": rumah or "",
+                    "nominal": nominal,
+                    "tanggal": tgl,
+                    "status": status,
+                    "tagihan_id": tagihan_id,
+                })
+
+            log.info("REKON PROSES file=%s cocok=%s tidak=%s belum=%s", file_id, cocok, tidak, belum)
+            return {
+                "success": True,
+                "file_mutasi_id": file_id,
+                "total_mutasi": len(mutasi_items),
+                "cocok": cocok,
+                "tidak_cocok": tidak,
+                "belum_ada_tagihan": belum,
+                "detail": detail,
+            }, 200
+
+        except requests.HTTPError as e:
+            log.error("REKON PROSES PB_ERROR status=%s", e.response.status_code if e.response else "?")
+            return error_response(f"PocketBase error ({e.response.status_code if e.response else '?'})", 502)
+        except Exception as e:
+            log.error("REKON PROSES error %s", str(e))
+            return error_response(str(e), 500)
+
+
+@mutasi_ns.route("/rekon/list")
+class RekonList(Resource):
+    @mutasi_ns.response(200, "Berhasil")
+    @mutasi_ns.response(401, "Token tidak valid")
+    def get(self):
+        """Daftar hasil rekon utk satu file mutasi.
+
+        Query params:
+        - file_mutasi_id (string): ID file mutasi
+        - status (string, optional): COCOK / TIDAK_COCOK / BELUM_ADA_TAGIHAN
+        """
+        token = request.headers.get("Authorization", "")
+        if not token:
+            return error_response("Header Authorization diperlukan", 401)
+        try:
+            file_id = request.args.get("file_mutasi_id", "")
+            status_filter = request.args.get("status", "")
+            if not file_id:
+                return error_response("file_mutasi_id diperlukan", 400)
+
+            filter_str = f'file_mutasi="{file_id}"'
+            if status_filter:
+                filter_str += f' && status="{status_filter}"'
+
+            result = pb_get("collections/rekon/records", token, filter=filter_str, perPage=500, sort="no_urut",
+                            expand="mutasi,tagihan,warga,warga.user")
+            return {"success": True, "items": result.get("items", [])}, 200
         except requests.HTTPError as e:
             return error_response(f"PocketBase error ({e.response.status_code if e.response else '?'})", 502)
         except Exception as e:
