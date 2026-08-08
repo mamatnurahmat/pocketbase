@@ -1,10 +1,10 @@
-const CACHE_NAME = 'warga-p2s-v6';
+const CACHE_NAME = 'warga-p2s-v7';
 const STATIC_ASSETS = [
   '/manifest.json',
 ];
 
 // Don't cache HTML pages - always fetch from network
-const HTML_ROUTES = ['/', '/login', '/register', '/dashboard', '/iuran', '/tagihan', '/lapor', '/laporan-warga', '/laporan-scurity', '/lampiran', '/profil', '/warga', '/notifikasi', '/payout'];
+const HTML_ROUTES = ['/', '/login', '/register', '/dashboard', '/iuran', '/tagihan', '/lapor', '/laporan-warga', '/laporan-scurity', '/lampiran', '/mutasi', '/profil', '/warga', '/notifikasi', '/payout'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
