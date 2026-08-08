@@ -11,6 +11,7 @@ export default function Rekon() {
   const [msg, setMsg] = useState(null);
   const [err, setErr] = useState(null);
   const [filter, setFilter] = useState('ALL');
+  const [detailItem, setDetailItem] = useState(null);
 
   const rupiah = (n) => { let v = n || 0; if (v < 1 && v > 0) v = 0; return 'Rp ' + v.toLocaleString('id-ID'); };
 
@@ -173,12 +174,11 @@ export default function Rekon() {
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, minWidth: 640 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, minWidth: 480 }}>
               <thead>
                 <tr style={{ background: '#F5FAF7', color: '#0F1A14' }}>
                   <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>No</th>
                   <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Rumah</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'left', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Keterangan</th>
                   <th style={{ padding: '8px 6px', textAlign: 'right', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Masuk</th>
                   <th style={{ padding: '8px 6px', textAlign: 'right', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Keluar</th>
                   <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Status</th>
@@ -188,13 +188,11 @@ export default function Rekon() {
                 {rekonList.map((r) => {
                   const st = statusInfo(r.status);
                   return (
-                    <tr key={r.id} style={{ borderBottom: '1px solid #F0F3F1' }}>
+                    <tr key={r.id} onClick={() => setDetailItem(r)}
+                      style={{ borderBottom: '1px solid #F0F3F1', cursor: 'pointer' }}>
                       <td style={{ padding: '7px 6px', textAlign: 'center', color: '#6B7B72' }}>{r.no_urut}</td>
                       <td style={{ padding: '7px 6px', textAlign: 'center', fontWeight: 700, color: '#0F1A14' }}>
                         {r.expand?.warga?.no_rumah || '-'}
-                      </td>
-                      <td style={{ padding: '7px 6px', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#0F1A14' }}>
-                        {r.keterangan}
                       </td>
                       <td style={{ padding: '7px 6px', textAlign: 'right', color: '#15935A', whiteSpace: 'nowrap' }}>
                         {r.mutasi_kredit ? rupiah(r.mutasi_kredit) : '-'}
@@ -215,6 +213,59 @@ export default function Rekon() {
           </div>
         )}
       </div>
+
+      {/* Popup Detail */}
+      {detailItem && (
+        <div className="modal-overlay" onClick={() => setDetailItem(null)}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div className="card" onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 420, borderRadius: 16, padding: 20, background: '#fff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={{ margin: 0, fontSize: 16 }}>Detail Rekon #{detailItem.no_urut}</h3>
+              <button onClick={() => setDetailItem(null)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#6B7B72', fontFamily: 'inherit' }}>✕</button>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+              <span style={{ fontSize: 12, padding: '6px 14px', borderRadius: 10, fontWeight: 700, color: statusInfo(detailItem.status).color, background: statusInfo(detailItem.status).bg }}>
+                {statusInfo(detailItem.status).label}
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: '8px 12px', fontSize: 12.5 }}>
+              <span style={{ color: '#6B7B72' }}>Rumah</span>
+              <span style={{ fontWeight: 700, color: '#0F1A14' }}>{detailItem.expand?.warga?.no_rumah || '-'}</span>
+
+              <span style={{ color: '#6B7B72' }}>Nama Warga</span>
+              <span style={{ fontWeight: 600, color: '#0F1A14' }}>{detailItem.expand?.warga?.expand?.user?.name || '-'}</span>
+
+              <span style={{ color: '#6B7B72' }}>Tanggal</span>
+              <span style={{ fontWeight: 600 }}>{detailItem.tanggal_posting ? new Date(detailItem.tanggal_posting).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</span>
+
+              <span style={{ color: '#6B7B72' }}>Masuk</span>
+              <span style={{ fontWeight: 700, color: '#15935A' }}>{detailItem.mutasi_kredit ? rupiah(detailItem.mutasi_kredit) : '-'}</span>
+
+              <span style={{ color: '#6B7B72' }}>Keluar</span>
+              <span style={{ fontWeight: 700, color: '#C24A4A' }}>{detailItem.mutasi_debet ? rupiah(detailItem.mutasi_debet) : '-'}</span>
+
+              <span style={{ color: '#6B7B72' }}>Saldo</span>
+              <span style={{ fontWeight: 600 }}>{rupiah(detailItem.saldo_akhir)}</span>
+
+              <span style={{ color: '#6B7B72' }}>Tagihan</span>
+              <span style={{ fontWeight: 600 }}>{detailItem.tagihan ? detailItem.expand?.tagihan?.id?.slice(0, 12) || 'Ada tagihan' : 'Tidak ada'}</span>
+            </div>
+
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #E6EBE7' }}>
+              <div style={{ fontSize: 11, color: '#6B7B72', fontWeight: 600, marginBottom: 4 }}>Keterangan</div>
+              <div style={{ fontSize: 12, color: '#0F1A14', lineHeight: 1.5, wordBreak: 'break-word' }}>{detailItem.keterangan || '-'}</div>
+            </div>
+
+            <button onClick={() => setDetailItem(null)}
+              style={{ width: '100%', marginTop: 16, background: '#15935A', color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
