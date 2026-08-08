@@ -36,6 +36,11 @@ const allItems = [
     icon: (c) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke={c} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   },
   {
+    {
+    label: 'Mutasi', path: '/mutasi',
+    icon: (c) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="3" stroke={c} strokeWidth="1.8"/><path d="M7 9h4m-4 4h10m-10 4h6" stroke={c} strokeWidth="1.8" strokeLinecap="round"/></svg>,
+  },
+  {
     label: 'Pembayaran', path: '/payout',
     icon: (c) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z" stroke={c} strokeWidth="1.8"/><path d="M12 6v12M6 12h12" stroke={c} strokeWidth="2" strokeLinecap="round"/></svg>,
   },
@@ -72,7 +77,7 @@ export default function Sidebar({ open, onClose, persistent }) {
 
   // Filter menu: Upload Bukti, Lampiran & Pembayaran hanya untuk pengurus
   const filteredItems = allItems.filter(i => {
-    if (i.path === '/iuran' || i.path === '/lampiran' || i.path === '/payout') return isPengurus;
+    if (i.path === '/iuran' || i.path === '/lampiran' || i.path === '/payout' || i.path === '/mutasi') return isPengurus;
     return true;
   });
   const items = isScurity ? scurityItems : filteredItems;
