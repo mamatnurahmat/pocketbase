@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { pb } from '../lib/pocketbase';
+import { pb, API_URL } from '../lib/pocketbase';
 
 export default function Mutasi() {
   const [isPengurus, setIsPengurus] = useState(() => localStorage.getItem('isPengurus') === 'true');
@@ -8,6 +8,10 @@ export default function Mutasi() {
   const [mutasiList, setMutasiList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState(null);
+  const [uploadError, setUploadError] = useState(null);
+  const [showUpload, setShowUpload] = useState(false);
 
   const rupiah = (n) => { let v = n || 0; if (v < 1 && v > 0) v = 0; return 'Rp ' + v.toLocaleString('id-ID'); };
 
@@ -64,6 +68,52 @@ export default function Mutasi() {
     return `/api/files/${record.collectionId}/${record.id}/${record.file_pdf}`;
   };
 
+  const handleUpload = async (e) => {
+    e.preventDefault();
+    const fileInput = e.target.file_pdf;
+    if (!fileInput.files || fileInput.files.length === 0) {
+      setUploadError('Pilih file PDF dulu');
+      return;
+    }
+    const file = fileInput.files[0];
+    const password = e.target.password?.value || '08111992';
+
+    setUploading(true);
+    setUploadMsg(null);
+    setUploadError(null);
+    try {
+      const formData = new FormData();
+      formData.append('file_pdf', file);
+      formData.append('password', password);
+
+      const token = pb.authStore.token;
+      const resp = await fetch(`${API_URL}/v1/mutasi/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const result = await resp.json();
+      if (!resp.ok) {
+        throw new Error(result.message || 'Upload gagal');
+      }
+      setUploadMsg(`✅ ${result.message} — ${result.jumlah_transaksi} transaksi (bulan ${result.bulan})`);
+      setShowUpload(false);
+      e.target.reset();
+
+      // Refresh data
+      const records = await pb.collection('file_mutasi').getFullList({ sort: '-created' });
+      records.sort((a, b) => new Date(b.created) - new Date(a.created));
+      setFileList(records);
+      if (records.length > 0) {
+        setSelectedFile(records[0]);
+      }
+    } catch (err) {
+      console.error(err);
+      setUploadError(err.message || 'Upload gagal');
+    }
+    setUploading(false);
+  };
+
   if (!isPengurus) {
     return (
       <div className="page-padded" style={{ padding: 40, textAlign: 'center', color: '#8A9991' }}>
@@ -76,10 +126,50 @@ export default function Mutasi() {
 
   return (
     <div className="page-padded" style={{ paddingBottom: 40 }}>
-      <div style={{ padding: '16px 20px 0' }}>
-        <h2 style={{ margin: 0 }}>Mutasi Rekening</h2>
-        <p style={{ margin: '4px 0 0', color: '#6B7B72', fontSize: 12 }}>Data mutasi dari file PDF yang diupload</p>
+      <div style={{ padding: '16px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <h2 style={{ margin: 0 }}>Mutasi Rekening</h2>
+          <p style={{ margin: '4px 0 0', color: '#6B7B72', fontSize: 12 }}>Data mutasi dari file PDF yang diupload</p>
+        </div>
+        <button
+          onClick={() => setShowUpload(!showUpload)}
+          style={{
+            background: '#15935A', color: '#fff', border: 'none', borderRadius: 12,
+            padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit'
+          }}
+        >
+          {showUpload ? 'Tutup' : '+ Upload'}
+        </button>
       </div>
+
+      {/* Upload form */}
+      {showUpload && (
+        <form onSubmit={handleUpload} className="card" style={{ margin: '16px 20px 0', padding: 16 }}>
+          <h4 style={{ margin: '0 0 12px', fontSize: 14 }}>📄 Upload Mutasi PDF</h4>
+          <input
+            type="file" name="file_pdf" accept="application/pdf"
+            style={{ width: '100%', padding: 8, border: '1.5px solid #E6EBE7', borderRadius: 10, fontSize: 12, marginBottom: 10 }}
+            required
+          />
+          <input
+            type="text" name="password" placeholder="Password PDF (default 08111992)"
+            defaultValue="08111992"
+            style={{ width: '100%', padding: 10, border: '1.5px solid #E6EBE7', borderRadius: 10, fontSize: 12, marginBottom: 10 }}
+          />
+          <button
+            type="submit" disabled={uploading}
+            style={{
+              width: '100%', background: uploading ? '#A8C9B8' : '#15935A', color: '#fff',
+              border: 'none', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 700,
+              cursor: uploading ? 'default' : 'pointer', fontFamily: 'inherit'
+            }}
+          >
+            {uploading ? 'Mengupload & Parse...' : 'Upload & Parse'}
+          </button>
+          {uploadMsg && <div style={{ marginTop: 10, fontSize: 12, color: '#15935A', fontWeight: 600 }}>{uploadMsg}</div>}
+          {uploadError && <div style={{ marginTop: 10, fontSize: 12, color: '#C24A4A', fontWeight: 600 }}>❌ {uploadError}</div>}
+        </form>
+      )}
 
       {/* Summary cards */}
       {selectedFile && (
@@ -88,7 +178,9 @@ export default function Mutasi() {
             <div>
               <div style={{ fontSize: 12, opacity: 0.85, fontWeight: 600 }}>📄 {selectedFile.nama_file}</div>
               <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>
-                {selectedFile.periode_awal ? new Date(selectedFile.periode_awal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'} — {selectedFile.periode_akhir ? new Date(selectedFile.periode_akhir).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}
+                {selectedFile.bulan ? `Bulan ${selectedFile.bulan}` : ''}
+                {selectedFile.periode_awal ? ` · ${new Date(selectedFile.periode_awal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}` : ''}
+                {selectedFile.periode_akhir ? ` — ${new Date(selectedFile.periode_akhir).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}` : ''}
               </div>
             </div>
             {selectedFile.file_pdf && (
@@ -129,7 +221,7 @@ export default function Mutasi() {
               padding: '8px 14px', borderRadius: 20, fontSize: 11, fontWeight: selectedFile?.id === f.id ? 700 : 600,
               cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
             }}
-          >{f.nama_file}</button>
+          >{f.bulan || f.nama_file}</button>
         ))}
         {fileList.length === 0 && <span style={{ color: '#8A9991', fontSize: 12 }}>Belum ada file mutasi</span>}
       </div>
@@ -141,7 +233,7 @@ export default function Mutasi() {
         ) : mutasiList.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 40, color: '#8A9991', fontSize: 14 }}>
             <div style={{ fontSize: 48, opacity: 0.3, marginBottom: 10 }}>📭</div>
-            Belum ada data mutasi
+            Belum ada data mutasi — upload PDF dulu ya
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>

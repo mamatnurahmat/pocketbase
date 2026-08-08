@@ -4,7 +4,9 @@ import uuid
 import logging
 from datetime import datetime, timezone
 
+import re
 import requests
+import fitz  # PyMuPDF untuk parse PDF mutasi
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_restx import Api, Resource, fields, reqparse
@@ -90,6 +92,7 @@ tagihan_ns = api.namespace("tagihan", description="Operasi tagihan")
 iuran_ns = api.namespace("iuran", description="Upload bukti bayar")
 aktivitas_ns = api.namespace("aktivitas", description="Log aktivitas warga")
 payout_ns = api.namespace("payout", description="Klaim & Reimbursement (Pembayaran Dana)")
+mutasi_ns = api.namespace("mutasi", description="Upload & lihat mutasi rekening (pengurus)")
 
 # ── Models ──────────────────────────────────────────────────────────
 
@@ -129,6 +132,99 @@ approve_response = api.model("ApproveResponse", {
     "balance_after": fields.Float,
     "message": fields.String,
 })
+
+
+
+# ── Mutasi PDF Parser ───────────────────────────────────────────
+MONTHS = {"JAN": "01", "FEB": "02", "MAR": "03", "APR": "04", "MEI": "05", "JUN": "06",
+          "JUL": "07", "AGS": "08", "SEP": "09", "OKT": "10", "NOV": "11", "DES": "12"}
+
+def parse_mutasi_pdf(pdf_bytes, password="08111992"):
+    """Parse PDF mutasi BJB ke daftar transaksi."""
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    if doc.needs_pass:
+        if not doc.authenticate(password):
+            raise ValueError("Password PDF salah")
+    lines = []
+    for page in doc:
+        lines.extend(page.get_text().split("\n"))
+    doc.close()
+
+    lines = [l.strip() for l in lines if l.strip()]
+
+    # Ambil periode header
+    bulan = ""
+    for i, l in enumerate(lines):
+        if l.upper().startswith("PERIODE"):
+            m = re.search(r"(\d{2})\s+([A-Z]{3})\s+(\d{4})", lines[i+1] if i+1 < len(lines) else "")
+            if m:
+                bulan = f"{MONTHS.get(m.group(2).upper(), '00')}-{m.group(3)}"
+            break
+
+    # Parse transaksi
+    transactions = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        line = lines[i]
+        if not re.match(r"^\d{1,3}$", line):
+            i += 1
+            continue
+        no = int(line)
+        if i + 1 >= n:
+            break
+        m_date = re.match(r"^(\d{2})\s+([A-Z]{3})\s+(\d{4})$", lines[i+1])
+        if not m_date:
+            i += 1
+            continue
+        tgl_posting = lines[i+1]
+        tgl_valuta = tgl_posting
+        j = i + 2
+        if j < n and re.match(r"^\d{2}\s+[A-Z]{3}\s+\d{4}$", lines[j]):
+            tgl_valuta = lines[j]
+            j += 1
+
+        ket_parts = []
+        amounts = []
+        while j < n:
+            l = lines[j]
+            if l.upper().startswith(("SALDO AKHIR", "TOTAL", "MUTASI DEBET", "MUTASI KREDIT")):
+                break
+            if re.match(r"^\d{1,3}$", l) and j + 1 < n and re.match(r"^\d{2}\s+[A-Z]{3}\s+\d{4}$", lines[j+1]):
+                break
+            if re.match(r"^\d{2}\s+[A-Z]{3}\s+\d{4}$", l) and len(ket_parts) > 0 and amounts:
+                break
+            m_amount = re.match(r"^(\d{1,3}(?:\.\d{3})+)$", l)
+            if m_amount:
+                amounts.append(int(l.replace(".", "")))
+            else:
+                if l and not l.upper().startswith(("NO", "TANGGAL", "MUTASI", "SALDO")):
+                    ket_parts.append(l)
+            j += 1
+
+        saldo = amounts[-1] if amounts else 0
+        debet = kredit = 0
+        if len(amounts) >= 2:
+            ket_text = " ".join(ket_parts).upper()
+            if "TRF KE" in ket_text or "BY TRF" in ket_text or "DEBET" in ket_text or "BIAYA" in ket_text or ket_text.startswith("PAY TOP UP"):
+                debet = amounts[-2]
+            else:
+                kredit = amounts[-2]
+
+        keterangan = re.sub(r"\s+", " ", " ".join(ket_parts)).strip()
+        transactions.append({
+            "no_urut": no,
+            "tanggal_posting": tgl_posting,
+            "tanggal_valuta": tgl_valuta,
+            "keterangan": keterangan,
+            "mutasi_debet": debet,
+            "mutasi_kredit": kredit,
+            "saldo_akhir": saldo,
+        })
+        i = j
+
+    return bulan, transactions
+
 
 # ── Dev Mode ───────────────────────────────────────────────────────
 # Collection yang TIDAK ikut dev mode
@@ -195,6 +291,14 @@ def pb_post_multipart(path: str, token: str, data: dict, files: dict) -> dict:
     """POST multipart/form-data ke PocketBase (untuk file upload)."""
     headers = {"Authorization": token}
     r = requests.post(f"{PB_URL}/api/{path}", headers=headers, data=data, files=files)
+    r.raise_for_status()
+    return r.json()
+
+
+def pb_patch_multipart(path: str, token: str, data: dict, files: dict) -> dict:
+    """PATCH multipart/form-data ke PocketBase (untuk update file)."""
+    headers = {"Authorization": token}
+    r = requests.patch(f"{PB_URL}/api/{path}", headers=headers, data=data, files=files)
     r.raise_for_status()
     return r.json()
 
@@ -1822,6 +1926,235 @@ def _get_user_id(token: str) -> str | None:
     except Exception:
         pass
     return None
+
+
+
+
+# ── Mutasi ──────────────────────────────────────────────────────
+
+@mutasi_ns.route("/upload")
+class MutasiUpload(Resource):
+    @mutasi_ns.expect(upload_parser)
+    @mutasi_ns.response(200, "Berhasil", iuran_upload_response)
+    @mutasi_ns.response(400, "Request tidak valid")
+    @mutasi_ns.response(401, "Token tidak valid")
+    @mutasi_ns.response(502, "PocketBase error")
+    def post(self):
+        """Upload PDF mutasi bank, parse, dan simpan ke collection file_mutasi + mutasi.
+
+        Menerima multipart/form-data:
+        - file_pdf (file): File PDF mutasi (wajib)
+        - password (string, optional): Password PDF (default 08111992)
+
+        Alur:
+        1. Parse PDF dengan PyMuPDF
+        2. Buat/update record di collection `file_mutasi` (grouping per bulan MM-YYYY,
+           jika bulan sama file lama dihapus/ditimpa)
+        3. Simpan tiap transaksi ke collection `mutasi`
+        4. Buat record di collection `report` per transaksi (dengan keterangan)
+
+        **Response success:**
+        ```json
+        {
+          "success": true,
+          "file_mutasi_id": "...",
+          "bulan": "07-2026",
+          "jumlah_transaksi": 79,
+          "saldo_awal": 15971491,
+          "saldo_akhir": 17242565,
+          "message": "Mutasi berhasil diupload"
+        }
+        ```
+        """
+        token = request.headers.get("Authorization", "")
+        if not token:
+            return error_response("Header Authorization diperlukan", 401)
+
+        file = request.files.get("file_pdf")
+        if not file:
+            return error_response("file_pdf diperlukan", 400)
+
+        password = request.form.get("password", "08111992").strip()
+
+        try:
+            # ── Parse PDF ──
+            pdf_bytes = file.read()
+            bulan, transactions = parse_mutasi_pdf(pdf_bytes, password)
+
+            if not transactions:
+                return error_response("Tidak ada transaksi yang bisa diparse dari PDF", 400)
+
+            # ── Buat/update file_mutasi (grouping per bulan) ──
+            if not bulan:
+                # Fallback: pakai bulan dari transaksi terakhir
+                m = re.search(r"(\d{2})\s*([A-Z]{3})\s*(\d{4})", transactions[-1]["tanggal_posting"])
+                if m:
+                    month_map = {"JAN":"01","FEB":"02","MAR":"03","APR":"04","MEI":"05","JUN":"06","JUL":"07","AGS":"08","SEP":"09","OKT":"10","NOV":"11","DES":"12"}
+                    bulan = f"{month_map.get(m.group(2).upper(), '00')}-{m.group(3)}"
+
+            # Cek file_mutasi existing utk bulan ini
+            existing = pb_get("collections/file_mutasi/records", token, filter=f'bulan="{bulan}"', perPage=1)
+            existing_items = existing.get("items", [])
+            file_mutasi_id = None
+            if existing_items:
+                file_mutasi_id = existing_items[0]["id"]
+                # Hapus mutasi lama yg terkait
+                try:
+                    old_mutasi = pb_get("collections/mutasi/records", token, filter=f'file_mutasi="{file_mutasi_id}"', perPage=200)
+                    for om in old_mutasi.get("items", []):
+                        try:
+                            requests.delete(f"{PB_URL}/api/collections/mutasi/records/{om['id']}", headers={"Authorization": token}).raise_for_status()
+                        except Exception:
+                            pass
+                    # Hapus report lama yg terkait mutasi tsb
+                    old_reports = pb_get("collections/report/records", token, filter=f'mutasi ~ "{file_mutasi_id}"', perPage=200)
+                    for orp in old_reports.get("items", []):
+                        try:
+                            requests.delete(f"{PB_URL}/api/collections/report/records/{orp['id']}", headers={"Authorization": token}).raise_for_status()
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+
+            # Upload file PDF (multipart)
+            uploaded_id = _generate_id() if not file_mutasi_id else file_mutasi_id
+            upload_data = {
+                "id": uploaded_id,
+                "nama_file": f"Mutasi {bulan}",
+                "bulan": bulan,
+                "periode_awal": "2026-07-23 00:00:00",
+                "periode_akhir": "2026-08-08 00:00:00",
+                "saldo_awal": transactions[0]["saldo_akhir"] - (transactions[0]["mutasi_kredit"] - transactions[0]["mutasi_debet"]),
+                "saldo_akhir": transactions[-1]["saldo_akhir"],
+                "total_debet": sum(t["mutasi_debet"] for t in transactions),
+                "total_kredit": sum(t["mutasi_kredit"] for t in transactions),
+                "jumlah_transaksi": len(transactions),
+            }
+            upload_files = {"file_pdf": (file.filename or "mutasi.pdf", pdf_bytes, "application/pdf")}
+            if file_mutasi_id:
+                # Update file existing (PATCH)
+                pb_result = pb_patch_multipart(f"collections/file_mutasi/records/{file_mutasi_id}", token, upload_data, upload_files)
+                file_mutasi_id = pb_result.get("id", file_mutasi_id)
+            else:
+                pb_result = pb_post_multipart("collections/file_mutasi/records", token, upload_data, upload_files)
+                file_mutasi_id = pb_result.get("id", uploaded_id)
+
+            # ── Simpan tiap transaksi ke mutasi + report ──
+            saved_count = 0
+            for t in transactions:
+                mutasi_data = {
+                    "id": _generate_id(),
+                    "no_urut": t["no_urut"],
+                    "tanggal_posting": t.get("tanggal_posting"),
+                    "tanggal_valuta": t.get("tanggal_valuta"),
+                    "keterangan": t["keterangan"],
+                    "mutasi_debet": t["mutasi_debet"],
+                    "mutasi_kredit": t["mutasi_kredit"],
+                    "saldo_akhir": t["saldo_akhir"],
+                    "file_mutasi": file_mutasi_id,
+                }
+                try:
+                    m_result = pb_post("collections/mutasi/records", token, mutasi_data)
+                    saved_count += 1
+
+                    # Buat report
+                    report_data = {
+                        "id": _generate_id(),
+                        "tanggal": t.get("tanggal_posting"),
+                        "keterangan": t["keterangan"],
+                        "debet": t["mutasi_debet"],
+                        "kredit": t["mutasi_kredit"],
+                        "saldo": t["saldo_akhir"],
+                        "mutasi": m_result.get("id", ""),
+                    }
+                    try:
+                        pb_post("collections/report/records", token, report_data)
+                    except Exception:
+                        pass
+                except Exception as e:
+                    log.error("MUTASI save tx#%s error %s", t.get("no_urut"), str(e))
+
+            log.info("MUTASI UPLOAD success bulan=%s count=%s file=%s", bulan, saved_count, file_mutasi_id)
+            return {
+                "success": True,
+                "file_mutasi_id": file_mutasi_id,
+                "bulan": bulan,
+                "jumlah_transaksi": saved_count,
+                "saldo_awal": transactions[0]["saldo_akhir"] - (transactions[0]["mutasi_kredit"] - transactions[0]["mutasi_debet"]),
+                "saldo_akhir": transactions[-1]["saldo_akhir"],
+                "message": "Mutasi berhasil diupload",
+            }, 200
+
+        except requests.HTTPError as e:
+            log.error("MUTASI UPLOAD PB_ERROR status=%s", e.response.status_code if e.response else "?")
+            return error_response(f"PocketBase error ({e.response.status_code if e.response else '?'})", 502)
+        except Exception as e:
+            log.error("MUTASI UPLOAD error %s", str(e))
+            return error_response(str(e), 500)
+
+
+@mutasi_ns.route("/list")
+class MutasiList(Resource):
+    @mutasi_ns.response(200, "Berhasil")
+    @mutasi_ns.response(401, "Token tidak valid")
+    def get(self):
+        """Daftar file mutasi (grouping per bulan) + jumlah transaksi.
+
+        **Response:**
+        ```json
+        {
+          "success": true,
+          "items": [
+            {"id": "...", "nama_file": "Mutasi 07-2026", "bulan": "07-2026", "jumlah_transaksi": 79, "saldo_awal": 15971491, "saldo_akhir": 17242565}
+          ]
+        }
+        ```
+        """
+        token = request.headers.get("Authorization", "")
+        if not token:
+            return error_response("Header Authorization diperlukan", 401)
+        try:
+            result = pb_get("collections/file_mutasi/records", token, sort="-created", perPage=100)
+            items = result.get("items", [])
+            return {"success": True, "items": items}, 200
+        except requests.HTTPError as e:
+            return error_response(f"PocketBase error ({e.response.status_code if e.response else '?'})", 502)
+        except Exception as e:
+            return error_response(str(e), 500)
+
+
+@mutasi_ns.route("/detail/<file_id>")
+class MutasiDetail(Resource):
+    @mutasi_ns.response(200, "Berhasil")
+    @mutasi_ns.response(401, "Token tidak valid")
+    def get(self, file_id):
+        """Detail transaksi mutasi utk satu file (data table).
+
+        **Response:**
+        ```json
+        {
+          "success": true,
+          "file_mutasi": {...},
+          "mutasi": [{"no_urut": 1, "keterangan": "...", "mutasi_debet": 0, "mutasi_kredit": 170000, "saldo_akhir": 16141491}]
+        }
+        ```
+        """
+        token = request.headers.get("Authorization", "")
+        if not token:
+            return error_response("Header Authorization diperlukan", 401)
+        try:
+            fm = pb_get(f"collections/file_mutasi/records/{file_id}", token)
+            mutasi = pb_get("collections/mutasi/records", token, filter=f'file_mutasi="{file_id}"', sort="no_urut", perPage=500)
+            return {
+                "success": True,
+                "file_mutasi": fm,
+                "mutasi": mutasi.get("items", []),
+            }, 200
+        except requests.HTTPError as e:
+            return error_response(f"PocketBase error ({e.response.status_code if e.response else '?'})", 502)
+        except Exception as e:
+            return error_response(str(e), 500)
+
 
 
 if __name__ == "__main__":
