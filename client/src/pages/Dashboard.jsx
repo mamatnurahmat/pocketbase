@@ -414,6 +414,14 @@ export default function Dashboard() {
                   </button>
                 )}
                 {localStorage.getItem('isPengurus') === 'true' && (
+                  <button className="quick-action" onClick={() => navigate('/rekon')}>
+                    <span className="quick-action-icon" style={{ background: '#EDE7F6' }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M9 3v3m6-3v3M4 7h16M6 7v13a1 1 0 001 1h10a1 1 0 001-1V7" stroke="#5E35B1" strokeWidth="1.8" strokeLinecap="round"/><path d="M9 12h6m-6 4h4" stroke="#5E35B1" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                    </span>
+                    <span>Rekon</span>
+                  </button>
+                )}
+                {localStorage.getItem('isPengurus') === 'true' && (
                   <button className="quick-action" onClick={() => navigate('/mutasi')}>
                     <span className="quick-action-icon" style={{ background: '#E0F2F1' }}>
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none">

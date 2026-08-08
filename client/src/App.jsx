@@ -12,6 +12,7 @@ import Tagihan from './pages/Tagihan'
 import Profil from './pages/Profil'
 import Lampiran from './pages/Lampiran'
 import Mutasi from './pages/Mutasi'
+import Rekon from './pages/Rekon'
 import Warga from './pages/Warga'
 import Notifikasi from './pages/Notifikasi'
 import Payout from './pages/Payout'
@@ -72,6 +73,7 @@ function App() {
       <Route path="/tagihan" element={<ProtectedRoute><AppLayout><Tagihan /></AppLayout></ProtectedRoute>} />
       <Route path="/lampiran" element={<ProtectedRoute><AppLayout><Lampiran /></AppLayout></ProtectedRoute>} />
       <Route path="/mutasi" element={<ProtectedRoute><AppLayout><Mutasi /></AppLayout></ProtectedRoute>} />
+      <Route path="/rekon" element={<ProtectedRoute><AppLayout><Rekon /></AppLayout></ProtectedRoute>} />
       <Route path="/profil" element={<ProtectedRoute><AppLayout><Profil /></AppLayout></ProtectedRoute>} />
       <Route path="/warga" element={<ProtectedRoute><AppLayout><Warga /></AppLayout></ProtectedRoute>} />
       <Route path="/notifikasi" element={<ProtectedRoute><AppLayout><Notifikasi /></AppLayout></ProtectedRoute>} />
