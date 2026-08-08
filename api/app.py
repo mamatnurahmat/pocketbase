@@ -149,6 +149,12 @@ def parse_tgl_id(tgl_str):
         return None
     return f"{m.group(3)}-{month}-{m.group(1)} 00:00:00"
 
+
+def current_bulan():
+    """Bulan berjalan dalam format MM-YYYY (waktu server)."""
+    now = datetime.now(timezone.utc)
+    return f"{now.month:02d}-{now.year}"
+
 def parse_mutasi_pdf(pdf_bytes, password="08111992"):
     """Parse PDF mutasi BJB ke daftar transaksi."""
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -2002,11 +2008,22 @@ class MutasiUpload(Resource):
                 if m:
                     bulan = f"{m.group(2)}-{m.group(1)}"
 
+            # Validasi format bulan (MM-YYYY)
+            if not re.match(r"^\d{2}-\d{4}$", bulan):
+                return error_response(f"Format bulan tidak valid: {bulan} (harus MM-YYYY)", 400)
+
             # Cek file_mutasi existing utk bulan ini
             existing = pb_get("collections/file_mutasi/records", token, filter=f'bulan="{bulan}"', perPage=1)
             existing_items = existing.get("items", [])
             file_mutasi_id = None
             if existing_items:
+                # Hanya bulan berjalan yang boleh ditimpa/update
+                if bulan != current_bulan():
+                    return error_response(
+                        f"Data mutasi bulan {bulan} sudah ada dan bukan bulan berjalan. "
+                        f"Hanya bulan berjalan ({current_bulan()}) yang bisa diperbarui.",
+                        400,
+                    )
                 file_mutasi_id = existing_items[0]["id"]
                 # Hapus mutasi lama yg terkait
                 try:
