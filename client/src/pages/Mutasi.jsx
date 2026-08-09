@@ -12,6 +12,10 @@ export default function Mutasi() {
   const [uploadMsg, setUploadMsg] = useState(null);
   const [uploadError, setUploadError] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
+  const [bulanInput, setBulanInput] = useState(() => {
+    const d = new Date();
+    return `${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+  });
 
   const rupiah = (n) => { let v = n || 0; if (v < 1 && v > 0) v = 0; return 'Rp ' + v.toLocaleString('id-ID'); };
 
@@ -85,6 +89,7 @@ export default function Mutasi() {
       const formData = new FormData();
       formData.append('file_pdf', file);
       formData.append('password', password);
+      formData.append('bulan', bulanInput);
 
       const token = pb.authStore.token;
       const resp = await fetch(`${API_URL}/v1/mutasi/upload`, {
@@ -155,6 +160,15 @@ export default function Mutasi() {
             type="text" name="password" placeholder="Password PDF (default 08111992)"
             defaultValue="08111992"
             style={{ width: '100%', padding: 10, border: '1.5px solid #E6EBE7', borderRadius: 10, fontSize: 12, marginBottom: 10 }}
+          />
+          <label style={{ fontSize: 11, color: '#6B7B72', fontWeight: 600 }}>Bulan (format MM-YYYY)</label>
+          <input
+            type="text" name="bulan" value={bulanInput}
+            onChange={(e) => setBulanInput(e.target.value)}
+            placeholder="contoh: 08-2026"
+            pattern="\d{2}-\d{4}"
+            maxLength="7"
+            style={{ width: '100%', padding: 10, border: '1.5px solid #E6EBE7', borderRadius: 10, fontSize: 12, margin: '4px 0 10px', fontFamily: 'inherit' }}
           />
           <button
             type="submit" disabled={uploading}

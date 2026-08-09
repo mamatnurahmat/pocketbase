@@ -2082,6 +2082,7 @@ class MutasiUpload(Resource):
             return error_response("file_pdf diperlukan", 400)
 
         password = request.form.get("password", "08111992").strip()
+        bulan_pilihan = request.form.get("bulan", "").strip()
 
         try:
             # ── Parse PDF ──
@@ -2092,7 +2093,10 @@ class MutasiUpload(Resource):
                 return error_response("Tidak ada transaksi yang bisa diparse dari PDF", 400)
 
             # ── Buat/update file_mutasi (grouping per bulan) ──
-            if not bulan:
+            if bulan_pilihan:
+                # Bulan dari form (MM-YYYY) override auto-detect
+                bulan = bulan_pilihan
+            elif not bulan:
                 # Fallback: pakai bulan dari transaksi terakhir
                 tp = transactions[-1].get("tanggal_posting") or ""
                 m = re.match(r"^(\d{4})-(\d{2})-", tp)
