@@ -225,10 +225,11 @@ export default function Rekon() {
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, minWidth: 520 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, minWidth: 580 }}>
               <thead>
                 <tr style={{ background: '#F5FAF7', color: '#0F1A14' }}>
                   <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>No</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Tgl Transaksi</th>
                   <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Rumah</th>
                   <th style={{ padding: '8px 6px', textAlign: 'right', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Masuk</th>
                   <th style={{ padding: '8px 6px', textAlign: 'right', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Keluar</th>
@@ -242,6 +243,9 @@ export default function Rekon() {
                   return (
                     <tr key={r.id} style={{ borderBottom: '1px solid #F0F3F1' }}>
                       <td style={{ padding: '7px 6px', textAlign: 'center', color: '#6B7B72' }}>{r.no_urut}</td>
+                      <td style={{ padding: '7px 6px', textAlign: 'center', color: '#6B7B72', whiteSpace: 'nowrap' }}>
+                        {r.tanggal_posting ? new Date(r.tanggal_posting).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-'}
+                      </td>
                       <td style={{ padding: '7px 6px', textAlign: 'center', fontWeight: 700, color: '#0F1A14', cursor: 'pointer' }} onClick={() => setDetailItem(r)}>
                         {r.expand?.warga?.no_rumah || '-'}
                       </td>
