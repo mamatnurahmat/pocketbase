@@ -6,12 +6,17 @@ export default function Rekon() {
   const [mutasiFiles, setMutasiFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [rekonList, setRekonList] = useState([]);
+  const [allTagihan, setAllTagihan] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [msg, setMsg] = useState(null);
   const [err, setErr] = useState(null);
   const [filter, setFilter] = useState('ALL');
   const [detailItem, setDetailItem] = useState(null);
+  const [editItem, setEditItem] = useState(null);
+  const [editTagihan, setEditTagihan] = useState('');
+  const [editKeterangan, setEditKeterangan] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const rupiah = (n) => { let v = n || 0; if (v < 1 && v > 0) v = 0; return 'Rp ' + v.toLocaleString('id-ID'); };
 
@@ -32,6 +37,14 @@ export default function Rekon() {
           setSelectedFile(files[0]);
           await fetchRekon(files[0].id);
         }
+
+        // Semua tagihan utk pilihan saat edit
+        const tagihan = await pb.collection('tagihan').getFullList({
+          expand: 'warga,warga.user,iuran',
+          perPage: 500,
+        });
+        tagihan.sort((a, b) => (a.expand?.warga?.no_rumah || '').localeCompare(b.expand?.warga?.no_rumah || ''));
+        setAllTagihan(tagihan);
       } catch (e) {
         console.warn('Error fetch rekon:', e);
       }
@@ -78,7 +91,7 @@ export default function Rekon() {
       });
       const result = await resp.json();
       if (!resp.ok) throw new Error(result.message || 'Proses gagal');
-      setMsg(`✅ Rekon selesai: ${result.cocok} cocok · ${result.tidak_cocok} tidak cocok · ${result.belum_ada_tagihan} tanpa tagihan`);
+      setMsg(`✅ Rekon selesai: ${result.cocok} match · ${result.tidak_cocok} unmatch · ${result.belum_ada_tagihan} tanpa tagihan`);
       await fetchRekon(selectedFile.id, 'ALL');
     } catch (ex) {
       console.error(ex);
@@ -88,15 +101,41 @@ export default function Rekon() {
   };
 
   const statusInfo = (s) => {
-    if (s === 'COCOK') return { label: '✅ Cocok', color: '#15935A', bg: '#E8F5EE' };
-    if (s === 'TIDAK_COCOK') return { label: '⚠️ Tidak Cocok', color: '#C24A4A', bg: '#FFF5F4' };
+    if (s === 'COCOK') return { label: '✅ Match', color: '#15935A', bg: '#E8F5EE' };
+    if (s === 'TIDAK_COCOK') return { label: '⚠️ Unmatch', color: '#C24A4A', bg: '#FFF5F4' };
     return { label: '➖ Tanpa Tagihan', color: '#8A9991', bg: '#F5F5F5' };
+  };
+
+  const openEdit = (r) => {
+    setEditItem(r);
+    setEditTagihan(r.tagihan || '');
+    setEditKeterangan(r.keterangan || '');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editItem) return;
+    setSavingEdit(true);
+    try {
+      const data = {
+        tagihan: editTagihan || '',
+        keterangan: editKeterangan,
+        status: editTagihan ? 'COCOK' : 'TIDAK_COCOK',
+      };
+      await pb.collection('rekon').update(editItem.id, data);
+      setMsg('✅ Data rekon diperbarui');
+      setEditItem(null);
+      await fetchRekon(selectedFile?.id, 'ALL');
+    } catch (ex) {
+      console.error(ex);
+      setErr(ex.message || 'Gagal update');
+    }
+    setSavingEdit(false);
   };
 
   const filters = [
     { key: 'ALL', label: 'Semua' },
-    { key: 'COCOK', label: '✅ Cocok' },
-    { key: 'TIDAK_COCOK', label: '⚠️ Tidak' },
+    { key: 'COCOK', label: '✅ Match' },
+    { key: 'TIDAK_COCOK', label: '⚠️ Unmatch' },
     { key: 'BELUM_ADA_TAGIHAN', label: '➖ Tanpa' },
   ];
 
@@ -174,7 +213,7 @@ export default function Rekon() {
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, minWidth: 480 }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, minWidth: 520 }}>
               <thead>
                 <tr style={{ background: '#F5FAF7', color: '#0F1A14' }}>
                   <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>No</th>
@@ -182,16 +221,16 @@ export default function Rekon() {
                   <th style={{ padding: '8px 6px', textAlign: 'right', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Masuk</th>
                   <th style={{ padding: '8px 6px', textAlign: 'right', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Keluar</th>
                   <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Status</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center', borderBottom: '1px solid #E6EBE7', fontWeight: 700 }}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
                 {rekonList.map((r) => {
                   const st = statusInfo(r.status);
                   return (
-                    <tr key={r.id} onClick={() => setDetailItem(r)}
-                      style={{ borderBottom: '1px solid #F0F3F1', cursor: 'pointer' }}>
+                    <tr key={r.id} style={{ borderBottom: '1px solid #F0F3F1' }}>
                       <td style={{ padding: '7px 6px', textAlign: 'center', color: '#6B7B72' }}>{r.no_urut}</td>
-                      <td style={{ padding: '7px 6px', textAlign: 'center', fontWeight: 700, color: '#0F1A14' }}>
+                      <td style={{ padding: '7px 6px', textAlign: 'center', fontWeight: 700, color: '#0F1A14', cursor: 'pointer' }} onClick={() => setDetailItem(r)}>
                         {r.expand?.warga?.no_rumah || '-'}
                       </td>
                       <td style={{ padding: '7px 6px', textAlign: 'right', color: '#15935A', whiteSpace: 'nowrap' }}>
@@ -205,6 +244,19 @@ export default function Rekon() {
                           {st.label}
                         </span>
                       </td>
+                      <td style={{ padding: '7px 6px', textAlign: 'center' }}>
+                        <button
+                          onClick={() => openEdit(r)}
+                          style={{
+                            background: r.status === 'TIDAK_COCOK' ? '#FFF5F4' : '#F0F3F1',
+                            color: r.status === 'TIDAK_COCOK' ? '#C24A4A' : '#6B7B72',
+                            border: 'none', borderRadius: 8, padding: '4px 10px', fontSize: 10,
+                            fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {r.status === 'TIDAK_COCOK' ? '✏️ Update' : '📄 Detail'}
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -215,7 +267,7 @@ export default function Rekon() {
       </div>
 
       {/* Popup Detail */}
-      {detailItem && (
+      {detailItem && !editItem && (
         <div className="modal-overlay" onClick={() => setDetailItem(null)}
           style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div className="card" onClick={(e) => e.stopPropagation()}
@@ -263,6 +315,60 @@ export default function Rekon() {
               style={{ width: '100%', marginTop: 16, background: '#15935A', color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
               Tutup
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Popup Edit Unmatch */}
+      {editItem && (
+        <div className="modal-overlay" onClick={() => setEditItem(null)}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div className="card" onClick={(e) => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 440, borderRadius: 16, padding: 20, background: '#fff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={{ margin: 0, fontSize: 16 }}>✏️ Update Rekon #{editItem.no_urut}</h3>
+              <button onClick={() => setEditItem(null)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#6B7B72', fontFamily: 'inherit' }}>✕</button>
+            </div>
+
+            <div style={{ fontSize: 12, color: '#6B7B72', marginBottom: 12 }}>
+              Rumah: <b style={{ color: '#0F1A14' }}>{editItem.expand?.warga?.no_rumah || '-'}</b>
+              {' · '}Masuk: <b style={{ color: '#15935A' }}>{editItem.mutasi_kredit ? rupiah(editItem.mutasi_kredit) : '-'}</b>
+              {' · '}Keluar: <b style={{ color: '#C24A4A' }}>{editItem.mutasi_debet ? rupiah(editItem.mutasi_debet) : '-'}</b>
+            </div>
+
+            <label style={{ fontSize: 11, color: '#6B7B72', fontWeight: 600 }}>Cocokkan dengan Tagihan</label>
+            <select
+              value={editTagihan} onChange={(e) => setEditTagihan(e.target.value)}
+              style={{ width: '100%', padding: 10, border: '1.5px solid #E6EBE7', borderRadius: 10, fontSize: 12.5, margin: '4px 0 12px', fontFamily: 'inherit', background: '#fff' }}
+            >
+              <option value="">— Pilih tagihan (kosongkan utk tetap unmatch) —</option>
+              {allTagihan
+                .filter((t) => !editItem.expand?.warga || t.warga === editItem.expand.warga.id)
+                .map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.expand?.warga?.no_rumah || '?'} · {t.expand?.iuran?.keterangan || t.iuran || ''} · Rp {(t.nominal || 0).toLocaleString('id-ID')} · {t.status_pembayaran}
+                  </option>
+                ))}
+            </select>
+
+            <label style={{ fontSize: 11, color: '#6B7B72', fontWeight: 600 }}>Atau Keterangan Bebas (free text)</label>
+            <textarea
+              value={editKeterangan} onChange={(e) => setEditKeterangan(e.target.value)}
+              placeholder="Contoh: Kasbon Tatab / Voucher 17an / Pembayaran via GoPay"
+              rows={2}
+              style={{ width: '100%', padding: 10, border: '1.5px solid #E6EBE7', borderRadius: 10, fontSize: 12.5, margin: '4px 0 12px', fontFamily: 'inherit', resize: 'vertical' }}
+            />
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setEditItem(null)}
+                style={{ flex: 1, background: '#fff', color: '#6B7B72', border: '1.5px solid #E6EBE7', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Batal
+              </button>
+              <button onClick={handleSaveEdit} disabled={savingEdit}
+                style={{ flex: 1, background: savingEdit ? '#A8C9B8' : '#15935A', color: '#fff', border: 'none', borderRadius: 10, padding: '10px', fontSize: 13, fontWeight: 700, cursor: savingEdit ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+                {savingEdit ? 'Menyimpan...' : 'Simpan'}
+              </button>
+            </div>
           </div>
         </div>
       )}
