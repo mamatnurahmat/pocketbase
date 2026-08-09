@@ -14,7 +14,7 @@ export default function Rekon() {
   const [filter, setFilter] = useState('ALL');
   const [detailItem, setDetailItem] = useState(null);
   const [editItem, setEditItem] = useState(null);
-  const [editTagihan, setEditTagihan] = useState('');
+  const [editTagihanIds, setEditTagihanIds] = useState([]);
   const [editKeterangan, setEditKeterangan] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
 
@@ -108,18 +108,23 @@ export default function Rekon() {
 
   const openEdit = (r) => {
     setEditItem(r);
-    setEditTagihan(r.tagihan || '');
+    setEditTagihanIds(Array.isArray(r.tagihan) ? [...r.tagihan] : (r.tagihan ? [r.tagihan] : []));
     setEditKeterangan(r.keterangan || '');
+  };
+
+  const toggleTagihan = (id) => {
+    setEditTagihanIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
   const handleSaveEdit = async () => {
     if (!editItem) return;
     setSavingEdit(true);
+    setErr(null);
     try {
       const data = {
-        tagihan: editTagihan || '',
+        tagihan: editTagihanIds,
         keterangan: editKeterangan,
-        status: editTagihan ? 'COCOK' : 'TIDAK_COCOK',
+        status: editTagihanIds.length > 0 ? 'COCOK' : 'TIDAK_COCOK',
       };
       await pb.collection('rekon').update(editItem.id, data);
       setMsg('✅ Data rekon diperbarui');
@@ -127,7 +132,14 @@ export default function Rekon() {
       await fetchRekon(selectedFile?.id, 'ALL');
     } catch (ex) {
       console.error(ex);
-      setErr(ex.message || 'Gagal update');
+      // Record mungkin sudah terhapus oleh proses rekon ulang — refresh list
+      if (String(ex.status || '').startsWith('4') || String(ex.status || '') === '404') {
+        setMsg('⚠️ Data sudah diperbarui — list di-refresh');
+        setEditItem(null);
+        await fetchRekon(selectedFile?.id, 'ALL');
+      } else {
+        setErr(ex.message || 'Gagal update');
+      }
     }
     setSavingEdit(false);
   };
@@ -303,7 +315,7 @@ export default function Rekon() {
               <span style={{ fontWeight: 600 }}>{rupiah(detailItem.saldo_akhir)}</span>
 
               <span style={{ color: '#6B7B72' }}>Tagihan</span>
-              <span style={{ fontWeight: 600 }}>{detailItem.tagihan ? detailItem.expand?.tagihan?.id?.slice(0, 12) || 'Ada tagihan' : 'Tidak ada'}</span>
+              <span style={{ fontWeight: 600 }}>{(Array.isArray(detailItem.tagihan) ? detailItem.tagihan.length : detailItem.tagihan ? 1 : 0)} tagihan</span>
             </div>
 
             <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #E6EBE7' }}>
@@ -319,12 +331,12 @@ export default function Rekon() {
         </div>
       )}
 
-      {/* Popup Edit Unmatch */}
+      {/* Popup Edit (multi tagihan) */}
       {editItem && (
         <div className="modal-overlay" onClick={() => setEditItem(null)}
           style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div className="card" onClick={(e) => e.stopPropagation()}
-            style={{ width: '100%', maxWidth: 440, borderRadius: 16, padding: 20, background: '#fff' }}>
+            style={{ width: '100%', maxWidth: 460, borderRadius: 16, padding: 20, background: '#fff', maxHeight: '85vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <h3 style={{ margin: 0, fontSize: 16 }}>✏️ Update Rekon #{editItem.no_urut}</h3>
               <button onClick={() => setEditItem(null)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#6B7B72', fontFamily: 'inherit' }}>✕</button>
@@ -336,20 +348,29 @@ export default function Rekon() {
               {' · '}Keluar: <b style={{ color: '#C24A4A' }}>{editItem.mutasi_debet ? rupiah(editItem.mutasi_debet) : '-'}</b>
             </div>
 
-            <label style={{ fontSize: 11, color: '#6B7B72', fontWeight: 600 }}>Cocokkan dengan Tagihan</label>
-            <select
-              value={editTagihan} onChange={(e) => setEditTagihan(e.target.value)}
-              style={{ width: '100%', padding: 10, border: '1.5px solid #E6EBE7', borderRadius: 10, fontSize: 12.5, margin: '4px 0 12px', fontFamily: 'inherit', background: '#fff' }}
-            >
-              <option value="">— Pilih tagihan (kosongkan utk tetap unmatch) —</option>
+            <label style={{ fontSize: 11, color: '#6B7B72', fontWeight: 600 }}>Cocokkan dengan Tagihan (boleh pilih lebih dari satu)</label>
+            <div style={{ maxHeight: 180, overflowY: 'auto', border: '1.5px solid #E6EBE7', borderRadius: 10, padding: 8, margin: '4px 0 12px' }}>
               {allTagihan
                 .filter((t) => !editItem.expand?.warga || t.warga === editItem.expand.warga.id)
-                .map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.expand?.warga?.no_rumah || '?'} · {t.expand?.iuran?.keterangan || t.iuran || ''} · Rp {(t.nominal || 0).toLocaleString('id-ID')} · {t.status_pembayaran}
-                  </option>
-                ))}
-            </select>
+                .map((t) => {
+                  const checked = editTagihanIds.includes(t.id);
+                  return (
+                    <label key={t.id} onClick={() => toggleTagihan(t.id)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 8, cursor: 'pointer', background: checked ? '#E8F5EE' : 'transparent', fontSize: 12 }}>
+                      <input type="checkbox" checked={checked} readOnly style={{ accentColor: '#15935A' }} />
+                      <span style={{ fontWeight: 600, color: '#0F1A14' }}>{t.expand?.warga?.no_rumah || '?'}</span>
+                      <span style={{ color: '#6B7B72', flex: 1 }}>{t.expand?.iuran?.keterangan || t.iuran || ''}</span>
+                      <span style={{ fontWeight: 700 }}>Rp {(t.nominal || 0).toLocaleString('id-ID')}</span>
+                      <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 6, background: t.status_pembayaran === 'Lunas' ? '#E8F5EE' : '#FFF5F4', color: t.status_pembayaran === 'Lunas' ? '#15935A' : '#C24A4A', fontWeight: 700 }}>
+                        {t.status_pembayaran}
+                      </span>
+                    </label>
+                  );
+                })}
+            </div>
+            <div style={{ fontSize: 11, color: '#6B7B72', marginBottom: 8 }}>
+              Dipilih: {editTagihanIds.length} tagihan (total Rp {(editTagihanIds.reduce((sum, id) => { const t = allTagihan.find(x => x.id === id); return sum + (t?.nominal || 0); }, 0)).toLocaleString('id-ID')})
+            </div>
 
             <label style={{ fontSize: 11, color: '#6B7B72', fontWeight: 600 }}>Atau Keterangan Bebas (free text)</label>
             <textarea

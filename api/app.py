@@ -2368,6 +2368,7 @@ class RekonProses(Resource):
                 if nominal == 0:
                     nominal = mtx.get("mutasi_debet") or 0
                 tgl = mtx.get("tanggal_posting", "")
+                tagihan_multi = []
 
                 warga_rec = warga_by_rumah.get(rumah) if rumah else None
                 status = "BELUM_ADA_TAGIHAN"
@@ -2378,30 +2379,40 @@ class RekonProses(Resource):
                     # Cari tagihan warga (status apa pun)
                     tg_candidates = [t for t in tagihan_items
                                      if t.get("warga") == warga_rec["id"]]
-                    matched = None
                     matched_ids = []
-                    # Cek 1 tagihan
+                    # Cek semua kombinasi tagihan yg totalnya mendekati nominal
+                    # 1 tagihan
                     for t in tg_candidates:
                         diff = abs((t.get("nominal") or 0) - nominal)
-                        if diff <= 1000:  # toleransi 1.000 (fee/bulat)
-                            matched = t
+                        if diff <= 1000:
                             matched_ids = [t["id"]]
                             break
-                    # Cek kombinasi 2 tagihan (IPL + 17an = 270.000, dst)
-                    if not matched and len(tg_candidates) >= 2:
+                    # 2 tagihan (IPL + 17an = 270.000, dst)
+                    if not matched_ids and len(tg_candidates) >= 2:
                         for i in range(len(tg_candidates)):
                             for j in range(i + 1, len(tg_candidates)):
                                 total2 = (tg_candidates[i].get("nominal") or 0) + (tg_candidates[j].get("nominal") or 0)
                                 if abs(total2 - nominal) <= 1000:
-                                    matched = tg_candidates[i]
                                     matched_ids = [tg_candidates[i]["id"], tg_candidates[j]["id"]]
                                     break
-                            if matched:
+                            if matched_ids:
                                 break
-                    if matched:
+                    # 3+ tagihan (misal IPL 3 bulan, dst)
+                    if not matched_ids and len(tg_candidates) >= 3:
+                        from itertools import combinations
+                        for r in range(2, min(len(tg_candidates), 5) + 1):
+                            for combo in combinations(tg_candidates, r):
+                                total_n = sum(t.get("nominal") or 0 for t in combo)
+                                if abs(total_n - nominal) <= 1000:
+                                    matched_ids = [t["id"] for t in combo]
+                                    break
+                            if matched_ids:
+                                break
+                    if matched_ids:
                         status = "COCOK"
                         tagihan_id = matched_ids[0] if matched_ids else ""
-                        # Simpan keterangan tambahan bila kombinasi
+                        # Simpan semua tagihan yg cocok
+                        tagihan_multi = matched_ids
                         if len(matched_ids) > 1:
                             ket_rekon = f"{ket} [KOMBINASI: {len(matched_ids)} tagihan]"
                         cocok += 1
@@ -2420,7 +2431,7 @@ class RekonProses(Resource):
                 rekon_data = {
                     "id": _generate_id(),
                     "mutasi": mtx["id"],
-                    "tagihan": tagihan_id,
+                    "tagihan": tagihan_multi,
                     "warga": warga_rec["id"] if warga_rec else "",
                     "status": status,
                     "keterangan": ket_rekon[:500],
@@ -2432,6 +2443,8 @@ class RekonProses(Resource):
                     "file_mutasi": file_id,
                 }
                 try:
+                    if status == "COCOK":
+                        log.info("REKON DEBUG no=%s matched_ids=%s tagihan_multi=%s", mtx.get("no_urut"), matched_ids, tagihan_multi)
                     pb_post("collections/rekon/records", token, rekon_data)
                 except Exception as e:
                     log.error("REKON save error %s", str(e))
