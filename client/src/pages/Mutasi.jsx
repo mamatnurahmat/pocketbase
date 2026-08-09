@@ -119,16 +119,6 @@ export default function Mutasi() {
     setUploading(false);
   };
 
-  if (!isPengurus) {
-    return (
-      <div className="page-padded" style={{ padding: 40, textAlign: 'center', color: '#8A9991' }}>
-        <div style={{ fontSize: 48, opacity: 0.3, marginBottom: 10 }}>🔒</div>
-        <h3 style={{ color: '#0F1A14' }}>Hanya untuk Pengurus</h3>
-        <p style={{ fontSize: 13 }}>Fitur lihat mutasi hanya tersedia untuk mode pengurus.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="page-padded" style={{ paddingBottom: 40 }}>
       <div style={{ padding: '16px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -136,19 +126,21 @@ export default function Mutasi() {
           <h2 style={{ margin: 0 }}>Mutasi Rekening</h2>
           <p style={{ margin: '4px 0 0', color: '#6B7B72', fontSize: 12 }}>Data mutasi dari file PDF yang diupload</p>
         </div>
-        <button
-          onClick={() => setShowUpload(!showUpload)}
-          style={{
-            background: '#15935A', color: '#fff', border: 'none', borderRadius: 12,
-            padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit'
-          }}
-        >
-          {showUpload ? 'Tutup' : '+ Upload'}
-        </button>
+        {isPengurus && (
+          <button
+            onClick={() => setShowUpload(!showUpload)}
+            style={{
+              background: '#15935A', color: '#fff', border: 'none', borderRadius: 12,
+              padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit'
+            }}
+          >
+            {showUpload ? 'Tutup' : '+ Upload'}
+          </button>
+        )}
       </div>
 
-      {/* Upload form */}
-      {showUpload && (
+      {/* Upload form (hanya pengurus) */}
+      {isPengurus && showUpload && (
         <form onSubmit={handleUpload} className="card" style={{ margin: '16px 20px 0', padding: 16 }}>
           <h4 style={{ margin: '0 0 12px', fontSize: 14 }}>📄 Upload Mutasi PDF</h4>
           <input

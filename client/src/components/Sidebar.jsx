@@ -80,7 +80,7 @@ export default function Sidebar({ open, onClose, persistent }) {
 
   // Filter menu: Upload Bukti, Lampiran & Pembayaran hanya untuk pengurus
   const filteredItems = allItems.filter(i => {
-    if (i.path === '/iuran' || i.path === '/lampiran' || i.path === '/payout' || i.path === '/mutasi' || i.path === '/rekon') return isPengurus;
+    if (i.path === '/iuran' || i.path === '/lampiran' || i.path === '/payout' || i.path === '/rekon') return isPengurus;
     return true;
   });
   const items = isScurity ? scurityItems : filteredItems;
