@@ -2120,19 +2120,27 @@ class MutasiUpload(Resource):
                         400,
                     )
                 file_mutasi_id = existing_items[0]["id"]
-                # Hapus mutasi lama yg terkait
+                # Hapus data lama yg terkait (urutan penting: rekon → report → mutasi)
                 try:
-                    old_mutasi = pb_get("collections/mutasi/records", token, filter=f'file_mutasi="{file_mutasi_id}"', perPage=200)
-                    for om in old_mutasi.get("items", []):
+                    # 1. Hapus rekon lama (relasi mutasi required=True)
+                    old_rekon = pb_get("collections/rekon/records", token, filter=f'file_mutasi="{file_mutasi_id}"', perPage=500)
+                    for ork in old_rekon.get("items", []):
                         try:
-                            requests.delete(f"{PB_URL}/api/collections/mutasi/records/{om['id']}", headers={"Authorization": token}).raise_for_status()
+                            requests.delete(f"{PB_URL}/api/collections/rekon/records/{ork['id']}", headers={"Authorization": token}).raise_for_status()
                         except Exception:
                             pass
-                    # Hapus report lama yg terkait mutasi tsb
-                    old_reports = pb_get("collections/report/records", token, filter=f'mutasi ~ "{file_mutasi_id}"', perPage=200)
+                    # 2. Hapus report lama
+                    old_reports = pb_get("collections/report/records", token, filter=f'mutasi ~ "{file_mutasi_id}"', perPage=500)
                     for orp in old_reports.get("items", []):
                         try:
                             requests.delete(f"{PB_URL}/api/collections/report/records/{orp['id']}", headers={"Authorization": token}).raise_for_status()
+                        except Exception:
+                            pass
+                    # 3. Hapus mutasi lama
+                    old_mutasi = pb_get("collections/mutasi/records", token, filter=f'file_mutasi="{file_mutasi_id}"', perPage=500)
+                    for om in old_mutasi.get("items", []):
+                        try:
+                            requests.delete(f"{PB_URL}/api/collections/mutasi/records/{om['id']}", headers={"Authorization": token}).raise_for_status()
                         except Exception:
                             pass
                 except Exception:
