@@ -122,18 +122,21 @@ onRecordAfterUpdateSuccess(function(e) {
   var pengurus = record.getBool("pengurus");
   var agama = record.getString("agama") || "";
 
-  // Ambil nilai lama untuk deteksi perubahan
+  // Ambil nilai lama via DB query (getOriginal tidak tersedia di runtime ini)
   var oldNoRumah = "";
   var oldNoWa = "";
   var oldStatusId = "";
   var oldPengurus = false;
   var oldAgama = "";
   try {
-    oldNoRumah = e.record.getOriginal("no_rumah") || "";
-    oldNoWa = e.record.getOriginal("no_wa") || "";
-    oldStatusId = e.record.getOriginal("status") || "";
-    oldPengurus = e.record.getOriginal("pengurus") || false;
-    oldAgama = e.record.getOriginal("agama") || "";
+    var oldRec = $app.findRecordById("warga", wargaId);
+    if (oldRec) {
+      oldNoRumah = oldRec.getString("no_rumah") || "";
+      oldNoWa = oldRec.getString("no_wa") || "";
+      oldStatusId = oldRec.getString("status") || "";
+      oldPengurus = oldRec.getBool("pengurus") || false;
+      oldAgama = oldRec.getString("agama") || "";
+    }
   } catch (err) {
     console.warn("warga_notify: gagal ambil original values:", err);
   }
