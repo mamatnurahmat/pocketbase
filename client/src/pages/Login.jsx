@@ -16,14 +16,14 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const loginIdentity = identity.trim();
-      // Login khusus email format: 3 digit kode rumah @ warga.local (contoh 010@warga.local)
-      if (!/^\d{3}@warga\.local$/.test(loginIdentity)) {
-        setError('Email tidak valid. Gunakan format: 3 digit kode rumah @warga.local (contoh 010@warga.local).');
+      // Login khusus email format kode rumah @ warga.local (contoh: c09@warga.local, kas@warga.local)
+      const email = identity.trim().toLowerCase();
+      if (!/^[a-z0-9]{2,5}@warga\.local$/.test(email)) {
+        setError('Email tidak valid. Gunakan format: kode rumah @warga.local (contoh: c09@warga.local).');
         setLoading(false);
         return;
       }
-      const authData = await pb.collection('users').authWithPassword(loginIdentity, password);
+      const authData = await pb.collection('users').authWithPassword(email, password);
       try {
         const w = await pb.collection('warga').getFirstListItem(`user="${authData.record.id}"`);
         localStorage.setItem('isPengurus', w.pengurus ? 'true' : 'false');
@@ -66,11 +66,11 @@ export default function Login() {
             className="form-control"
             value={identity}
             onChange={(e) => setIdentity(e.target.value)}
-            placeholder="010@warga.local"
+            placeholder="c09@warga.local"
             required
           />
           <small style={{ color: '#888', display: 'block', marginTop: 6 }}>
-            Format: 3 digit kode rumah @warga.local (contoh: 010@warga.local)
+            Format: kode rumah @warga.local (contoh: c09@warga.local, kas@warga.local)
           </small>
         </div>
         <div className="form-group">
