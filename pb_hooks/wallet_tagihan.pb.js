@@ -20,7 +20,7 @@ onRecordAfterUpdateSuccess(function (e) {
     var tagihanId = record.getString('id');
 
     // Cek apakah transaksi sudah dibuat oleh Flask API
-    var existingTrx = $app.findRecordsByFilter('transactions', 'note ~ "' + tagihanId + '"', '', 1, 0);
+    var existingTrx = $app.findRecordsByFilter('transactions', 'note ~ {:tagid}', '', 1, 0, { tagid: tagihanId });
     if (existingTrx.length > 0) {
       console.log('wallet_tagihan: transaksi sudah ada, skip (handled by API)');
       return;
