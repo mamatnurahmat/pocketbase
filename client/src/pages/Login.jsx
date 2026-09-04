@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { pb } from '../lib/pocketbase';
 import { checkScurity } from '../lib/auth';
 
@@ -16,9 +16,12 @@ export default function Login() {
     setLoading(true);
 
     try {
-      let loginIdentity = identity;
-      if (/^\d+$/.test(identity)) {
-        loginIdentity = "hp_" + identity;
+      const loginIdentity = identity.trim();
+      // Login khusus email format: 3 digit kode rumah @ warga.local (contoh 010@warga.local)
+      if (!/^\d{3}@warga\.local$/.test(loginIdentity)) {
+        setError('Email tidak valid. Gunakan format: 3 digit kode rumah @warga.local (contoh 010@warga.local).');
+        setLoading(false);
+        return;
       }
       const authData = await pb.collection('users').authWithPassword(loginIdentity, password);
       try {
@@ -31,7 +34,7 @@ export default function Login() {
       localStorage.setItem('isScurity', isSc ? 'true' : 'false');
       navigate('/dashboard');
     } catch (err) {
-      setError('Nomor HP / Email atau Password salah.');
+      setError('Email atau Password salah.');
     } finally {
       setLoading(false);
     }
@@ -57,15 +60,18 @@ export default function Login() {
 
       <form onSubmit={handleLogin} style={{ marginTop: 28 }}>
         <div className="form-group">
-          <label>Nomor HP atau Email</label>
+          <label>Email</label>
           <input
             type="text"
             className="form-control"
             value={identity}
             onChange={(e) => setIdentity(e.target.value)}
-            placeholder="08123456789 atau email@mail.com"
+            placeholder="010@warga.local"
             required
           />
+          <small style={{ color: '#888', display: 'block', marginTop: 6 }}>
+            Format: 3 digit kode rumah @warga.local (contoh: 010@warga.local)
+          </small>
         </div>
         <div className="form-group">
           <label>Password</label>
@@ -82,11 +88,6 @@ export default function Login() {
           {loading ? 'Sedang masuk...' : 'Masuk'}
         </button>
       </form>
-
-      <div style={{ flex: 1 }} />
-      <p style={{ textAlign: 'center', marginTop: 24, fontSize: 14 }}>
-        Belum punya akun? <Link to="/register">Daftar di sini</Link>
-      </p>
     </div>
   );
 }

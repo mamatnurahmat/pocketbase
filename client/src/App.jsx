@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useDesktop } from './lib/useDesktop'
 import Login from './pages/Login'
-import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Iuran from './pages/Iuran'
 import Lapor from './pages/Lapor'
@@ -27,7 +26,7 @@ function AppLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const isDesktop = useDesktop()
   const location = useLocation()
-  const hideSidebar = ['/login', '/register'].includes(location.pathname)
+  const hideSidebar = ['/login'].includes(location.pathname)
 
   if (hideSidebar) return children
 
@@ -63,7 +62,6 @@ function App() {
         } 
       />
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
       <Route path="/pin" element={<ProtectedRoute><PinScreen /></ProtectedRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
       <Route path="/iuran" element={<ProtectedRoute><AppLayout><Iuran /></AppLayout></ProtectedRoute>} />
