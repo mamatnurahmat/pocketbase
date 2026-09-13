@@ -48,6 +48,11 @@ pnpm build
 Untuk cutover ke `pb_public/`, salin isi `build/` ke `../pb_public/` setelah
 semua halaman selesai di-port. Roadmap lengkap ada di `../REDESIGN_PLAN` (chat).
 
+## Dokumentasi fitur
+
+- [Fitur Siteplan 3D — `/map`](./FITUR-SITEPLAN.md) — peta kavling, status dari
+  data warga, info penghuni, mode jalan (POV), dan pagar/pohon saluran air.
+
 ## Status porting
 
 - [x] M1 Foundation (SvelteKit + PWA + design token hijau P2S)
