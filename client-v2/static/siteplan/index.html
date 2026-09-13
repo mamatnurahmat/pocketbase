@@ -1503,8 +1503,9 @@ setTimeout(function(){ document.getElementById("boot").classList.add("gone"); },
 
   function classify(rec){
     var st = ((rec.expand && rec.expand.status && rec.expand.status.nama) || "").toLowerCase();
-    /* "Kosong" & "Developer" sama-sama lahan yang belum dibangun */
-    if(st === "kosong" || st === "developer") return {status:"available", empty:true};
+    /* "Developer" = lahan belum dibangun; "Kosong" = rumah tanpa penghuni */
+    if(st === "developer") return {status:"available", empty:true};
+    if(st === "kosong")    return {status:"available", empty:false};
     var user  = (rec.expand && rec.expand.user) || {};
     var email = String(user.email || "").toLowerCase();
     var nama  = String(user.name  || "");
@@ -1525,7 +1526,8 @@ setTimeout(function(){ document.getElementById("boot").classList.add("gone"); },
                      email.indexOf("nonexistent") !== -1;
     var generik = /^Warga\s/i.test(nama);
     return {
-      nama: (!nama || generik) ? "" : nama,
+      /* akun nonaktif / nama generik bukan penghuni aktif */
+      nama: (belumAktif || generik) ? "" : nama,
       status: ((rec.expand && rec.expand.status && rec.expand.status.nama) || ""),
       pengurus: !!rec.pengurus,
       aktif: !belumAktif
