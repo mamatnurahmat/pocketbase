@@ -1,0 +1,27 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: warga-p2s-client-dev
+    working_dir: /app
+    # Sumber code di-mount agar HMR jalan. `node_modules` & `.svelte-kit`
+    # pakai volume anonim supaya tidak ketiban binding dari host (mis. arch beda).
+    volumes:
+      - .:/app
+      - client_node_modules:/app/node_modules
+      - client_svelte_kit:/app/.svelte-kit
+    environment:
+      # Koneksi langsung ke PocketBase production public.
+      PUBLIC_PB_URL: https://prestige2.sawangan.web.id
+      PUBLIC_API_URL: https://api.sawangan.web.id
+      # Vite dev server bind ke 0.0.0.0 supaya bisa diakses dari host.
+      HOST: 0.0.0.0
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "5173:5173"
+    command: pnpm dev
+
+volumes:
+  client_node_modules:
+  client_svelte_kit:
