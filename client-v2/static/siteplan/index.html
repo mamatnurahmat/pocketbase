@@ -777,7 +777,10 @@ function layout(){
 
 /* perabot kavling kosong: patok sudut, papan "dijual", semak liar */
 var emptyProps = [];
-UNITS.filter(function(u){ return u.empty; }).forEach(function(u){
+function buildEmptyProps(){
+  emptyProps.forEach(function(o){ scene.remove(o.group); });
+  emptyProps = [];
+  UNITS.filter(function(u){ return u.empty; }).forEach(function(u){
   var g = new THREE.Group();
   var dx = u._dir.x, dz = u._dir.z;
   // patok sudut + tali batas kavling
@@ -804,7 +807,9 @@ UNITS.filter(function(u){ return u.empty; }).forEach(function(u){
   g.rotation.y = u.yaw;
   scene.add(g);
   emptyProps.push({u:u, group:g});
-});
+  });
+}
+buildEmptyProps();
 
 /* ---- selection ring ---- */
 var ring = new THREE.Mesh(
@@ -1244,13 +1249,14 @@ mS.onclick = function(){ setMode("status"); };
 mT.onclick = function(){ setMode("tahap"); };
 
 /* stock header */
-(function(){
+function renderStock(){
   var c = {}; UNITS.forEach(function(u){ c[u.status]=(c[u.status]||0)+1; });
   document.getElementById("nAvail").textContent = c.available||0;
   document.getElementById("nAkad").textContent  = c.akad||0;
   document.getElementById("nRes").textContent   = c.reserved||0;
   document.getElementById("nTot").textContent   = N_U;
-})();
+}
+renderStock();
 
 /* camera buttons */
 var topOn = false, bTop = document.getElementById("bTop");
@@ -1451,6 +1457,79 @@ function loop(){
 loop();
 
 setTimeout(function(){ document.getElementById("boot").classList.add("gone"); }, 420);
+
+/* ============ SINKRON DATA PROFIL WARGA (PocketBase) ============
+   Status kavling diambil dari collection `warga` agar peta mengikuti data asli,
+   bukan daftar hardcoded. Pemetaannya:
+     status "Kosong"     -> available + tanah kosong (belum dibangun)
+     status "Developer"  -> available (unit milik developer)
+     akun belum aktif    -> available (email *.disabled/nonexistent atau nama generik "Warga X")
+     selain itu          -> akad (sudah dihuni)
+   Kalau request gagal / belum login, peta tetap memakai data bawaan. */
+(function(){
+  var PB = "https://prestige2.sawangan.web.id";
+
+  function authToken(){
+    try {
+      var raw = localStorage.getItem("pocketbase_auth");
+      if(!raw) return "";
+      return (JSON.parse(raw) || {}).token || "";
+    } catch(e){ return ""; }
+  }
+
+  /* "C09" -> "C-09" agar cocok dengan id kavling pada peta */
+  function toUnitId(noRumah){
+    var s = String(noRumah || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    var m = /^([A-G])(\d{1,2})$/.exec(s);
+    return m ? m[1] + "-" + (m[2].length === 1 ? "0" + m[2] : m[2]) : "";
+  }
+
+  function classify(rec){
+    var st = ((rec.expand && rec.expand.status && rec.expand.status.nama) || "").toLowerCase();
+    if(st === "kosong")    return {status:"available", empty:true};
+    if(st === "developer") return {status:"available", empty:false};
+    var user  = (rec.expand && rec.expand.user) || {};
+    var email = String(user.email || "").toLowerCase();
+    var nama  = String(user.name  || "");
+    var belumAktif = email.indexOf(".disabled@") !== -1 ||
+                     email.indexOf("nonexistent") !== -1 ||
+                     /^Warga\s/i.test(nama);
+    return {status: belumAktif ? "available" : "akad", empty:false};
+  }
+
+  var token = authToken();
+  if(!token) return;                       /* belum login — pakai data bawaan */
+
+  var url = PB + "/api/collections/warga/records" +
+            "?perPage=200&expand=status,user" +
+            "&fields=no_rumah,expand.status.nama,expand.user.name,expand.user.email";
+
+  fetch(url, {headers:{Authorization: token}})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(data){
+      if(!data || !data.items || !data.items.length) return;
+      var changed = 0;
+      data.items.forEach(function(rec){
+        var id = toUnitId(rec.no_rumah);
+        var i  = IDX[id];
+        if(i === undefined) return;
+        var u = UNITS[i], k = classify(rec);
+        if(u.status !== k.status || !!u.empty !== k.empty){
+          u.status = k.status;
+          u.empty  = k.empty;
+          changed++;
+        }
+      });
+      if(!changed) return;
+      buildEmptyProps();                   /* patok & papan "dijual" ikut data baru */
+      buildLabels();                       /* label "TANAH KOSONG" menyesuaikan */
+      applyColors();                       /* warna + layout */
+      renderKeys();
+      renderStock();
+      if(selected >= 0) select(selected);  /* segarkan panel detail yang terbuka */
+    })
+    .catch(function(e){ console.warn("sinkron warga:", e); });
+})();
 
 })();
 </script>
