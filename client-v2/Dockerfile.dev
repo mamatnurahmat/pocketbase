@@ -1,0 +1,21 @@
+FROM node:22-alpine
+
+RUN corepack enable
+
+WORKDIR /app
+
+# Dependency install pakai lockfile (di-mount dari host saat compose up)
+COPY package.json ./
+COPY pnpm-lock.yaml* ./
+
+# Instalasi awal — kalau lockfile belum ada, buat pertama kali dengan install biasa
+RUN if [ -f pnpm-lock.yaml ]; then \
+      pnpm install --frozen-lockfile; \
+    else \
+      pnpm install; \
+    fi
+
+# Sisa source di-mount via bind mount dari docker-compose.
+EXPOSE 5173
+
+CMD ["pnpm", "dev"]
