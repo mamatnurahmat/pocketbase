@@ -278,6 +278,8 @@
   </div>
   <div id="dpill"><i></i><span id="dpillT">—</span></div>
   <div class="rows">
+    <div class="row" id="rOwn" hidden><span>Penghuni</span><b id="dOwn">—</b></div>
+    <div class="row" id="rSt" hidden><span>Keterangan</span><b id="dSt">—</b></div>
     <div class="row"><span>Luas tanah</span><b id="dLt">—</b></div>
     <div class="row"><span>Tahap bangun</span><b id="dTh">—</b></div>
     <div class="row"><span>Tipe</span><b id="dTy">—</b></div>
@@ -1116,7 +1118,9 @@ var d = {
   pillT: document.getElementById("dpillT"),
   lt: document.getElementById("dLt"), th: document.getElementById("dTh"),
   ty: document.getElementById("dTy"), fc: document.getElementById("dFc"),
-  rd: document.getElementById("dRd")
+  rd: document.getElementById("dRd"),
+  own: document.getElementById("dOwn"), rOwn: document.getElementById("rOwn"),
+  st:  document.getElementById("dSt"),  rSt:  document.getElementById("rSt")
 };
 function typeOf(u){
   if(u.empty) return "Tanah kosong · siap bangun";
@@ -1143,6 +1147,19 @@ function select(i){
   d.ty.textContent = typeOf(u);
   d.fc.textContent = "Hadap "+FACE[u.yaw];
   d.rd.textContent = u.road+" m";
+
+  /* Info warga dari profil (hanya tampil bila datanya ada) */
+  var w = u.warga;
+  var penghuni = "";
+  if(u.empty)            penghuni = "— belum dibangun";
+  else if(w && w.nama)   penghuni = w.nama + (w.pengurus ? " · Pengurus" : "");
+  else if(w)             penghuni = "Belum berpenghuni";
+  d.own.textContent = penghuni;
+  d.rOwn.hidden = !penghuni;
+
+  var ket = (w && w.status) ? w.status : "";
+  d.st.textContent = ket;
+  d.rSt.hidden = !ket;
   ring.position.set(u.x, 1.2, u.z); ring.visible = true;
   beam.position.set(u.x, 17, u.z); beam.visible = true;
   want.t.set(u.x, 0, u.z);
@@ -1486,8 +1503,8 @@ setTimeout(function(){ document.getElementById("boot").classList.add("gone"); },
 
   function classify(rec){
     var st = ((rec.expand && rec.expand.status && rec.expand.status.nama) || "").toLowerCase();
-    if(st === "kosong")    return {status:"available", empty:true};
-    if(st === "developer") return {status:"available", empty:false};
+    /* "Kosong" & "Developer" sama-sama lahan yang belum dibangun */
+    if(st === "kosong" || st === "developer") return {status:"available", empty:true};
     var user  = (rec.expand && rec.expand.user) || {};
     var email = String(user.email || "").toLowerCase();
     var nama  = String(user.name  || "");
@@ -1497,12 +1514,30 @@ setTimeout(function(){ document.getElementById("boot").classList.add("gone"); },
     return {status: belumAktif ? "available" : "akad", empty:false};
   }
 
+  /* Info penghuni untuk panel detail. Nama generik ("Warga C08") dan akun
+     yang belum aktif tidak dianggap penghuni. Nomor WA sengaja tidak
+     ditampilkan di peta demi privasi. */
+  function occupantOf(rec){
+    var user  = (rec.expand && rec.expand.user) || {};
+    var email = String(user.email || "").toLowerCase();
+    var nama  = String(user.name  || "").trim();
+    var belumAktif = email.indexOf(".disabled@") !== -1 ||
+                     email.indexOf("nonexistent") !== -1;
+    var generik = /^Warga\s/i.test(nama);
+    return {
+      nama: (!nama || generik) ? "" : nama,
+      status: ((rec.expand && rec.expand.status && rec.expand.status.nama) || ""),
+      pengurus: !!rec.pengurus,
+      aktif: !belumAktif
+    };
+  }
+
   var token = authToken();
   if(!token) return;                       /* belum login — pakai data bawaan */
 
   var url = PB + "/api/collections/warga/records" +
             "?perPage=200&expand=status,user" +
-            "&fields=no_rumah,expand.status.nama,expand.user.name,expand.user.email";
+            "&fields=no_rumah,pengurus,expand.status.nama,expand.user.name,expand.user.email";
 
   fetch(url, {headers:{Authorization: token}})
     .then(function(r){ return r.ok ? r.json() : null; })
@@ -1514,12 +1549,15 @@ setTimeout(function(){ document.getElementById("boot").classList.add("gone"); },
         var i  = IDX[id];
         if(i === undefined) return;
         var u = UNITS[i], k = classify(rec);
-        if(u.status !== k.status || !!u.empty !== k.empty){
+        u.warga = occupantOf(rec);
+        var wasEmpty = Boolean(u.empty);
+        if(u.status !== k.status || wasEmpty !== k.empty){
           u.status = k.status;
           u.empty  = k.empty;
           changed++;
         }
       });
+      if(selected >= 0) select(selected);  /* info warga muncul walau status tetap */
       if(!changed) return;
       buildEmptyProps();                   /* patok & papan "dijual" ikut data baru */
       buildLabels();                       /* label "TANAH KOSONG" menyesuaikan */
