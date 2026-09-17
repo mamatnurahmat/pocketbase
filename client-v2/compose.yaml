@@ -1,0 +1,31 @@
+# ============================================================
+# compose.yaml — compose file untuk LOCAL
+# p2s-app — build / release image production
+# ------------------------------------------------------------
+# Dipakai oleh Makefile:
+#   make build    → docker compose -f compose.yaml build
+#   make release  → docker compose -f compose.yaml push
+#
+# Variable (di-export oleh Makefile):
+#   ORG_REGISTRY → registry Docker Hub (default: newrahmat)
+#   IMAGE_NAME   → nama image (default: p2s-app)
+#   IMAGE_TAG    → tag image (default: latest)
+#   BUILD_ENV    → environment (production | staging | development)
+#   PORT         → port host yang di-map ke nginx (container :80)
+# ============================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BRANCH: ${BUILD_ENV:-production}
+        PUBLIC_PB_URL: ${PUBLIC_PB_URL:-}
+        PUBLIC_API_URL: ${PUBLIC_API_URL:-}
+
+    image: ${ORG_REGISTRY:-newrahmat}/${IMAGE_NAME:-p2s-app}:${IMAGE_TAG:-latest}
+    container_name: ${IMAGE_NAME:-p2s-app}-${BUILD_ENV:-production}
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:80"
