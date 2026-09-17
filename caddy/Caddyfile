@@ -1,45 +1,203 @@
 {
-    admin off
+	order coraza_waf first
+}
+
+# ============================================================
+# Caddy WAF - 2026-08-25
+# Domain aktif: api, prestige2, argocd, vault, vault-web,
+# photos, keyclock, k8s, llm, pi, netbird, dev (client-v2)
+# ============================================================
+
+# WAF untuk domain publik
+api.sawangan.web.id {
+	coraza_waf {
+		load_owasp_crs
+		directives `
+            Include /ruleset/coraza.conf
+            Include /ruleset/owasp-crs/crs-setup.conf.example
+            Include /ruleset/owasp-crs/rules/*.conf
+            SecRuleEngine On
+            SecAuditLog /audit/waf-audit.log
+            SecAuditEngine RelevantOnly
+            SecAuditLogRelevantStatus "^(?:(5|4)(0|1)[0-9])$"
+            SecRequestBodyAccess On
+            SecResponseBodyAccess On
+            SecResponseBodyMimeType text/plain text/html text/xml application/json
+        `
+	}
+	reverse_proxy pocketbase-api:8888
 }
 
 prestige2.sawangan.web.id {
-    reverse_proxy pocketbase:8090
+	coraza_waf {
+		load_owasp_crs
+		directives `
+            Include /ruleset/coraza.conf
+            Include /ruleset/owasp-crs/crs-setup.conf.example
+            Include /ruleset/owasp-crs/rules/*.conf
+            SecRuleEngine On
+            SecAuditLog /audit/waf-audit.log
+            SecAuditEngine RelevantOnly
+            SecAuditLogRelevantStatus "^(?:(5|4)(0|1)[0-9])$"
+            SecRequestBodyAccess On
+            # Izinkan metode PATCH (dipakai PocketBase untuk update record)
+            SecRuleRemoveById 911100
+        `
+	}
+	reverse_proxy pocketbase:8090
 }
 
-api.sawangan.web.id {
-    reverse_proxy pocketbase-api:8888
-}
-
-dashboard.sawangan.web.id {
-    reverse_proxy vikunja:3456
+# Client-v2 (SvelteKit + nginx) - container p2s-app-production di network client-v2_default
+dev.sawangan.web.id {
+	reverse_proxy p2s-app-production:80
 }
 
 argocd.sawangan.web.id {
-    handle {
-        @grpc {
-            header Content-Type application/grpc
-        }
-        reverse_proxy @grpc 100.106.55.29:8443 {
-            transport http {
-                versions h2c 2
-            }
-        }
-        reverse_proxy 100.106.55.29:8080
-    }
+	coraza_waf {
+		load_owasp_crs
+		directives `
+            Include /ruleset/coraza.conf
+            Include /ruleset/owasp-crs/crs-setup.conf.example
+            Include /ruleset/owasp-crs/rules/*.conf
+            SecRuleEngine On
+            SecAuditLog /audit/waf-audit.log
+        `
+	}
+	reverse_proxy 100.106.55.29:8080
 }
 
+# Non-WAF domains
 vault.sawangan.web.id {
-    reverse_proxy 100.106.55.29:8200
+	reverse_proxy 100.106.55.29:8200
 }
 
 vault-web.sawangan.web.id {
-    reverse_proxy 100.106.55.29:8200
+	reverse_proxy 100.106.55.29:8200
 }
 
 photos.sawangan.web.id {
-    reverse_proxy 100.106.55.29:8283
+	reverse_proxy 100.106.55.29:8283
 }
 
-keycloak.sawangan.web.id {
-    reverse_proxy 100.106.55.29:8888
+keyclock.sawangan.web.id {
+	reverse_proxy 100.106.55.29:8888
+}
+
+k8s.sawangan.web.id {
+	reverse_proxy 100.106.55.29:8086
+}
+
+# LLM swagger static + backend (tailnet nurahmat-1)
+llm.ngen.web.id {
+	handle /swagger/* {
+		uri strip_prefix /swagger
+		root * /home/devops/llm-swagger
+		header Cache-Control "public, max-age=86400"
+		header Access-Control-Allow-Origin "*"
+		file_server
+	}
+	handle /openapi.json {
+		root * /home/devops/llm-swagger
+		header Cache-Control "public, max-age=86400"
+		header Access-Control-Allow-Origin "*"
+		file_server
+	}
+	reverse_proxy 100.106.55.29:8110
+}
+
+# Pi Agent API Server (OpenAI-compatible) - host-run (systemd), port 8888
+pi.ngen.web.id {
+	coraza_waf {
+		load_owasp_crs
+		directives `
+            Include /ruleset/coraza.conf
+            Include /ruleset/owasp-crs/crs-setup.conf.example
+            Include /ruleset/owasp-crs/rules/*.conf
+            SecRuleEngine On
+            SecAuditLog /audit/waf-audit.log
+            SecAuditEngine RelevantOnly
+            SecAuditLogRelevantStatus "^(?:(5|4)(0|1)[0-9])$"
+            SecRequestBodyAccess On
+            SecResponseBodyAccess On
+            SecResponseBodyMimeType text/plain text/html text/xml application/json
+            # JSON body multi-baris (false positive rule 921150)
+            SecRuleRemoveById 921150
+        `
+	}
+	# host gateway waf-network -> node systemd 0.0.0.0:8888
+	reverse_proxy 172.21.0.1:8888
+}
+
+# NetBird (v0.73+ combined: management+signal+relay+embedded IdP) - external caddy
+netbird.ngen.web.id {
+	# Native gRPC (bypass WAF - protokol biner long-lived) - HARUS pertama
+	@grpc header Content-Type application/grpc*
+	handle @grpc {
+		reverse_proxy h2c://netbird-server:80
+	}
+
+	# Relay + WebSocket proxy (bypass WAF - streaming long-lived)
+	@stream path /relay* /ws-proxy/*
+	handle @stream {
+		reverse_proxy netbird-server:80
+	}
+
+	# API + OIDC (dengan WAF Coraza)
+	@wafpath path /api/* /oauth2/*
+	handle @wafpath {
+		coraza_waf {
+			load_owasp_crs
+			directives `
+                Include /ruleset/coraza.conf
+                Include /ruleset/owasp-crs/crs-setup.conf.example
+                Include /ruleset/owasp-crs/rules/*.conf
+                SecRuleEngine On
+                SecAuditLog /audit/waf-audit.log
+                SecAuditEngine RelevantOnly
+                SecAuditLogRelevantStatus "^(?:(5|4)(0|1)[0-9])$"
+                SecRequestBodyAccess On
+                SecResponseBodyAccess On
+                SecResponseBodyMimeType text/plain text/html text/xml application/json
+                # JSON multi-baris (mencegah false positive 921150)
+                SecRuleRemoveById 921150
+				# OAuth device flow (netbird CLI) redirect_uri localhost:53000 - false positive 934110
+				SecRuleRemoveById 934110
+				# Dashboard memakai PATCH/DELETE (onboarding akun) - false positive 911100 method enforcement
+				SecRuleRemoveById 911100
+            `
+		}
+		reverse_proxy netbird-server:80
+	}
+
+	# Dashboard UI (dengan WAF Coraza) - fallback
+	handle {
+		coraza_waf {
+			load_owasp_crs
+			directives `
+                Include /ruleset/coraza.conf
+                Include /ruleset/owasp-crs/crs-setup.conf.example
+                Include /ruleset/owasp-crs/rules/*.conf
+                SecRuleEngine On
+                SecAuditLog /audit/waf-audit.log
+                SecAuditEngine RelevantOnly
+                SecAuditLogRelevantStatus "^(?:(5|4)(0|1)[0-9])$"
+                SecRequestBodyAccess On
+                SecResponseBodyAccess On
+                SecResponseBodyMimeType text/plain text/html text/xml application/json
+                SecRuleRemoveById 921150
+            `
+		}
+		reverse_proxy netbird-dashboard:80
+	}
+}
+
+# Home Assistant - home.ngen.web.id (HA di VM 100.77.26.92 port 8123, HTTP polos)
+# Non-WAF: HA memakai WebSocket/SSE long-lived
+home.ngen.web.id {
+	reverse_proxy http://100.77.26.92:8123 {
+		# Home Assistant menolak X-Forwarded-For dari proxy yang belum ditrusted (400).
+		# Strip sementara sampai trusted_proxies dikonfigurasi di sisi HA.
+		header_up -X-Forwarded-For
+		header_up -X-Forwarded-Proto
+	}
 }

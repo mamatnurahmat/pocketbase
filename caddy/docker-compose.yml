@@ -1,19 +1,30 @@
 services:
-  caddy:
-    image: caddy:latest
-    container_name: caddy
+  caddy-waf:
+    image: caddy-coraza:latest
+    container_name: caddy-waf
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
+    networks:
+      - waf-network
+      - pocketbase-net
+      - client-v2_default
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
-      - /var/data/pocketbase/caddy_data:/data
-      - /var/data/pocketbase/caddy_config:/config
-    networks:
-      - pocketbase-net
+      - ./ruleset:/ruleset
+      - ./audit:/audit
+      - ./data:/data
+      - ./config:/config
+      - /home/devops/llm-swagger:/home/devops/llm-swagger:ro
 
 networks:
+  waf-network:
+    name: waf-network
+    external: false
   pocketbase-net:
     name: pocketbase-net
+    external: true
+  client-v2_default:
+    name: client-v2_default
     external: true
