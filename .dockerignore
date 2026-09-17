@@ -1,0 +1,9 @@
+.git
+.gitignore
+.pi
+.claude
+.DS_Store
+node_modules
+.svelte-kit
+build
+.env

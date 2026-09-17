@@ -1,0 +1,36 @@
+# ============================================================
+# build.compose — compose file untuk CI/CD (Jenkins X)
+# p2s-app — build / release image production
+# ------------------------------------------------------------
+# Sama dengan compose.yaml, dipakai jalur CI/CD. Platform dipaksa
+# linux/amd64 (bisa di-override via PLATFORM) agar image hasil build
+# selalu cocok dengan node deploy.
+#
+# Dipakai oleh Makefile:
+#   make build ENV=production COMPOSE_FILE=build.compose
+#
+# Variable (di-export oleh Makefile):
+#   ORG_REGISTRY → registry Docker Hub (default: newrahmat)
+#   IMAGE_NAME   → nama image (default: p2s-app)
+#   IMAGE_TAG    → tag image (default: latest)
+#   BUILD_ENV    → environment (production | staging | development)
+#   PORT         → port host yang di-map ke nginx (container :80)
+#   PLATFORM     → target platform build (default: linux/amd64)
+# ============================================================
+
+services:
+  app:
+    platform: ${PLATFORM:-linux/amd64}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BRANCH: ${BUILD_ENV:-production}
+        PUBLIC_PB_URL: ${PUBLIC_PB_URL:-}
+        PUBLIC_API_URL: ${PUBLIC_API_URL:-}
+
+    image: ${ORG_REGISTRY:-newrahmat}/${IMAGE_NAME:-p2s-app}:${IMAGE_TAG:-latest}
+    container_name: ${IMAGE_NAME:-p2s-app}-${BUILD_ENV:-production}
+    restart: "no"
+    ports:
+      - "${PORT:-80}:80"

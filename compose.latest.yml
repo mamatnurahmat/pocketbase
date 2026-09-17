@@ -1,0 +1,29 @@
+# ============================================================
+# compose.latest.yml — jalankan image latest (tanpa build)
+# p2s-app — SvelteKit static + nginx
+# ------------------------------------------------------------
+# Pakai image yang sudah di-push oleh `make release`:
+#   newrahmat/p2s-app:latest
+#
+# Env PUBLIC_* sudah di-bake saat build image (Vite), jadi
+# tidak perlu di-set lagi di sini.
+#
+# Usage:
+#   docker compose -f compose.latest.yml up -d
+#   docker compose -f compose.latest.yml down
+#
+# Akses: http://localhost:8111
+# ============================================================
+
+services:
+  app:
+    platform: ${PLATFORM:-linux/amd64}
+    image: ${ORG_REGISTRY:-newrahmat}/${IMAGE_NAME:-p2s-app}:${IMAGE_TAG:-latest}
+    container_name: ${IMAGE_NAME:-p2s-app}-latest
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8111}:80"
+    volumes:
+      # Pakai default.conf dari repo agar fix redirect port ikut terpakai
+      # tanpa harus rebuild image.
+      - ./default.conf:/etc/nginx/conf.d/default.conf:ro

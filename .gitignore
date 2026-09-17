@@ -1,4 +1,28 @@
-push-service/node_modules/
+# ── Dependencies ──────────────────────────────────────────────
 node_modules/
+push-service/node_modules/
+
+# ── Build artifacts (dihasilkan `pnpm build` / docker build) ──
+build/
+.svelte-kit/
+dist/
+
+# ── Environment ───────────────────────────────────────────────
+# .env.* boleh berisi URL/key spesifik environment; contoh aman di-commit.
 .env
-*.tar.gzpb_data/
+.env.*
+!.env.example
+
+# ── Data runtime PocketBase (kalau masih ada) ─────────────────
+pb_data/
+
+# ── Scratch dari agent (session/task log) ─────────────────────
+.pi/tasks/
+
+# ── Setting tool lokal ────────────────────────────────────────
+.claude/settings.local.json
+
+# ── OS / arsip / log ──────────────────────────────────────────
+.DS_Store
+*.tar.gz
+*.log
