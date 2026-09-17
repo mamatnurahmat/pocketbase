@@ -1,34 +1,34 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 :root {
 	/* ── Identitas P2S (hijau) ── */
-	--c-primary: #15935A;
-	--c-primary-dark: #0C6B40;
-	--c-primary-soft: #E5F3EC;
-	--c-primary-gradient: linear-gradient(150deg, #1FAE69, #0C6B40);
+	--c-primary: #15935a;
+	--c-primary-dark: #0c6b40;
+	--c-primary-soft: #e5f3ec;
+	--c-primary-gradient: linear-gradient(150deg, #1fae69, #0c6b40);
 
-	--c-bg: #F4F6F4;
+	--c-bg: #f4f6f4;
 	--c-surface: #ffffff;
-	--c-dark: #0F1A14;
-	--c-text: #0F1A14;
-	--c-text-muted: #6B7B72;
-	--c-text-light: #8A9991;
-	--c-text-subtle: #A6B0AA;
-	--c-border: #E6EBE7;
-	--c-border-light: #EEF2EF;
+	--c-dark: #0f1a14;
+	--c-text: #0f1a14;
+	--c-text-muted: #6b7b72;
+	--c-text-light: #8a9991;
+	--c-text-subtle: #a6b0aa;
+	--c-border: #e6ebe7;
+	--c-border-light: #eef2ef;
 
 	/* Accent status */
-	--c-green: #15935A;
-	--c-green-bg: #E5F3EC;
-	--c-amber: #B87514;
-	--c-amber-bg: #FBF0DC;
-	--c-red: #C24A4A;
-	--c-red-bg: #FBE9E9;
-	--c-blue: #2E6BC7;
-	--c-blue-bg: #E4EEFB;
-	--c-slate: #55607A;
-	--c-slate-bg: #EDEFF5;
+	--c-green: #15935a;
+	--c-green-bg: #e5f3ec;
+	--c-amber: #b87514;
+	--c-amber-bg: #fbf0dc;
+	--c-red: #c24a4a;
+	--c-red-bg: #fbe9e9;
+	--c-blue: #2e6bc7;
+	--c-blue-bg: #e4eefb;
+	--c-slate: #55607a;
+	--c-slate-bg: #edeff5;
 
 	--radius-card: 20px;
 	--radius-btn: 15px;
@@ -40,7 +40,7 @@
 	--shadow-subtle: 0 1px 2px rgba(15, 26, 20, 0.05);
 	--shadow-btn: 0 12px 24px -10px rgba(21, 147, 90, 0.55);
 
-	--mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+	--mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 * {
@@ -50,9 +50,9 @@
 }
 
 body {
-	font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-	background: #E6EBE7;
-	background-image: radial-gradient(circle at 20% 0%, #EEF5F0 0%, #E6EBE7 55%);
+	font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+	background: #e6ebe7;
+	background-image: radial-gradient(circle at 20% 0%, #eef5f0 0%, #e6ebe7 55%);
 	color: var(--c-text);
 	min-height: 100vh;
 	-webkit-font-smoothing: antialiased;
