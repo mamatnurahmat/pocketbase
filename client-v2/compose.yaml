@@ -16,6 +16,8 @@
 
 services:
   app:
+    # Default platform linux/amd64 agar image bisa jalan di node deploy x86_64
+    platform: linux/amd64
     build:
       context: .
       dockerfile: Dockerfile

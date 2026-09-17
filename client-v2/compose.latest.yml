@@ -17,6 +17,8 @@
 
 services:
   app:
+    # Default platform linux/amd64 (host deploy x86_64)
+    platform: linux/amd64
     image: ${ORG_REGISTRY:-newrahmat}/${IMAGE_NAME:-p2s-app}:${IMAGE_TAG:-latest}
     container_name: ${IMAGE_NAME:-p2s-app}-latest
     restart: unless-stopped

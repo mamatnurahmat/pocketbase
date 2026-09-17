@@ -1,4 +1,8 @@
 push-service/node_modules/
 node_modules/
 .env
-*.tar.gzpb_data/
+*.tar.gz
+pb_data/
+pb_data.corrupted/
+caddy_data/
+caddy_config/
