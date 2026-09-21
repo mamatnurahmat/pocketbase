@@ -21,6 +21,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - default
+      - pocketbase-net
 
   api:
     image: pocketbase-api:latest
@@ -33,6 +36,9 @@ services:
     depends_on:
       pocketbase:
         condition: service_healthy
+    networks:
+      - default
+      - pocketbase-net
 
   swagger-ui:
     image: swaggerapi/swagger-ui
@@ -44,3 +50,8 @@ services:
       - ../swagger/openapi.yaml:/openapi.yaml:ro
     environment:
       SWAGGER_JSON: /openapi.yaml
+
+networks:
+  pocketbase-net:
+    name: pocketbase-net
+    external: true
