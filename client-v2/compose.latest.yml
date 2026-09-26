@@ -5,15 +5,27 @@
 # Pakai image yang sudah di-push oleh `make release`:
 #   newrahmat/p2s-app:latest
 #
+# Project name: p2s-app (top-level `name:`) — TERPISAH dari
+# project dev (docker-compose.dev.yml → name: p2s-dev), jadi
+# `down` salah satu tidak pernah menyentuh container/asset
+# project lainnya.
+#
 # Env PUBLIC_* sudah di-bake saat build image (Vite), jadi
 # tidak perlu di-set lagi di sini.
+#
+# Prasyarat: network client-v2_default harus sudah ada
+# (dibuat sekali via `docker network create client-v2_default`
+# atau oleh stack lain). Caddy (caddy-waf) reach container ini
+# lewat network tersebut.
 #
 # Usage:
 #   docker compose -f compose.latest.yml up -d
 #   docker compose -f compose.latest.yml down
 #
-# Akses: http://localhost:8111
+# Akses: http://localhost:8111 — dan https://dev.sawangan.web.id via Caddy
 # ============================================================
+
+name: p2s-app
 
 services:
   app:
@@ -24,7 +36,16 @@ services:
     restart: unless-stopped
     ports:
       - "${PORT:-8111}:80"
+    networks:
+      # Network bersama dengan caddy-waf — external: tidak pernah
+      # dibuat/dihapus oleh project ini (down di sini aman).
+      - waf_shared
     volumes:
       # Pakai default.conf dari repo agar fix redirect port ikut terpakai
       # tanpa harus rebuild image.
       - ./default.conf:/etc/nginx/conf.d/default.conf:ro
+
+networks:
+  waf_shared:
+    name: client-v2_default
+    external: true

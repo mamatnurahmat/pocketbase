@@ -52,6 +52,17 @@ export default defineConfig(({ mode }) => {
 		server: {
 			host: '0.0.0.0',
 			port: 5173,
+			// Dev via https://dev.sawangan.web.id (Caddy → container dev).
+			// Tanpa ini Vite 6 memblokir request dengan Host asing:
+			// "Blocked request. This host is not allowed."
+			allowedHosts: ['dev.sawangan.web.id'],
+			// Hot reload di Docker: inotify tidak menembus bind mount
+			// antar filesystem → pakai polling. Aktif dari docker-compose.dev.yml
+			// (VITE_WATCH_POLLING=true); dev di host tetap pakai inotify.
+			watch: {
+				usePolling: process.env.VITE_WATCH_POLLING === 'true',
+				interval: 300
+			},
 			proxy: {
 				// Proxy request /api/* ke PocketBase public agar autentikasi cookie
 				// (kalau ada) tetap same-origin & tidak kena CORS saat dev.
@@ -64,3 +75,4 @@ export default defineConfig(({ mode }) => {
 		}
 	};
 });
+

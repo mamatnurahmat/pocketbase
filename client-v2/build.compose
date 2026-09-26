@@ -5,6 +5,10 @@
 # Sama dengan compose.yaml tapi dipaksa platform linux/amd64
 # agar image hasil build selalu cocok dengan node deploy.
 #
+# Project name: p2s-build (top-level `name:`), sama dengan
+# compose.yaml agar `make down` konsisten membersihkan project
+# build saja.
+#
 # Dipakai oleh Makefile:
 #   make build ENV=production COMPOSE_FILE=build.compose
 #
@@ -15,6 +19,8 @@
 #   BUILD_ENV    → environment (production | staging | development)
 #   PORT         → port host yang di-map ke nginx (container :80)
 # ============================================================
+
+name: p2s-build
 
 services:
   app:

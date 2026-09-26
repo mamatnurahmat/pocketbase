@@ -1,76 +1,92 @@
-# Docker Compose — Development Mode (Hot Reload + Debug)
-# ======================================================
-# Stack: SvelteKit 5 + Vite + pnpm + Node Inspector
+# Docker Compose — Development Mode (Hot Reload)
+# =====================================================
+# Stack: SvelteKit 5 + Vite dev server + pnpm
 #
-# Fitur:
-#   - Hot reload (HMR) via bind mount + polling
-#   - Node Inspector (Chrome DevTools) di port 9229
-#   - Env PUBLIC_* ter-expose via vite.config.ts (envPrefix)
-#   - Volume anonim untuk node_modules & .svelte-kit
+# Project name: p2s-dev (top-level `name:`) — TERPISAH dari
+# project produksi (compose.latest.yml → name: p2s-app), jadi
+# `down` di sini tidak pernah menyentuh p2s-app-latest.
 #
-# Usage:
-#   docker compose -f docker-compose.dev.yml up --build
-#   docker compose -f docker-compose.dev.yml up -d --build   # detached
+# Live update via https://dev.sawangan.web.id:
+#   Caddy (caddy-waf, network waf-network)
+#     → container ini di network client-v2_default
+#     → reverse_proxy Vite dev :5173 (termasuk upgrade WebSocket/HMR).
 #
-# Debug (Chrome DevTools):
-#   chrome://inspect → Configure → tambah localhost:9229 → Inspect
+# Usage (dari repo root):
+#   docker compose -f client-v2/docker-compose.dev.yml up -d --build
 #
-# Troubleshoot:
-#   docker compose -f docker-compose.dev.yml logs -f web
+# Source di-bind-mount dari host: edit file → browser auto reload (HMR).
+# node_modules & .svelte-kit pakai volume agar tidak ketimpa bind mount host.
+
+name: p2s-dev
 
 services:
   web:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    container_name: warga-p2s-client-dev
+    container_name: client-dev
     working_dir: /app
+    restart: unless-stopped
 
     volumes:
       # Bind mount source code agar perubahan langsung terdeteksi (hot reload)
       - .:/app
-      # Volume anonim: node_modules & build cache tetap milik container,
+      # Volume anonim: node_modules & cache milik container,
       # supaya tidak ketiban binding dari host (mis. beda arsitektur)
-      - client_node_modules:/app/node_modules
-      - client_svelte_kit:/app/.svelte-kit
+      - p2s-dev_node_modules:/app/node_modules
+      - p2s-dev_svelte_kit:/app/.svelte-kit
       # pnpm store agar install ulang jauh lebih cepat
-      - client_pnpm_store:/pnpm-store
+      - p2s-dev_pnpm_store:/pnpm-store
 
     environment:
-      # Vite dev server bind ke 0.0.0.0 agar bisa diakses dari host
+      # Vite dev server bind ke 0.0.0.0 agar bisa diakses Caddy/host
       HOST: 0.0.0.0
       PORT: "5173"
 
-      # Polling wajib untuk hot reload di Docker bind-mount (macOS/Windows),
-      # karena event inotify tidak menembus VM Docker.
-      CHOKIDAR_USEPOLLING: "true"
-      CHOKIDAR_INTERVAL: "300"
+      # Aktifkan polling watcher di container (lihat vite.config.ts → server.watch)
+      VITE_WATCH_POLLING: "true"
 
-      # Env public — dibaca `import.meta.env.PUBLIC_*` (lihat envPrefix di vite.config.ts)
+      # Env public — dibaca `import.meta.env.PUBLIC_*`
       PUBLIC_PB_URL: ${PUBLIC_PB_URL:-https://prestige2.sawangan.web.id}
       PUBLIC_API_URL: ${PUBLIC_API_URL:-https://api.sawangan.web.id}
 
-      # Node Inspector (Chrome DevTools / VS Code attach)
-      NODE_OPTIONS: "--inspect=0.0.0.0:9229"
-
     ports:
-      - "5173:5173" # Vite dev server
-      - "9229:9229" # Node Inspector (debug)
+      # Di-expose ke localhost saja, untuk troubleshooting langsung;
+      # jalur utama tetap https://dev.sawangan.web.id via Caddy.
+      - "127.0.0.1:5173:5173"
+      - "127.0.0.1:9229:9229"
 
-    command: pnpm dev
+    networks:
+      - default
+      - caddy_waf
 
-    # Supaya container bisa di-attach debugger & Ctrl+C bersih
+    # Jalankan vite langsung via node agar --inspect hanya menempel di
+    # proses vite (kalau via NODE_OPTIONS, pnpm induk ikut bind 9229 → gagal).
+    command: node --inspect=0.0.0.0:9229 node_modules/vite/bin/vite.js dev --host 0.0.0.0 --port 5173
+
     stdin_open: true
     tty: true
 
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5173/"]
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:5173/"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 15s
+      start_period: 30s
+
+networks:
+  default:
+    # Nama dipertahankan agar container dev tetap reach-able dari
+    # caddy-waf yang sudah join network ini (external → tidak pernah
+    # dibuat/dihapus oleh project ini, jadi `down` aman).
+    name: client-v2_default
+    external: true
+  caddy_waf:
+    name: waf-network
+    external: true
 
 volumes:
-  client_node_modules:
-  client_svelte_kit:
-  client_pnpm_store:
+  # Prefix p2s-dev_ supaya tidak bentrok dengan volume project lain.
+  p2s-dev_node_modules:
+  p2s-dev_svelte_kit:
+  p2s-dev_pnpm_store:

@@ -774,3 +774,5 @@
 		height: 44px;
 	}
 </style>
+
+<p>hmr-live-test</p>

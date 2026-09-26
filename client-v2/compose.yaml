@@ -6,6 +6,11 @@
 #   make build    → docker compose -f compose.yaml build
 #   make release  → docker compose -f compose.yaml push
 #
+# Project name: p2s-build (top-level `name:`) — TERPISAH dari
+# project deploy (compose.latest.yml → p2s-app) dan dev
+# (docker-compose.dev.yml → p2s-dev), jadi `make down` di sini
+# tidak pernah menyentuh container project lain.
+#
 # Variable (di-export oleh Makefile):
 #   ORG_REGISTRY → registry Docker Hub (default: newrahmat)
 #   IMAGE_NAME   → nama image (default: p2s-app)
@@ -13,6 +18,8 @@
 #   BUILD_ENV    → environment (production | staging | development)
 #   PORT         → port host yang di-map ke nginx (container :80)
 # ============================================================
+
+name: p2s-build
 
 services:
   app:

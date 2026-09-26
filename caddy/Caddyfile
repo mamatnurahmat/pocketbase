@@ -47,9 +47,12 @@ prestige2.sawangan.web.id {
 	reverse_proxy pocketbase:8090
 }
 
-# Client-v2 (SvelteKit + nginx) - container p2s-app-production di network client-v2_default
+# Client-v2 — build produksi (SvelteKit static + nginx)
+# Container p2s-app-latest di network client-v2_default (lihat client-v2/compose.latest.yml).
+# Sebelumnya menunjuk ke Vite dev server (client-dev:5173); untuk balik ke mode dev,
+# ganti lagi ke `reverse_proxy client-dev:5173`.
 dev.sawangan.web.id {
-	reverse_proxy p2s-app-production:80
+	reverse_proxy p2s-app-latest:80
 }
 
 argocd.sawangan.web.id {

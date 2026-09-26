@@ -17,8 +17,9 @@
 9. [API Reference](#-api-reference)
 10. [Build & Deployment](#-build--deployment)
 11. [Skrip NPM](#-skrip-npm)
-12. [Troubleshooting](#-troubleshooting)
-13. [Roadmap & Ide Pengembangan](#-roadmap--ide-pengembangan)
+12. [Ownership & Permission (Host)](#-ownership--permission-host)
+13. [Troubleshooting](#-troubleshooting)
+14. [Roadmap & Ide Pengembangan](#-roadmap--ide-pengembangan)
 
 ---
 
@@ -712,7 +713,53 @@ docker compose pull && docker compose up -d   # update image
 
 ---
 
+## 👤 Ownership & Permission (Host)
+
+Repo ini harus dimiliki user **`devops:devops`**. Ada dua penyebab umum ownership menyimpang di host produksi:
+
+| Penyebab | Akibat |
+|---|---|
+| Session agent / CI berjalan sebagai user lain (mis. `nurahmat`) | `.git/` dan file baru jadi milik user tersebut → `devops` kehilangan akses tulis (edit, commit, `git gc` gagal) |
+| Container yang jalan sebagai **root** menulis ke bind-mount (`pb_public/`, `pb_migrations/`, `pb_hooks/`, `pb_data/`, `client-v2/node_modules`) | File/folder baru jadi `root:root` → edit dari host kena *Permission denied* |
+
+### Cek penyimpangan
+
+```bash
+find . \( \! -user devops -o \! -group devops \) -printf '%u:%g %p\n' | head -20
+# rekap jumlah per owner:group
+find . \( \! -user devops -o \! -group devops \) -printf '%u:%g\n' | sort | uniq -c
+```
+
+### Perbaikan (idempotent, aman dijalankan kapan saja)
+
+```bash
+sudo chown -R devops:devops .
+
+# opsional — normalisasi mode (file 644, dir 755):
+sudo find . -type d -exec chmod 755 {} +
+sudo find . -type f -exec chmod 644 {} +
+```
+
+> **Catatan:** operasi `git` besar (`clone`, `pull`, `checkout`) yang dijalankan user lain, atau build yang dijalankan container root, akan menghasilkan file baru dengan ownership menyimpang lagi. Setelah itu, cukup jalankan ulang `sudo chown -R devops:devops .` dari root repo.
+
+> **Alternatif jangka panjang:** set `user: "1000:1000"` (UID/GID `devops` di host) pada service di `docker-compose.yml`, atau jalankan build dengan user host, agar file hasil container langsung milik `devops`.
+
+---
+
 ## 🩺 Troubleshooting
+
+<details>
+<summary><b>❌ Permission denied saat edit file / commit (ownership salah)</b></summary>
+
+Repo harus dimiliki `devops:devops`. Container (root) atau session agent (user lain) bisa mengubah ownership file. Perbaiki dengan:
+
+```bash
+sudo chown -R devops:devops .
+```
+
+Detail penyebab & pencegahan: bagian [Ownership & Permission](#-ownership--permission-host).
+
+</details>
 
 <details>
 <summary><b>❌ Terjebak di halaman Login saat instalasi pertama kali</b></summary>
