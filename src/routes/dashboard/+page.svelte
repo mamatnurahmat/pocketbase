@@ -171,6 +171,15 @@
 		return () => clearInterval(timer);
 	});
 
+	// Lock body scroll saat QR fullscreen aktif
+	$effect(() => {
+		if (!browser) return;
+		document.body.style.overflow = qrModalOpen ? 'hidden' : '';
+		return () => {
+			document.body.style.overflow = '';
+		};
+	});
+
 	// ── Helpers ──
 	function greeting(): string {
 		const h = new Date().getHours();
@@ -592,45 +601,76 @@
 	{/if}
 </div>
 
-<!-- ═══════ Modal QR Warga ═══════ -->
-<Modal
-	open={qrModalOpen}
-	title="QR Warga Saya"
-	maxWidth={360}
-	onClose={() => (qrModalOpen = false)}
->
-	<div class="qr-detail">
-		{#if qrImageUrl}
-			<div class="qr-big">
-				<img src={qrImageUrl} alt="QR warga besar" />
+<!-- ═══════ Fullscreen QR Warga ═══════ -->
+{#if qrModalOpen}
+	<div
+		class="qr-fs"
+		role="dialog"
+		aria-modal="true"
+		aria-label="QR Warga fullscreen"
+		onclick={(e) => {
+			if (e.target === e.currentTarget) qrModalOpen = false;
+		}}
+		onkeydown={(e) => e.key === 'Escape' && (qrModalOpen = false)}
+		tabindex="-1"
+	>
+		<button
+			class="qr-fs-btn qr-fs-close"
+			onclick={() => (qrModalOpen = false)}
+			aria-label="Tutup"
+		>
+			<svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+				<path
+					d="M6 6l12 12M18 6L6 18"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+				/>
+			</svg>
+		</button>
+		<button
+			class="qr-fs-btn qr-fs-dl"
+			onclick={onDownloadQr}
+			disabled={!qrImageUrl || qrDownloading}
+			aria-label="Unduh QR"
+			title="Unduh QR"
+		>
+			{#if qrDownloading}
+				<svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+					<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-opacity="0.3" />
+					<path d="M21 12a9 9 0 00-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+						<animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.9s" repeatCount="indefinite" />
+					</path>
+				</svg>
+			{:else}
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+					<path
+						d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					/>
+				</svg>
+			{/if}
+		</button>
+
+		<div class="qr-fs-inner">
+			<div class="qr-fs-header">
+				<div class="qr-fs-nama">{warga?.nama || '-'}</div>
+				<div class="qr-fs-rumah">No. Rumah <b>{warga?.no_rumah || '-'}</b></div>
 			</div>
-		{:else}
-			<div class="qr-big qr-empty">Memuat…</div>
-		{/if}
-		<div class="qr-info">
-			<div class="qr-info-nama">{warga?.nama || '-'}</div>
-			<div class="qr-info-line">No. Rumah: <b>{warga?.no_rumah || '-'}</b></div>
-			{#if warga?.no_hp}
-				<div class="qr-info-line">HP: {warga.no_hp}</div>
+
+			{#if qrImageUrl}
+				<div class="qr-fs-img">
+					<img src={qrImageUrl} alt="QR warga" />
+				</div>
+			{:else}
+				<div class="qr-fs-img qr-fs-empty">Memuat…</div>
 			{/if}
-			{#if qrRecord?.code}
-				<div class="qr-token">{qrRecord.code}</div>
-			{/if}
-		</div>
-		<div class="qr-actions">
-			<button
-				class="btn btn-primary sm"
-				onclick={onDownloadQr}
-				disabled={!qrImageUrl || qrDownloading}
-			>
-				{qrDownloading ? 'Mengunduh…' : '⬇ Unduh PNG'}
-			</button>
-			<button class="btn btn-outline sm" onclick={() => (qrModalOpen = false)}>
-				Tutup
-			</button>
 		</div>
 	</div>
-</Modal>
+{/if}
 
 <!-- ═══════ Modal Call Scurity ═══════ -->
 <Modal
@@ -904,74 +944,110 @@
 		color: var(--c-red);
 	}
 
-	/* ── QR modal detail ── */
-	.qr-detail {
+	/* ── QR fullscreen ── */
+	.qr-fs {
+		position: fixed;
+		inset: 0;
+		z-index: 9999;
+		background: rgba(15, 26, 20, 0.94);
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		gap: 14px;
-		padding: 6px 0 4px;
+		padding:
+			calc(env(safe-area-inset-top, 0) + 52px)
+			4px
+			calc(env(safe-area-inset-bottom, 0) + 14px);
 	}
 
-	.qr-big {
-		width: 260px;
-		height: 260px;
-		background: #fff;
-		border-radius: 16px;
+	.qr-fs-btn {
+		position: absolute;
+		right: 10px;
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.14);
+		color: #fff;
+		border: none;
+		font-family: inherit;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		overflow: hidden;
-		box-shadow: 0 6px 18px -6px rgba(15, 26, 20, 0.2);
+		cursor: pointer;
 	}
 
-	.qr-big img {
+	.qr-fs-btn:active:not(:disabled) {
+		background: rgba(255, 255, 255, 0.26);
+	}
+
+	.qr-fs-btn:disabled {
+		opacity: 0.4;
+		cursor: default;
+	}
+
+	.qr-fs-close {
+		top: calc(env(safe-area-inset-top, 0) + 10px);
+	}
+
+	.qr-fs-dl {
+		top: calc(env(safe-area-inset-top, 0) + 60px);
+	}
+
+	.qr-fs-inner {
+		flex: 1 1 auto;
+		width: 100%;
+		margin: 0 auto;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 14px;
+		min-height: 0;
+	}
+
+	.qr-fs-header {
+		text-align: center;
+		color: #fff;
+		flex: 0 0 auto;
+	}
+
+	.qr-fs-nama {
+		font-size: 18px;
+		font-weight: 800;
+		text-transform: capitalize;
+		line-height: 1.15;
+	}
+
+	.qr-fs-rumah {
+		font-size: 13px;
+		font-weight: 600;
+		color: rgba(255, 255, 255, 0.75);
+		margin-top: 2px;
+	}
+
+	.qr-fs-img {
+		flex: 0 1 auto;
+		/* sisakan ruang untuk header + safe-area; tombol sekarang overlay atas
+		   jadi tidak mengurangi tinggi. */
+		width: min(98vw, calc(100vh - 120px));
+		aspect-ratio: 1 / 1;
+		background: #fff;
+		border-radius: 20px;
+		padding: 10px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.6);
+	}
+
+	.qr-fs-img img {
 		width: 100%;
 		height: 100%;
 		object-fit: contain;
 		image-rendering: pixelated;
 	}
 
-	.qr-empty {
+	.qr-fs-empty {
 		color: var(--c-text-light);
-		font-size: 13px;
-	}
-
-	.qr-info {
-		text-align: center;
-		display: flex;
-		flex-direction: column;
-		gap: 3px;
-	}
-
-	.qr-info-nama {
-		font-size: 17px;
-		font-weight: 800;
-		text-transform: capitalize;
-	}
-
-	.qr-info-line {
-		font-size: 13px;
-		color: var(--c-text-muted);
-	}
-
-	.qr-token {
-		font-family: var(--mono);
-		font-size: 11px;
-		color: var(--c-text-light);
-		margin-top: 4px;
-		word-break: break-all;
-	}
-
-	.qr-actions {
-		display: flex;
-		gap: 8px;
-		width: 100%;
-	}
-
-	.qr-actions .btn.sm {
-		margin-top: 0;
-		flex: 1;
+		font-size: 14px;
 	}
 
 	.btn.sm {
