@@ -16,23 +16,22 @@
 	} from '$lib/types';
 	import {
 		getMyWarga,
+		getMyQr,
 		listTagihanForDashboard,
 		getWalletKas,
-		getWalletPribadi,
 		getLastAbsenScurity,
 		getMutasiQuick
 	} from '$lib/dashboard';
+	import { getQrImageUrl, downloadQrImage } from '$lib/qrcode';
+	import type { QrCode } from '$lib/types';
 	import Modal from '$lib/components/Modal.svelte';
 
 	// ── State ──
 	let warga = $state<Warga | null>(null);
 	let tagihan = $state<Tagihan[]>([]);
 	let walletKas = $state<Wallet | null>(null);
-	let walletPribadi = $state<Wallet | null>(null);
 	let walletKasLoaded = $state(false);
-	let walletPribadiLoaded = $state(false);
 	let walletKasError = $state('');
-	let walletPribadiError = $state('');
 	let lastAbsen = $state<AbsenScurityInfo | null>(null);
 	let mutasiFiles = $state<FileMutasi[]>([]);
 	let mutasiRows = $state<MutasiRow[]>([]);
@@ -41,9 +40,17 @@
 	let slideIndex = $state(0);
 	let touchStartX = 0;
 
+	// QR state
+	let qrRecord = $state<QrCode | null>(null);
+	let qrImageUrl = $state<string>('');
+	let qrLoading = $state(false);
+	let qrDownloading = $state(false);
+	let qrError = $state('');
+	let qrModalOpen = $state(false);
+
 	const slides = [
+		{ type: 'qr' as const, label: 'QR Warga' },
 		{ type: 'kas' as const, label: 'Saldo Kas' },
-		{ type: 'pribadi' as const, label: 'Saldo Saya' },
 		{ type: 'tagihan' as const, label: 'Tagihan' }
 	];
 
@@ -71,18 +78,9 @@
 			} catch (e) {
 				console.warn('tagihan fetch:', e);
 			}
+			void loadQr(w.id);
 		} catch (e) {
 			console.warn('warga not found:', e);
-		}
-
-		// Wallet pribadi
-		try {
-			walletPribadi = await getWalletPribadi(userId);
-		} catch (e) {
-			walletPribadiError = e instanceof Error ? e.message : 'Gagal memuat wallet';
-			console.warn('wallet pribadi:', e);
-		} finally {
-			walletPribadiLoaded = true;
 		}
 
 		// Wallet kas
@@ -93,6 +91,37 @@
 			console.warn('wallet kas:', e);
 		} finally {
 			walletKasLoaded = true;
+		}
+	}
+
+	async function loadQr(wargaId: string) {
+		qrLoading = true;
+		qrError = '';
+		try {
+			const qr = await getMyQr(wargaId);
+			qrRecord = qr;
+			qrImageUrl = getQrImageUrl(qr);
+			if (!qrImageUrl) qrError = 'Gambar QR belum tersedia';
+		} catch (e) {
+			qrError = e instanceof Error ? e.message : 'Gagal memuat QR';
+			console.warn('qr load:', e);
+		} finally {
+			qrLoading = false;
+		}
+	}
+
+	async function onDownloadQr() {
+		if (!qrRecord || !warga) return;
+		const safeNama = (warga.nama || 'warga').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+		const safeRumah = (warga.no_rumah || 'na').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+		qrDownloading = true;
+		try {
+			await downloadQrImage(qrRecord, `qr-${safeRumah}-${safeNama}.png`);
+		} catch (e) {
+			console.warn('download qr:', e);
+			qrError = e instanceof Error ? e.message : 'Gagal mengunduh QR';
+		} finally {
+			qrDownloading = false;
 		}
 	}
 
@@ -231,7 +260,6 @@
 	}
 
 	const kasBalance = $derived(maskBalance(walletKas?.balance));
-	const myBalance = $derived(maskBalance(walletPribadi?.balance));
 
 	// Teks yang tampil di kartu balance
 	function balanceText(
@@ -247,9 +275,6 @@
 
 	const kasBalanceText = $derived(
 		balanceText(kasBalance, walletKasLoaded, !!walletKas)
-	);
-	const myBalanceText = $derived(
-		balanceText(myBalance, walletPribadiLoaded, !!walletPribadi)
 	);
 
 	function waLink(hp: string): string {
@@ -314,7 +339,37 @@
 					{#each slides as s (s.type)}
 						<div class="slide-item">
 							<div class="card slide">
-								{#if s.type === 'tagihan'}
+								{#if s.type === 'qr'}
+									<button
+										type="button"
+										class="qr-slide"
+										onclick={() => qrImageUrl && (qrModalOpen = true)}
+										disabled={!qrImageUrl}
+										aria-label="Buka detail QR warga"
+									>
+										<div class="qr-thumb">
+											{#if qrLoading}
+												<span class="qr-skel">Memuat…</span>
+											{:else if qrImageUrl}
+												<img src={qrImageUrl} alt="QR warga" />
+											{:else}
+												<span class="qr-skel">QR belum tersedia</span>
+											{/if}
+										</div>
+										<div class="qr-meta">
+											<span class="lbl">QR Warga</span>
+											<span class="qr-nama">{warga?.nama || '-'}</span>
+											<span class="qr-rumah">
+												No. Rumah: <b>{warga?.no_rumah || '-'}</b>
+											</span>
+											{#if qrError}
+												<span class="qr-err">{qrError}</span>
+											{:else}
+												<span class="qr-hint">Ketuk untuk detail & unduh</span>
+											{/if}
+										</div>
+									</button>
+								{:else if s.type === 'tagihan'}
 									<div class="row">
 										<span class="lbl">
 											Total tagihan {isPengurusMode ? 'semua warga ' : ''}belum dibayar
@@ -352,43 +407,6 @@
 									>
 										Lihat Riwayat
 									</button>
-								{:else}
-									<div class="row">
-										<span class="lbl">Saldo dompet saya</span>
-										<span class="mini">💳 Pribadi</span>
-									</div>
-									<div
-										class="amount"
-										style:color={myBalance != null && myBalance > 0
-											? 'var(--c-primary)'
-											: 'var(--c-text)'}
-									>
-										{myBalanceText}
-									</div>
-									{#if walletPribadiError}
-										<div class="hint" style="color: var(--c-red)">
-											{walletPribadiError}
-										</div>
-									{/if}
-									<div class="hint">
-										Top up untuk bayar iuran & transfer antar warga
-									</div>
-									<div class="row-btns">
-										<button
-											class="btn btn-outline sm"
-											onclick={() => goto('/tagihan')}
-										>
-											Cek Tagihan
-										</button>
-										<button
-											class="btn btn-outline sm"
-											style="border-color: #2563EB; color: #2563EB;"
-											onclick={() => walletPribadi && goto(`/riwayat/${walletPribadi.id}`)}
-											disabled={!walletPribadi}
-										>
-											📊 Riwayat
-										</button>
-									</div>
 								{/if}
 							</div>
 						</div>
@@ -573,6 +591,46 @@
 		</div>
 	{/if}
 </div>
+
+<!-- ═══════ Modal QR Warga ═══════ -->
+<Modal
+	open={qrModalOpen}
+	title="QR Warga Saya"
+	maxWidth={360}
+	onClose={() => (qrModalOpen = false)}
+>
+	<div class="qr-detail">
+		{#if qrImageUrl}
+			<div class="qr-big">
+				<img src={qrImageUrl} alt="QR warga besar" />
+			</div>
+		{:else}
+			<div class="qr-big qr-empty">Memuat…</div>
+		{/if}
+		<div class="qr-info">
+			<div class="qr-info-nama">{warga?.nama || '-'}</div>
+			<div class="qr-info-line">No. Rumah: <b>{warga?.no_rumah || '-'}</b></div>
+			{#if warga?.no_hp}
+				<div class="qr-info-line">HP: {warga.no_hp}</div>
+			{/if}
+			{#if qrRecord?.code}
+				<div class="qr-token">{qrRecord.code}</div>
+			{/if}
+		</div>
+		<div class="qr-actions">
+			<button
+				class="btn btn-primary sm"
+				onclick={onDownloadQr}
+				disabled={!qrImageUrl || qrDownloading}
+			>
+				{qrDownloading ? 'Mengunduh…' : '⬇ Unduh PNG'}
+			</button>
+			<button class="btn btn-outline sm" onclick={() => (qrModalOpen = false)}>
+				Tutup
+			</button>
+		</div>
+	</div>
+</Modal>
 
 <!-- ═══════ Modal Call Scurity ═══════ -->
 <Modal
@@ -761,10 +819,159 @@
 		color: var(--c-text-light);
 	}
 
-	.slide .row-btns {
+	/* ── QR slide ── */
+	.qr-slide {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		width: 100%;
+		background: transparent;
+		border: none;
+		padding: 0;
+		font-family: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+
+	.qr-slide:disabled {
+		cursor: default;
+	}
+
+	.qr-slide:active:not(:disabled) {
+		transform: scale(0.99);
+	}
+
+	.qr-thumb {
+		width: 96px;
+		height: 96px;
+		flex: none;
+		background: #fff;
+		border-radius: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+		box-shadow: 0 4px 12px -4px rgba(15, 26, 20, 0.15);
+	}
+
+	.qr-thumb img {
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		image-rendering: pixelated;
+	}
+
+	.qr-skel {
+		font-size: 11px;
+		color: var(--c-text-light);
+		text-align: center;
+		padding: 0 8px;
+	}
+
+	.qr-meta {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		min-width: 0;
+		flex: 1;
+	}
+
+	.qr-nama {
+		font-size: 17px;
+		font-weight: 800;
+		text-transform: capitalize;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.qr-rumah {
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--c-text-muted);
+	}
+
+	.qr-hint {
+		font-size: 11px;
+		font-weight: 600;
+		color: var(--c-primary);
+		margin-top: 2px;
+	}
+
+	.qr-err {
+		font-size: 11px;
+		font-weight: 600;
+		color: var(--c-red);
+	}
+
+	/* ── QR modal detail ── */
+	.qr-detail {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 14px;
+		padding: 6px 0 4px;
+	}
+
+	.qr-big {
+		width: 260px;
+		height: 260px;
+		background: #fff;
+		border-radius: 16px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+		box-shadow: 0 6px 18px -6px rgba(15, 26, 20, 0.2);
+	}
+
+	.qr-big img {
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		image-rendering: pixelated;
+	}
+
+	.qr-empty {
+		color: var(--c-text-light);
+		font-size: 13px;
+	}
+
+	.qr-info {
+		text-align: center;
+		display: flex;
+		flex-direction: column;
+		gap: 3px;
+	}
+
+	.qr-info-nama {
+		font-size: 17px;
+		font-weight: 800;
+		text-transform: capitalize;
+	}
+
+	.qr-info-line {
+		font-size: 13px;
+		color: var(--c-text-muted);
+	}
+
+	.qr-token {
+		font-family: var(--mono);
+		font-size: 11px;
+		color: var(--c-text-light);
+		margin-top: 4px;
+		word-break: break-all;
+	}
+
+	.qr-actions {
 		display: flex;
 		gap: 8px;
-		margin-top: 16px;
+		width: 100%;
+	}
+
+	.qr-actions .btn.sm {
+		margin-top: 0;
+		flex: 1;
 	}
 
 	.btn.sm {
@@ -772,11 +979,6 @@
 		font-size: 14px;
 		margin-top: 16px;
 		width: 100%;
-	}
-
-	.row-btns .btn.sm {
-		margin-top: 0;
-		flex: 1;
 	}
 
 	/* ── Stats ── */

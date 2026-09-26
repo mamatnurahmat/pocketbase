@@ -1,9 +1,11 @@
 import { pb } from './pb';
+import { getOrCreateQrForWarga } from './qrcode';
 import type {
 	AbsenScurityInfo,
 	FileMutasi,
 	LaporanScurity,
 	MutasiRow,
+	QrCode,
 	Tagihan,
 	Wallet,
 	Warga
@@ -12,6 +14,11 @@ import type {
 /** Ambil warga terikat user login. */
 export async function getMyWarga(userId: string): Promise<Warga> {
 	return pb.collection('warga').getFirstListItem<Warga>(`user="${userId}"`);
+}
+
+/** Ambil (atau buat) QR aktif milik warga login. */
+export async function getMyQr(wargaId: string): Promise<QrCode> {
+	return getOrCreateQrForWarga(wargaId);
 }
 
 /** Ambil tagihan untuk dashboard (mode pengurus = semua, selainnya = milik warga). */

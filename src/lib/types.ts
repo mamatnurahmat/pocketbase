@@ -177,3 +177,13 @@ export interface LaporanScurityRec extends RecordModel {
 	dibuat_oleh?: string;
 	tanggal?: string;
 }
+
+export interface QrCode extends RecordModel {
+	warga: string;
+	code: string;
+	active?: boolean;
+	image?: string;
+	expand?: {
+		warga?: Warga;
+	};
+}

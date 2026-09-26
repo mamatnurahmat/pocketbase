@@ -1,0 +1,38 @@
+{
+	"collections": [
+		{
+			"name": "qr_codes",
+			"type": "base",
+			"listRule": "@request.auth.id != \"\"",
+			"viewRule": "@request.auth.id != \"\"",
+			"createRule": "@request.auth.id != \"\"",
+			"updateRule": "@request.auth.id != \"\" && @collection.warga.id ?= warga && @collection.warga.pengurus = true",
+			"deleteRule": "@request.auth.id != \"\" && @collection.warga.id ?= warga && @collection.warga.pengurus = true",
+			"fields": [
+				{
+					"name": "warga",
+					"type": "relation",
+					"required": true,
+					"collectionName": "warga",
+					"cascadeDelete": true,
+					"maxSelect": 1
+				},
+				{
+					"name": "code",
+					"type": "text",
+					"required": true,
+					"min": 16,
+					"max": 64
+				},
+				{
+					"name": "active",
+					"type": "bool"
+				}
+			],
+			"indexes": [
+				"CREATE UNIQUE INDEX idx_qr_codes_warga_active ON qr_codes (warga) WHERE active = TRUE",
+				"CREATE UNIQUE INDEX idx_qr_codes_code ON qr_codes (code)"
+			]
+		}
+	]
+}
