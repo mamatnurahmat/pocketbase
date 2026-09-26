@@ -7,6 +7,8 @@
 #   - Node Inspector (Chrome DevTools) di port 9229
 #   - Env PUBLIC_* ter-expose via vite.config.ts (envPrefix)
 #   - Volume anonim untuk node_modules & .svelte-kit
+#   - Join network `waf-network` agar bisa di-resolve oleh
+#     reverse proxy Caddy (caddy-waf) → dev.sawangan.web.id
 #
 # Usage:
 #   docker compose -f docker-compose.dev.yml up --build
@@ -58,18 +60,28 @@ services:
       - "5173:5173" # Vite dev server
       - "9229:9229" # Node Inspector (debug)
 
-    command: pnpm dev
+    # Dependensi di-install saat start (bukan saat build) karena /app
+    # di-bind-mount dari host dan menimpa isi image. Cache di pnpm-store
+    # membuat install berikutnya cepat.
+    command: sh -c "pnpm install --frozen-lockfile && pnpm dev"
 
     # Supaya container bisa di-attach debugger & Ctrl+C bersih
     stdin_open: true
     tty: true
 
+    networks:
+      - waf-network
+
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5173/"]
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:5173/"]
       interval: 30s
       timeout: 5s
-      retries: 3
-      start_period: 15s
+      retries: 5
+      start_period: 120s
+
+networks:
+  waf-network:
+    external: true
 
 volumes:
   client_node_modules:

@@ -1,33 +1,24 @@
 # Dockerfile — Development Mode
-# ==============================
-# Build context: root repo
-# Base: Node 22 Alpine (lightweight, pnpm via corepack)
+# ============================================================
+# Pakai node:22-alpine (sesuai `engines.node >= 22` di package.json)
+# dan install pnpm global saat BUILD (bukan corepack saat runtime —
+# corepack terkenal bisa menggantung saat download pnpm di start-up;
+# saat build, jaringan host terbukti lancar).
 #
-# Note: Source code di-mount via bind mount saat runtime,
-#       sehingga hot reload (HMR) bisa jalan.
-
+# Versi pnpm di-pin sama dengan `packageManager` di package.json.
+#
+# Dependensi TIDAK di-install saat build: source di-bind-mount ke
+# /app (menimpa isi image), jadi install dilakukan saat container
+# start (lihat `command` di docker-compose.dev.yml) dengan cache
+# pnpm-store di volume `client_pnpm_store`.
 FROM node:22-alpine
 
-# Enable pnpm via corepack
-RUN corepack enable
+ENV PNPM_VERSION=9.15.9
 
-# Direktori kerja
 WORKDIR /app
 
-# Copy manifest dependency dulu (layer caching)
-COPY package.json pnpm-lock.yaml* ./
+RUN npm install -g pnpm@${PNPM_VERSION}
 
-# Install dependencies (frozen-lockfile kalau ada lockfile)
-RUN if [ -f pnpm-lock.yaml ]; then \
-      pnpm install --frozen-lockfile; \
-    else \
-      pnpm install; \
-    fi
-
-# Port yang di-expose
-#   5173 = Vite dev server
-#   9229 = Node Inspector (debug)
 EXPOSE 5173 9229
 
-# Default command (bisa di-override di compose)
 CMD ["pnpm", "dev"]

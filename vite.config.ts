@@ -51,6 +51,8 @@ export default defineConfig(({ mode }) => {
 		],
 		server: {
 			host: '0.0.0.0',
+			// Izinkan akses via reverse proxy Caddy (https://dev.sawangan.web.id)
+			allowedHosts: ['dev.sawangan.web.id'],
 			port: 5173,
 			proxy: {
 				// Proxy request /api/* ke PocketBase public agar autentikasi cookie
